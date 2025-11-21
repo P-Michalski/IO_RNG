@@ -1,4 +1,4 @@
-# Backend tester for RNG
+# Backend tester for RNG implementations.
 
 from typing import Optional, Tuple
 from lcg import lcg_bit_stream
