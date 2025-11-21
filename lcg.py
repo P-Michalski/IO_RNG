@@ -76,3 +76,18 @@ def lcg_bit_stream(seed: int, a: int, c: int, m: int, n_bits: int,
         else:
             out.extend(bits[:rem])
     return out
+
+'''
+# Przykład użycia
+if __name__ == "__main__":
+    # Parametry GLIBC-like
+    seed = 123456789
+    a = 1103515245
+    c = 12345
+    m = 2**31
+    n_bits = 100
+    bits_per_value = 31
+    msb_first = True
+    bit_stream = lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value, msb_first)
+    print(bit_stream)
+'''
