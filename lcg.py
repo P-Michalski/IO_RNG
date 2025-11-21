@@ -1,6 +1,6 @@
 """
 Funkcja publiczna:
-    lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value=None, msb_first=True) -> List[int]
+    lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value=None, msb_first=True, return_time=False) -> List[int] | (List[int], float)
 
 Parametry:
     seed : int           -- wartość początkowa
@@ -10,9 +10,11 @@ Parametry:
     n_bits : int          -- liczba bitów do zwrócenia
     bits_per_value : int  -- ile bitów pobrać z każdej wartości (domyślnie bit-length(m))
     msb_first : bool      -- True: MSB-first, False: LSB-first
+    return_time : bool    -- jeśli True, funkcja zwraca (bity, czas_w_sekundach)
 
 Zwraca:
     lista intów 0/1 długości n_bits
+    lub (lista intów, czas_w_sekundach) jeśli return_time=True
 
 Proponowane dobre parametry:
 
@@ -44,7 +46,8 @@ Wskazówki praktyczne:
 - Zawsze jawnie ustaw bits_per_value (np. 31 albo 32) zamiast polegać na m.bit_length().
 - Wybierz msb_first zgodnie z wymaganiami testów (domyślnie True).
 """
-from typing import List, Optional
+from typing import List, Optional, Tuple, Union
+import time
 
 def _int_to_bits(value: int, bits: int, msb_first: bool = True) -> List[int]:
     if bits <= 0:
@@ -56,17 +59,22 @@ def _int_to_bits(value: int, bits: int, msb_first: bool = True) -> List[int]:
 
 def lcg_bit_stream(seed: int, a: int, c: int, m: int, n_bits: int,
                    bits_per_value: Optional[int] = None,
-                   msb_first: bool = True) -> List[int]:
+                   msb_first: bool = True,
+                   return_time: bool = False) -> Union[List[int], Tuple[List[int], float]]:
     seed = int(seed)
     a = int(a)
     c = int(c)
     m = int(m)
     n_bits = int(n_bits)
     if n_bits <= 0:
+        if return_time:
+            return [], 0.0
         return []
 
     bpv = int(bits_per_value) if bits_per_value is not None else (m.bit_length() if m > 1 else 1)
     out: List[int] = []
+
+    start = time.perf_counter() if return_time else None
     while len(out) < n_bits:
         seed = (a * seed + c) % m
         bits = _int_to_bits(seed, bpv, msb_first)
@@ -75,19 +83,22 @@ def lcg_bit_stream(seed: int, a: int, c: int, m: int, n_bits: int,
             out.extend(bits)
         else:
             out.extend(bits[:rem])
+    if return_time:
+        elapsed = time.perf_counter() - start  # type: ignore[operator]
+        return out, elapsed
     return out
 
 '''
 # Przykład użycia
 if __name__ == "__main__":
-    # Parametry GLIBC-like
     seed = 123456789
     a = 1103515245
     c = 12345
     m = 2**31
-    n_bits = 100
+    n_bits = 1024
     bits_per_value = 31
     msb_first = True
-    bit_stream = lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value, msb_first)
-    print(bit_stream)
+    bits, elapsed = lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value, msb_first, return_time=True)
+    print(f"Generated {n_bits} bits in {elapsed:.6f} seconds:")
+    print(bits)
 '''
