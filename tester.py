@@ -1,4 +1,4 @@
-# Backend tester for RNG bit stream generator
+# Backend tester for RNG
 
 from typing import Optional, Tuple
 from lcg import lcg_bit_stream
