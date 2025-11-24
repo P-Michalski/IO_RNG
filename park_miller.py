@@ -1,5 +1,5 @@
 """
-Park-Miller "Minimal Standard" RNG — implementacja "z palca".
+Park-Miller "Minimal Standard" RNG — implementacja.
 Funkcja publiczna:
     lcg_bit_stream(seed, n_bits, bits_per_value=None, msb_first=True, return_time=False)
 (albo park_miller_bit_stream z tymi samymi parametrami)
@@ -36,27 +36,19 @@ def park_miller_bit_stream(seed: int, n_bits: int,
                            bits_per_value: Optional[int] = None,
                            msb_first: bool = True,
                            return_time: bool = False) -> Union[List[int], Tuple[List[int], float]]:
-    """
-    Generuje strumień bitów korzystając z Park-Miller (schrage) bez mnożenia dużych liczb.
-    """
     seed = int(seed)
     n_bits = int(n_bits)
     if n_bits <= 0:
         if return_time:
             return [], 0.0
         return []
-
-    # upewnij się, że seed w odpowiednim zakresie: jeśli 0 -> ustaw na 1
     seed %= _PM_M
     if seed <= 0:
         seed = 1
-
     bpv = int(bits_per_value) if bits_per_value is not None else _PM_M.bit_length()  # domyślnie 31
     out: List[int] = []
-
     start = time.perf_counter() if return_time else None
     while len(out) < n_bits:
-        # Schrage method to compute (a * seed) % m without overflow
         hi = seed // _PM_Q
         lo = seed % _PM_Q
         t = _PM_A * lo - _PM_R * hi
@@ -73,11 +65,10 @@ def park_miller_bit_stream(seed: int, n_bits: int,
             out.extend(bits[:rem])
 
     if return_time:
-        elapsed = time.perf_counter() - start  # type: ignore[operator]
+        elapsed = time.perf_counter() - start
         return out, elapsed
     return out
 
-# Alias dla kompatybilności nazw (można importować lcg_bit_stream z tego pliku)
 lcg_bit_stream = park_miller_bit_stream
 
 """
