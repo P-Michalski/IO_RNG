@@ -46,7 +46,6 @@ def _simple_seed_state(seed: int, r: int, base: int) -> List[int]:
     state: List[int] = []
     for _ in range(r):
         x = (a * x + c) % m
-        # rozciągnij wartości do zakresu base (mogą być m < base; ok)
         state.append(x % base)
     return state
 
@@ -73,22 +72,17 @@ def awcg_bit_stream(seed: Optional[Union[int, Sequence[int]]],
     if r <= 0 or s <= 0 or s >= r:
         raise ValueError("Wymagane: r > s > 0")
 
-    # przygotuj stan
     if seed is None:
         state = _simple_seed_state(1, r, base)
     elif isinstance(seed, int):
         state = _simple_seed_state(seed, r, base)
     else:
-        # sekwencja liczb
         state = [int(x) % base for x in seed]
         if len(state) < r:
-            # dopełnij przy użyciu prostego seeda
             extra = _simple_seed_state(1, r - len(state), base)
             state.extend(extra)
-        # weź tylko pierwsze r
         state = state[:r]
 
-    # dobór bits_per_value: jeśli base jest potęgą 2, wybierz base.bit_length()-1
     if bits_per_value is not None:
         bpv = int(bits_per_value)
     else:
@@ -99,15 +93,13 @@ def awcg_bit_stream(seed: Optional[Union[int, Sequence[int]]],
 
     out: List[int] = []
     carry = 0
-    p = 0  # wskaźnik miejsca w cyklicznym buforze
+    p = 0
     start = time.perf_counter() if return_time else None
 
     while len(out) < n_bits:
-        # x_n = x_{n-r} + x_{n-s} + carry (mod base), carry = 0/1 jeśli przekroczenie base
-        idx_r = p % r                   # miejsce, które zostanie nadpisane
-        idx_n_minus_r = (p - r) % r     # równoważne (p) - r
+        idx_r = p % r
+        idx_n_minus_r = (p - r) % r     
         idx_n_minus_s = (p - s) % r
-        # użyj wartości historycznych:
         val = state[idx_n_minus_r] + state[idx_n_minus_s] + carry
         if val >= base:
             carry = 1
@@ -125,7 +117,7 @@ def awcg_bit_stream(seed: Optional[Union[int, Sequence[int]]],
             out.extend(bits[:rem])
 
     if return_time:
-        elapsed = time.perf_counter() - start  # type: ignore[operator]
+        elapsed = time.perf_counter() - start
         return out, elapsed
     return out
 
