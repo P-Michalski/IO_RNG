@@ -1,8 +1,8 @@
 from typing import Tuple, Optional
 import time
 
-import lcg
-import park_miller
+import LCG
+import Park_Miller
 import AWCG
 import PCG32
 import SplitMix64
@@ -17,12 +17,12 @@ def measure_lcg(n_bits: int) -> Tuple[float, float]:
     a = 1103515245
     c = 12345
     m = 2**31
-    bits, elapsed = lcg.lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value=31, msb_first=True, return_time=True)
+    bits, elapsed = LCG.lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value=31, msb_first=True, return_time=True)
     return elapsed, _mean(bits)
 
 def measure_park_miller(n_bits: int) -> Tuple[float, float]:
     seed = 123456789
-    bits, elapsed = park_miller.park_miller_bit_stream(seed, n_bits, bits_per_value=31, msb_first=True, return_time=True)
+    bits, elapsed = Park_Miller.park_miller_bit_stream(seed, n_bits, bits_per_value=31, msb_first=True, return_time=True)
     return elapsed, _mean(bits)
 
 def measure_awcg(n_bits: int) -> Tuple[float, float]:
@@ -72,4 +72,4 @@ def run_all(n_bits: int = 100000) -> None:
             print(f"{name}: ERROR -> {e}")
 
 if __name__ == "__main__":
-    run_all(100000)
+    run_all(10000000)
