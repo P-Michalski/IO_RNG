@@ -129,9 +129,6 @@ def awcg_bit_stream(seed: Optional[Union[int, Sequence[int]]],
         return out, elapsed
     return out
 
-# Alias nazw dla kompatybilności z resztą projektu/testerem
-lcg_bit_stream = awcg_bit_stream
-
 """
 if __name__ == "__main__":
     # Krótki przykład użycia

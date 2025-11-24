@@ -96,9 +96,6 @@ def pcg32_bit_stream(seed: Optional[Union[int, Sequence[int]]],
         return out, elapsed
     return out
 
-lcg_bit_stream = pcg32_bit_stream
-
-
 """
 if __name__ == "__main__":
     # Krótki przykład użycia

@@ -69,8 +69,6 @@ def park_miller_bit_stream(seed: int, n_bits: int,
         return out, elapsed
     return out
 
-lcg_bit_stream = park_miller_bit_stream
-
 """
 # Krótki przykład użycia
 if __name__ == "__main__":
