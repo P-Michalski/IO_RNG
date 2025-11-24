@@ -1,5 +1,5 @@
 """
-PCG32 — implementacja "z palca" (wariant 32-bitowy).
+PCG32 — implementacja (wariant 32-bitowy).
 
 Funkcja publiczna:
     pcg32_bit_stream(seed, n_bits, bits_per_value=None, msb_first=True, return_time=False)
@@ -22,7 +22,7 @@ from typing import List, Optional, Tuple, Union, Sequence
 import time
 
 # Stałe PCG
-_PCG_MULT = 6364136223846793005  # multiplier
+_PCG_MULT = 6364136223846793005
 _MASK64 = (1 << 64) - 1
 
 def _int_to_bits(value: int, bits: int, msb_first: bool = True) -> List[int]:
@@ -34,16 +34,10 @@ def _int_to_bits(value: int, bits: int, msb_first: bool = True) -> List[int]:
         return [ (value >> i) & 1 for i in range(bits) ]
 
 def _pcg_step(state: int, inc: int) -> Tuple[int, int]:
-    """
-    Jeden krok update'u stanu PCG i wygenerowanie 32-bitowego wyniku.
-    Zwraca (nowy_state, output32).
-    """
     state = (state * _PCG_MULT + inc) & _MASK64
     x = state
-    # xorshift and rotate as w PCG-XSH-RR (typowy PCG32)
     xorshifted = (((x >> 18) ^ x) >> 27) & 0xFFFFFFFF
     rot = (x >> 59) & 0x1F
-    # rotacja w prawo o rot
     output = ((xorshifted >> rot) | (xorshifted << ((-rot) & 31))) & 0xFFFFFFFF
     return state, output
 
@@ -61,8 +55,7 @@ def pcg32_bit_stream(seed: Optional[Union[int, Sequence[int]]],
         if return_time:
             return [], 0.0
         return []
-
-    # Parsowanie seeda/init sequence
+    
     if seed is None:
         initstate = 1
         seq = 1
@@ -70,7 +63,6 @@ def pcg32_bit_stream(seed: Optional[Union[int, Sequence[int]]],
         initstate = int(seed)
         seq = 1
     else:
-        # sekwencja -> weź pierwsze dwa elementy
         seq_list = [int(x) for x in seed]
         if len(seq_list) >= 2:
             initstate, seq = seq_list[0], seq_list[1]
@@ -79,14 +71,12 @@ def pcg32_bit_stream(seed: Optional[Union[int, Sequence[int]]],
         else:
             initstate, seq = 1, 1
 
-    inc = ((int(seq) << 1) | 1) & _MASK64  # must be odd
-    # Zalecane inicjowanie (wg PCG): state = 0; step(); state += initstate; step()
+    inc = ((int(seq) << 1) | 1) & _MASK64
     state = 0
     state = (state * _PCG_MULT + inc) & _MASK64
     state = (state + (int(initstate) & _MASK64)) & _MASK64
     state = (state * _PCG_MULT + inc) & _MASK64
 
-    # bits_per_value domyślnie 32 (PCG32)
     bpv = int(bits_per_value) if bits_per_value is not None else 32
 
     out: List[int] = []
@@ -102,11 +92,10 @@ def pcg32_bit_stream(seed: Optional[Union[int, Sequence[int]]],
             out.extend(bits[:rem])
 
     if return_time:
-        elapsed = time.perf_counter() - start  # type: ignore[operator]
+        elapsed = time.perf_counter() - start
         return out, elapsed
     return out
 
-# Alias do kompatybilności z testerem/projektem
 lcg_bit_stream = pcg32_bit_stream
 
 
