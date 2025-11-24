@@ -89,7 +89,7 @@ def lcg_bit_stream(seed: int, a: int, c: int, m: int, n_bits: int,
     return out
 
 '''
-# Przykład użycia
+# Przykład użycia LCG
 if __name__ == "__main__":
     seed = 123456789
     a = 1103515245

@@ -70,7 +70,7 @@ def park_miller_bit_stream(seed: int, n_bits: int,
     return out
 
 """
-# Krótki przykład użycia
+# Krótki przykład użycia Park-Miller
 if __name__ == "__main__":
     seed = 123456789
     n_bits = 100
