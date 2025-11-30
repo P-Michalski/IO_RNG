@@ -1,0 +1,8 @@
+# Wymusz język dla rozszerzeń
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript
+
+# Oznacz katalogi jako wygenerowane/vendored (nie będą liczyć się do statystyk)
+frontend/node_modules/** linguist-vendored=true
+frontend/dist/** linguist-generated=true
+frontend/build/** linguist-generated=true
