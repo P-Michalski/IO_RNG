@@ -6,3 +6,6 @@
 frontend/node_modules/** linguist-vendored=true
 frontend/dist/** linguist-generated=true
 frontend/build/** linguist-generated=true
+
+#shadcn/ui components
+frontend/src/components/ui/** linguist-generated=true
