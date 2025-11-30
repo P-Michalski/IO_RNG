@@ -16,7 +16,7 @@ import {
 import {
   LayoutDashboard,
   Cpu as GeneratorIcon,
-  TestTube as TestsIcon,
+  TestTubeDiagonal as TestsIcon,
   FileChartColumn as ResultsIcon,
   BookOpen as WikiIcon,
   Settings as SettingsIcon,
@@ -37,6 +37,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { ModeToggle } from "../mode-toggle";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import githubWhite from "../../../src/assets/github/github-mark-white.png";
+import githubDark from "../../../src/assets/github/github-mark.png";
+import { useTheme } from "../theme-provider";
 
 interface MenuItem {
   label: string;
@@ -47,6 +52,20 @@ interface MenuItem {
 export const NavigationSidebar = () => {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const { theme } = useTheme();
+
+  const ghRepo = {
+    name: "IO_RNG",
+    url: "https://github.com/P-Michalski/IO_RNG",
+    icon: (
+      <AvatarImage
+        src={theme === "light" ? githubDark : githubWhite}
+        alt="GitHub Repository"
+      />
+    ),
+    description: "GitHub Repo",
+  };
 
   const menuItems: MenuItem[] = [
     {
@@ -106,6 +125,7 @@ export const NavigationSidebar = () => {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader></SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Overview</SidebarGroupLabel>
@@ -238,7 +258,35 @@ export const NavigationSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter></SidebarFooter>
+      <SidebarFooter className="p-2">
+        <div className="flex group-data-[collapsible=icon]:flex-col items-center gap-2 transition-[flex-direction] duration-300 ease-in-out">
+          <SidebarMenuButton
+            size="lg"
+            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground flex-1 group-data-[collapsible=icon]:flex-none transition-[flex] duration-300 ease-in-out"
+            asChild
+            tooltip={ghRepo.description}
+          >
+            <a
+              href={ghRepo.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2"
+            >
+              <Avatar className="h-8 w-8 rounded-lg">
+                {ghRepo.icon}
+                <AvatarFallback className="rounded-lg">GH</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight overflow-hidden transition-[width,opacity] duration-300 ease-in-out group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
+                <span className="truncate font-medium">{ghRepo.name}</span>
+                <span className="truncate text-xs">{ghRepo.description}</span>
+              </div>
+            </a>
+          </SidebarMenuButton>
+          <div className="transition-transform duration-300 ease-in-out">
+            <ModeToggle />
+          </div>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 };

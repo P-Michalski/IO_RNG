@@ -8,7 +8,6 @@ import { Dashboard } from "./components/Dashboard/dashboard";
 import { Tests } from "./components/Tests/tests";
 import { Results } from "./components/Results/results";
 import { Generator } from "./components/Generator/generator";
-import { Wiki } from "./components/Wiki/wiki";
 import { AlgorithmsWiki } from "./components/Wiki/AlgorithmsWiki/algorithms-wiki";
 import { MethodologyWiki } from "./components/Wiki/MethodologyWiki/methodology-wiki";
 import { Settings } from "./components/Settings/settings";
