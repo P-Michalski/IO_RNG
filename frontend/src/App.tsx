@@ -8,10 +8,8 @@ function App() {
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <SidebarProvider>
         <NavigationSidebar />
-        <main>
-          <SidebarTrigger />
-          <Outlet />
-        </main>
+        <SidebarTrigger />
+        <Outlet />
       </SidebarProvider>
     </ThemeProvider>
   );
