@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 export const NotFound = () => {
   return (
     <div className="flex items-center justify-center min-h-screen w-full">
-      <Empty className="max-w-md border border-dashed from-muted/50 to-background bg-linear-to-b from-30%">
+      <Empty className="max-w-md border border-solid from-muted/50 to-background bg-linear-to-b from-30%">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <BookDashed />
