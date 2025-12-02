@@ -4,7 +4,7 @@ Definicja endpointów REST API.
 """
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from api.views import RNGViewSet, TestResultViewSet
+from io_rng.api.views import RNGViewSet, TestResultViewSet
 
 # Router automatycznie generuje URLe dla ViewSetów
 router = DefaultRouter()

@@ -7,15 +7,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Count, Avg
 
-from core.entities.rng import RNG, Language, Algorithm
-from core.use_cases.run_rng_test import RunRNGTestUseCase
-from infrastructure.models import RNGModel, TestResultModel
-from infrastructure.repositories.django_repositories import (
+from io_rng.core.entities.rng import RNG, Language, Algorithm
+from io_rng.core.use_cases.run_rng_test import RunRNGTestUseCase
+from io_rng.infrastructure.models import RNGModel, TestResultModel
+from io_rng.infrastructure.repositories.django_repositories import (
     DjangoRNGRepository,
     DjangoTestResultRepository
 )
-from infrastructure.runners.python_runner import PythonRNGRunner
-from api.serializers import (
+from io_rng.infrastructure.runners.python_runner import PythonRNGRunner
+from io_rng.api.serializers import (
     RNGSerializer,
     TestResultSerializer,
     RunTestRequestSerializer,

@@ -3,7 +3,7 @@ Django REST Framework Serializers
 Konwersja między JSON a domenowymi entities.
 """
 from rest_framework import serializers
-from core.entities.rng import Language, Algorithm
+from io_rng.core.entities.rng import Language, Algorithm
 
 
 class RNGSerializer(serializers.Serializer):
