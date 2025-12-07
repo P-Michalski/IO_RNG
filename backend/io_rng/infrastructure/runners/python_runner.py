@@ -1,103 +1,135 @@
 """
-Python RNG Runner - Infrastructure
-Implementuje uruchamianie RNG napisanych w Pythonie.
+Python RNG Runner - ładuje i uruchamia generatory Python
 """
-import os
-import sys
 import importlib.util
-from typing import List
+import sys
+from typing import List, Tuple, Any, Dict, Optional
+from pathlib import Path
+
 from io_rng.core.entities.rng import RNG, Language
+from io_rng.core.entities.test_result import DataType
 from io_rng.core.interfaces.rng_runner import IRNGRunner
+from io_rng.infrastructure.runners.universal_adapter import UniversalRNGAdapter
 
 
 class PythonRNGRunner(IRNGRunner):
-    """
-    Runner dla generatorów napisanych w Pythonie.
-    Dynamicznie ładuje moduły i uruchamia funkcje generujące.
-    """
+    """Runner dla Python RNG - dynamicznie ładuje moduły"""
 
     def can_run(self, rng: RNG) -> bool:
-        """Sprawdza czy to RNG pythonowy"""
+        """Sprawdza czy to Python RNG"""
         return rng.language == Language.PYTHON
 
-    def generate_numbers(self, rng: RNG, count: int, seed: int = None) -> List[float]:
+    def generate_raw(
+        self,
+        rng: RNG,
+        count: int,
+        seed: int = None,
+        parameters: Optional[Dict[str, Any]] = None
+    ) -> Tuple[List[Any], DataType]:
         """
-        Generuje liczby używając pythonowego RNG.
-
-        Oczekiwana struktura modułu RNG:
-        - Funkcja generate(count: int, seed: int = None) -> List[float]
-        """
-        if not self.can_run(rng):
-            raise RuntimeError(f"Cannot run {rng.language.value} RNG with Python runner")
-
-        # Załaduj moduł dynamicznie
-        module = self._load_module(rng.code_path)
-
-        # Sprawdź czy moduł ma funkcję generate
-        if not hasattr(module, 'generate'):
-            raise RuntimeError(f"Module {rng.code_path} doesn't have 'generate' function")
-
-        # Wywołaj funkcję
-        try:
-            numbers = module.generate(count, seed)
-
-            # Walidacja wyników
-            if not isinstance(numbers, list):
-                raise RuntimeError("generate() must return a list")
-
-            if len(numbers) != count:
-                raise RuntimeError(f"Expected {count} numbers, got {len(numbers)}")
-
-            # Sprawdź czy liczby są w zakresie [0, 1]
-            for num in numbers:
-                if not isinstance(num, (int, float)) or num < 0 or num > 1:
-                    raise RuntimeError(f"Invalid number: {num}. Must be in [0, 1]")
-
-            return [float(n) for n in numbers]
-
-        except Exception as e:
-            raise RuntimeError(f"Error running RNG: {str(e)}")
-
-    def validate_setup(self, rng: RNG) -> bool:
-        """Sprawdza czy moduł może być załadowany"""
-        try:
-            # Sprawdź czy plik istnieje
-            if not os.path.exists(rng.code_path):
-                return False
-
-            # Spróbuj załadować moduł
-            module = self._load_module(rng.code_path)
-
-            # Sprawdź czy ma wymaganą funkcję
-            return hasattr(module, 'generate')
-
-        except Exception:
-            return False
-
-    @staticmethod
-    def _load_module(path: str):
-        """
-        Dynamicznie ładuje moduł Pythona z pliku.
+        Generuje surowe dane (bity, inty, lub floaty).
 
         Args:
-            path: Ścieżka do pliku .py
+            rng: RNG entity
+            count: Liczba wartości do wygenerowania
+            seed: Opcjonalny seed
+            parameters: Opcjonalne parametry (override rng.parameters)
 
         Returns:
-            Załadowany moduł
+            (data, data_type) - surowe dane i ich typ
         """
-        # Stwórz unikalna nazwę dla modułu
-        module_name = os.path.splitext(os.path.basename(path))[0]
+        if not self.can_run(rng):
+            raise RuntimeError(f"Cannot run {rng.language.value}")
 
-        # Załaduj specyfikację modułu
+        module = self._load_module(rng.code_path)
+
+        # Merge parametrów: rng.parameters < parameters z requesta
+        final_parameters = {**(rng.parameters or {}), **(parameters or {})}
+        adapter = UniversalRNGAdapter(module, final_parameters)
+
+        return adapter.generate_raw(count, seed)
+
+    def generate_numbers(
+        self,
+        rng: RNG,
+        count: int,
+        seed: int = None,
+        parameters: Optional[Dict[str, Any]] = None
+    ) -> List[float]:
+        """
+        Generuje liczby float [0,1] z opcjonalnymi parametrami.
+
+        Args:
+            rng: RNG entity
+            count: Liczba liczb do wygenerowania
+            seed: Opcjonalny seed
+            parameters: Opcjonalne parametry (override rng.parameters)
+
+        Returns:
+            Lista liczb float [0, 1]
+        """
+        data, data_type = self.generate_raw(rng, count, seed, parameters)
+
+        # Konwertuj do float [0,1] jeśli potrzeba
+        if data_type == DataType.FLOATS:
+            return data
+        elif data_type == DataType.BITS:
+            return self._bits_to_floats(data)
+        elif data_type == DataType.INTEGERS:
+            return self._ints_to_floats(data)
+
+    def _bits_to_floats(self, bits: List[int]) -> List[float]:
+        """Konwertuje bity na floaty [0,1] - 32 bity na liczbę"""
+        bits_per_num = 32
+        numbers = []
+        max_val = (2**bits_per_num) - 1
+
+        for i in range(len(bits) // bits_per_num):
+            chunk = bits[i * bits_per_num : (i + 1) * bits_per_num]
+            value = sum(bit << (bits_per_num - 1 - j) for j, bit in enumerate(chunk))
+            numbers.append(value / max_val)
+
+        return numbers
+
+    def _ints_to_floats(self, integers: List[int]) -> List[float]:
+        """Konwertuje inty na floaty [0,1]"""
+        if not integers:
+            return []
+
+        min_val = min(integers)
+        max_val = max(integers)
+
+        if min_val == max_val:
+            return [0.5] * len(integers)
+
+        return [(x - min_val) / (max_val - min_val) for x in integers]
+
+    def _load_module(self, path: str):
+        """Ładuje moduł Python dynamicznie"""
+        path_obj = Path(path)
+
+        if not path_obj.exists():
+            raise FileNotFoundError(f"Module not found: {path}")
+
+        if not path_obj.suffix == '.py':
+            raise ValueError(f"Not a Python file: {path}")
+
+        module_name = path_obj.stem
         spec = importlib.util.spec_from_file_location(module_name, path)
-        if spec is None:
-            raise RuntimeError(f"Cannot load module from {path}")
 
-        # Stwórz moduł
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Cannot load: {path}")
+
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
-
-        # Wykonaj moduł
         spec.loader.exec_module(module)
 
         return module
+
+    def validate_setup(self, rng: RNG) -> bool:
+        """Waliduje czy generator działa"""
+        try:
+            data, data_type = self.generate_raw(rng, 10, seed=42)
+            return len(data) >= 10 or len(data) >= 320  # 10 liczb lub 320+ bitów
+        except:
+            return False

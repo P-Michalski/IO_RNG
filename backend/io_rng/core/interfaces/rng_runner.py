@@ -1,59 +1,58 @@
 """
 RNG Runner Interface - Port
-Abstrakcja do uruchamiania generatorów liczb losowych.
-Pozwala na różne implementacje dla różnych języków.
 """
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Dict, Any, Optional
 from io_rng.core.entities.rng import RNG
 
 
 class IRNGRunner(ABC):
-    """
-    Interface definiujący kontrakt dla runnerów RNG.
-    Każdy język będzie miał swoją implementację.
-    """
+    """Interface dla runnerów RNG"""
 
     @abstractmethod
     def can_run(self, rng: RNG) -> bool:
         """
-        Sprawdza czy runner obsługuje dany RNG.
+        Sprawdza czy runner może uruchomić dany RNG.
 
         Args:
-            rng: Entity RNG do sprawdzenia
+            rng: RNG entity
 
         Returns:
-            True jeśli runner może uruchomić ten RNG
+            True jeśli runner obsługuje ten język
         """
         pass
 
     @abstractmethod
-    def generate_numbers(self, rng: RNG, count: int, seed: int = None) -> List[float]:
+    def generate_numbers(
+        self,
+        rng: RNG,
+        count: int,
+        seed: int = None,
+        parameters: Optional[Dict[str, Any]] = None
+    ) -> List[float]:
         """
-        Generuje liczby losowe używając danego RNG.
+        Generuje liczby losowe z opcjonalnymi parametrami.
 
         Args:
-            rng: Entity RNG do uruchomienia
+            rng: RNG entity
             count: Liczba liczb do wygenerowania
             seed: Opcjonalny seed dla powtarzalności
+            parameters: Opcjonalne parametry (override rng.parameters)
 
         Returns:
-            Lista wygenerowanych liczb (0.0 - 1.0)
-
-        Raises:
-            RuntimeError: Gdy nie można uruchomić RNG
+            Lista liczb float w zakresie [0.0, 1.0]
         """
         pass
 
     @abstractmethod
     def validate_setup(self, rng: RNG) -> bool:
         """
-        Sprawdza czy środowisko jest gotowe do uruchomienia RNG.
+        Waliduje czy generator jest poprawnie skonfigurowany.
 
         Args:
-            rng: Entity RNG do walidacji
+            rng: RNG entity
 
         Returns:
-            True jeśli setup jest poprawny
+            True jeśli generator może być uruchomiony
         """
         pass

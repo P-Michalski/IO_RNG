@@ -1,10 +1,9 @@
 """
 Run RNG Test Use Case
-Logika biznesowa uruchamiania testów generatorów.
 """
-from typing import List, Dict, Any
+from typing import Dict, Any, List
 import time
-from datetime import datetime
+
 from io_rng.core.entities.rng import RNG
 from io_rng.core.entities.test_result import TestResult
 from io_rng.core.interfaces.rng_runner import IRNGRunner
@@ -12,88 +11,87 @@ from io_rng.core.interfaces.repositories import IRNGRepository, ITestResultRepos
 
 
 class RunRNGTestUseCase:
-    """
-    Use Case odpowiedzialny za uruchamianie testów RNG.
-    Implementuje logikę biznesową niezależną od frameworka.
-    """
+    """Use case do uruchamiania testów RNG"""
 
     def __init__(
-            self,
-            rng_repository: IRNGRepository,
-            result_repository: ITestResultRepository,
-            runners: List[IRNGRunner]
+        self,
+        rng_repository: IRNGRepository,
+        result_repository: ITestResultRepository,
+        runners: List[IRNGRunner]
     ):
         self.rng_repository = rng_repository
         self.result_repository = result_repository
         self.runners = runners
 
+    def _find_runner(self, rng: RNG) -> IRNGRunner:
+        """
+        Znajduje odpowiedni runner dla danego RNG.
+
+        Args:
+            rng: RNG entity
+
+        Returns:
+            Runner który może uruchomić ten RNG
+
+        Raises:
+            RuntimeError: Jeśli nie znaleziono runnera
+        """
+        for runner in self.runners:
+            if runner.can_run(rng):
+                return runner
+
+        raise RuntimeError(f"No runner available for {rng.language.value}")
+
     def execute(
-            self,
-            rng_id: int,
-            test_name: str = "frequency_test",
-            samples_count: int = 10000,
-            seed: int = None
+        self,
+        rng_id: int,
+        test_name: str,
+        samples_count: int,
+        seed: int = None,
+        parameters: Dict[str, Any] = None
     ) -> TestResult:
         """
-        Uruchamia test dla danego RNG.
+        Wykonuje test RNG z opcjonalnymi parametrami.
 
         Args:
             rng_id: ID generatora do przetestowania
-            test_name: Nazwa testu do wykonania
+            test_name: Nazwa testu statystycznego
             samples_count: Liczba próbek do wygenerowania
             seed: Opcjonalny seed dla powtarzalności
+            parameters: Opcjonalne parametry dla generatora (override RNG.parameters)
 
         Returns:
             TestResult z wynikami testu
 
         Raises:
-            ValueError: Gdy RNG nie istnieje lub jest nieaktywny
-            RuntimeError: Gdy nie można uruchomić testu
+            ValueError: Jeśli RNG nie istnieje
+            RuntimeError: Jeśli nie ma odpowiedniego runnera
         """
-        # 1. Pobierz RNG
+
+        # 1. Pobierz RNG z repozytorium
         rng = self.rng_repository.get_by_id(rng_id)
         if not rng:
-            raise ValueError(f"RNG with id {rng_id} not found")
-
-        if not rng.validate_for_execution():
-            raise ValueError(f"RNG {rng.name} is not ready for execution")
+            raise ValueError(f"RNG {rng_id} not found")
 
         # 2. Znajdź odpowiedni runner
         runner = self._find_runner(rng)
         if not runner:
-            raise RuntimeError(f"No runner available for {rng.language.value}")
+            raise RuntimeError(f"No runner for {rng.language.value}")
 
-        # 3. Waliduj setup
-        if not runner.validate_setup(rng):
-            raise RuntimeError(f"Runner setup validation failed for {rng.name}")
+        # 3. Generuj liczby losowe (z parametrami z requesta)
+        start_time = time.perf_counter()
 
-        # 4. Uruchom generowanie liczb
-        start_time = time.time()
         try:
-            numbers = runner.generate_numbers(rng, samples_count, seed)
-            execution_time = (time.time() - start_time) * 1000  # ms
+            numbers = runner.generate_numbers(rng, samples_count, seed, parameters)
         except Exception as e:
-            # Zapisz wynik z błędem
-            error_result = TestResult(
-                rng_id=rng_id,
-                test_name=test_name,
-                passed=False,
-                score=0.0,
-                execution_time_ms=0.0,
-                samples_count=samples_count,
-                statistics={},
-                error_message=str(e),
-                created_at=datetime.now()
-            )
-            return self.result_repository.save(error_result)
+            return self._create_error_result(rng_id, test_name, str(e))
 
-        # 5. Wykonaj test statystyczny
-        test_result = self._perform_statistical_test(
-            numbers=numbers,
-            test_name=test_name
-        )
+        execution_time = (time.perf_counter() - start_time) * 1000  # ms
 
-        # 6. Stwórz wynik
+        # 4. Wykonaj test statystyczny
+        test_result = self._perform_statistical_test(numbers, test_name)
+
+        # 5. Utwórz TestResult entity
         result = TestResult(
             rng_id=rng_id,
             test_name=test_name,
@@ -101,30 +99,31 @@ class RunRNGTestUseCase:
             score=test_result['score'],
             execution_time_ms=execution_time,
             samples_count=samples_count,
-            statistics=test_result['statistics'],
-            created_at=datetime.now()
+            statistics=test_result['statistics']
         )
 
-        # 7. Zapisz wynik
+        # 6. Zapisz wynik
         return self.result_repository.save(result)
 
-    def _find_runner(self, rng: RNG) -> IRNGRunner:
-        """Znajduje runner obsługujący dany RNG"""
-        for runner in self.runners:
-            if runner.can_run(rng):
-                return runner
-        return None
-
     def _perform_statistical_test(
-            self,
-            numbers: List[float],
-            test_name: str
+        self,
+        numbers: List[float],
+        test_name: str
     ) -> Dict[str, Any]:
         """
-        Wykonuje test statystyczny na wygenerowanych liczbach.
+        Wykonuje test statystyczny na liczbach losowych.
 
-        Tutaj implementujemy różne testy (frequency, chi-square, etc.)
+        Args:
+            numbers: Lista liczb float w zakresie [0, 1]
+            test_name: Nazwa testu do wykonania
+
+        Returns:
+            Słownik z wynikami: {'passed': bool, 'score': float, 'statistics': dict}
+
+        Raises:
+            ValueError: Jeśli test_name jest nieznany
         """
+
         if test_name == "frequency_test":
             return self._frequency_test(numbers)
         elif test_name == "uniformity_test":
@@ -134,56 +133,120 @@ class RunRNGTestUseCase:
 
     def _frequency_test(self, numbers: List[float]) -> Dict[str, Any]:
         """
-        Test częstotliwości - sprawdza czy liczby są równomiernie rozłożone.
-        Prosty test dla przykładu.
+        Test częstości (Chi-square test).
+        Sprawdza czy liczby są równomiernie rozłożone w binach.
+
+        Args:
+            numbers: Lista liczb [0, 1]
+
+        Returns:
+            Wynik testu z chi-square statystyką
         """
-        # Podziel zakres [0,1] na 10 binów
-        bins = [0] * 10
+        num_bins = 10
+        bins = [0] * num_bins
+
+        # Zlicz liczby w każdym binie
         for num in numbers:
-            bin_index = min(int(num * 10), 9)
-            bins[bin_index] += 1
+            bin_idx = min(int(num * num_bins), num_bins - 1)
+            bins[bin_idx] += 1
 
-        # Oczekiwana liczba w każdym binie
-        expected = len(numbers) / 10
+        # Chi-square test
+        expected = len(numbers) / num_bins
+        chi_square = sum(
+            (observed - expected) ** 2 / expected
+            for observed in bins
+        )
 
-        # Oblicz chi-square statistic
-        chi_square = sum((observed - expected) ** 2 / expected for observed in bins)
+        # Krytyczna wartość dla p=0.05, df=9
+        critical_value = 16.919
+        passed = chi_square < critical_value
 
-        # Dla 9 stopni swobody, wartość krytyczna (p=0.05) ≈ 16.919
-        passed = chi_square < 16.919
-
-        # Score: im bliżej 0, tym lepiej (normalizujemy do 0-1)
-        score = max(0, 1 - (chi_square / 30))
+        # Score: 1.0 = idealny, 0.0 = bardzo zły
+        score = max(0.0, min(1.0, 1 - (chi_square / critical_value)))
 
         return {
             'passed': passed,
-            'score': score,
+            'score': round(score, 2),
             'statistics': {
-                'chi_square': chi_square,
+                'chi_square': round(chi_square, 3),
+                'critical_value': critical_value,
                 'bins': bins,
                 'expected_per_bin': expected
             }
         }
 
     def _uniformity_test(self, numbers: List[float]) -> Dict[str, Any]:
-        """Test uniformity - prosty przykład"""
-        mean = sum(numbers) / len(numbers)
-        variance = sum((x - mean) ** 2 for x in numbers) / len(numbers)
+        """
+        Test równomierności (mean & variance test).
+        Sprawdza czy średnia ≈ 0.5 i wariancja ≈ 1/12.
 
-        # Dla uniform distribution [0,1]: mean ≈ 0.5, variance ≈ 0.083
-        mean_diff = abs(mean - 0.5)
-        var_diff = abs(variance - 0.083)
+        Args:
+            numbers: Lista liczb [0, 1]
 
+        Returns:
+            Wynik testu z mean i variance
+        """
+        n = len(numbers)
+
+        # Oblicz średnią
+        mean = sum(numbers) / n
+
+        # Oblicz wariancję
+        variance = sum((x - mean) ** 2 for x in numbers) / n
+
+        # Wartości oczekiwane dla rozkładu uniform [0,1]
+        expected_mean = 0.5
+        expected_variance = 1.0 / 12.0  # ≈ 0.083
+
+        # Różnice
+        mean_diff = abs(mean - expected_mean)
+        var_diff = abs(variance - expected_variance)
+
+        # Test przechodzi jeśli różnice są małe
         passed = mean_diff < 0.05 and var_diff < 0.02
-        score = max(0, 1 - (mean_diff * 10 + var_diff * 5))
+
+        # Score bazujący na różnicach
+        score = max(0.0, min(1.0, 1 - (mean_diff * 10 + var_diff * 5)))
 
         return {
             'passed': passed,
-            'score': score,
+            'score': round(score, 2),
             'statistics': {
-                'mean': mean,
-                'variance': variance,
-                'expected_mean': 0.5,
-                'expected_variance': 0.083
+                'mean': round(mean, 6),
+                'expected_mean': expected_mean,
+                'variance': round(variance, 6),
+                'expected_variance': round(expected_variance, 6),
+                'mean_diff': round(mean_diff, 6),
+                'var_diff': round(var_diff, 6)
             }
         }
+
+    def _create_error_result(
+        self,
+        rng_id: int,
+        test_name: str,
+        error_message: str
+    ) -> TestResult:
+        """
+        Tworzy TestResult z błędem.
+
+        Args:
+            rng_id: ID generatora
+            test_name: Nazwa testu
+            error_message: Komunikat błędu
+
+        Returns:
+            TestResult z error_message
+        """
+        result = TestResult(
+            rng_id=rng_id,
+            test_name=test_name,
+            passed=False,
+            score=0.0,
+            execution_time_ms=0.0,
+            samples_count=0,
+            statistics={},
+            error_message=error_message
+        )
+
+        return self.result_repository.save(result)

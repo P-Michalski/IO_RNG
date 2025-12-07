@@ -15,6 +15,7 @@ class RNGSerializer(serializers.Serializer):
     algorithm = serializers.ChoiceField(choices=[a.value for a in Algorithm])
     description = serializers.CharField()
     code_path = serializers.CharField(max_length=500)
+    parameters = serializers.JSONField(required=False, allow_null=True)
     is_active = serializers.BooleanField(default=True)
 
     def validate_name(self, value):
@@ -43,11 +44,6 @@ class TestResultSerializer(serializers.Serializer):
     statistics = serializers.JSONField()
     error_message = serializers.CharField(required=False, allow_null=True)
     created_at = serializers.DateTimeField(read_only=True)
-    quality_rating = serializers.SerializerMethodField()
-
-    def get_quality_rating(self, obj):
-        """Dodaje rating jakości"""
-        return obj.get_quality_rating()
 
 
 class RunTestRequestSerializer(serializers.Serializer):
@@ -63,6 +59,7 @@ class RunTestRequestSerializer(serializers.Serializer):
         default=10000
     )
     seed = serializers.IntegerField(required=False, allow_null=True)
+    parameters = serializers.JSONField(required=False, allow_null=True)
 
 
 class RNGDetailSerializer(RNGSerializer):
