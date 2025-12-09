@@ -1,0 +1,1 @@
+C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem\ 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\release\chacha20_rng.exe: C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem\ 5\IO\rng_algorithms\IO_RNG\chacha20_rng\src\main.rs

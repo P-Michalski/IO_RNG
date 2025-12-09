@@ -1,0 +1,8 @@
+[package]
+name = "chacha20_rng"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chacha20 = "0.9"
+serde_json = "1.0"
