@@ -1,0 +1,2 @@
+C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\bin\Xoshiro256.pdb
+C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\bin\Xoshiro256.exe
