@@ -1,0 +1,466 @@
+   0.087052700s  INFO prepare_target{force=false package_id=chacha20_rng v0.1.0 (C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng) target="chacha20_rng"}: cargo::core::compiler::fingerprint: fingerprint error for chacha20_rng v0.1.0 (C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng)/Check { test: false }/TargetInner { name: "chacha20_rng", doc: true, ..: with_path("C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\chacha20_rng\\src\\main.rs", Edition2021) }
+   0.087328600s  INFO prepare_target{force=false package_id=chacha20_rng v0.1.0 (C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng) target="chacha20_rng"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\chacha20_rng-810bd2c5f9e80e9c\bin-chacha20_rng`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.133548000s  INFO prepare_target{force=false package_id=chacha20 v0.9.1 target="chacha20"}: cargo::core::compiler::fingerprint: fingerprint error for chacha20 v0.9.1/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("chacha20", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\chacha20-0.9.1\\src\\lib.rs", Edition2021) }
+   0.134060600s  INFO prepare_target{force=false package_id=chacha20 v0.9.1 target="chacha20"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\chacha20-87fe1b17d104114e\lib-chacha20`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: <unknown>
+  16: <unknown>
+  17: git_midx_writer_dump
+  18: git_filter_source_repo
+  19: git_midx_writer_dump
+  20: BaseThreadInitThunk
+  21: RtlUserThreadStart
+   0.134890500s  INFO prepare_target{force=false package_id=cfg-if v1.0.4 target="cfg_if"}: cargo::core::compiler::fingerprint: fingerprint error for cfg-if v1.0.4/Check { test: false }/TargetInner { ..: lib_target("cfg_if", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\cfg-if-1.0.4\\src\\lib.rs", Edition2018) }
+   0.134913500s  INFO prepare_target{force=false package_id=cfg-if v1.0.4 target="cfg_if"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\cfg-if-20bb53187b6715fb\lib-cfg_if`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.135431900s  INFO prepare_target{force=false package_id=cipher v0.4.4 target="cipher"}: cargo::core::compiler::fingerprint: fingerprint error for cipher v0.4.4/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("cipher", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\cipher-0.4.4\\src\\lib.rs", Edition2021) }
+   0.135448900s  INFO prepare_target{force=false package_id=cipher v0.4.4 target="cipher"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\cipher-333f5de89820ea98\lib-cipher`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.135939400s  INFO prepare_target{force=false package_id=crypto-common v0.1.7 target="crypto_common"}: cargo::core::compiler::fingerprint: fingerprint error for crypto-common v0.1.7/Check { test: false }/TargetInner { ..: lib_target("crypto_common", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\crypto-common-0.1.7\\src\\lib.rs", Edition2018) }
+   0.135954400s  INFO prepare_target{force=false package_id=crypto-common v0.1.7 target="crypto_common"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\crypto-common-879d55a3c39aefb5\lib-crypto_common`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_path
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: git_filter_source_repo
+  17: <unknown>
+  18: <unknown>
+  19: git_midx_writer_dump
+  20: git_filter_source_repo
+  21: git_midx_writer_dump
+  22: BaseThreadInitThunk
+  23: RtlUserThreadStart
+   0.136431200s  INFO prepare_target{force=false package_id=generic-array v0.14.7 target="generic_array"}: cargo::core::compiler::fingerprint: fingerprint error for generic-array v0.14.7/Check { test: false }/TargetInner { ..: lib_target("generic_array", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\generic-array-0.14.7\\src\\lib.rs", Edition2015) }
+   0.136445100s  INFO prepare_target{force=false package_id=generic-array v0.14.7 target="generic_array"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\generic-array-9f30039ad4d2e46e\lib-generic_array`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_path
+  12: git_filter_source_path
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: git_filter_source_repo
+  17: git_filter_source_repo
+  18: <unknown>
+  19: <unknown>
+  20: git_midx_writer_dump
+  21: git_filter_source_repo
+  22: git_midx_writer_dump
+  23: BaseThreadInitThunk
+  24: RtlUserThreadStart
+   0.138237500s  INFO prepare_target{force=false package_id=typenum v1.19.0 target="typenum"}: cargo::core::compiler::fingerprint: fingerprint error for typenum v1.19.0/Check { test: false }/TargetInner { ..: lib_target("typenum", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\typenum-1.19.0\\src\\lib.rs", Edition2018) }
+   0.138290700s  INFO prepare_target{force=false package_id=typenum v1.19.0 target="typenum"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\typenum-bd531a55d84148be\lib-typenum`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_path
+  12: git_filter_source_path
+  13: git_filter_source_path
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: git_filter_source_repo
+  17: git_filter_source_repo
+  18: git_filter_source_repo
+  19: <unknown>
+  20: <unknown>
+  21: git_midx_writer_dump
+  22: git_filter_source_repo
+  23: git_midx_writer_dump
+  24: BaseThreadInitThunk
+  25: RtlUserThreadStart
+   0.146604400s  INFO prepare_target{force=false package_id=inout v0.1.4 target="inout"}: cargo::core::compiler::fingerprint: fingerprint error for inout v0.1.4/Check { test: false }/TargetInner { ..: lib_target("inout", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\inout-0.1.4\\src\\lib.rs", Edition2021) }
+   0.146651000s  INFO prepare_target{force=false package_id=inout v0.1.4 target="inout"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\inout-a9bf70de654ef0df\lib-inout`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_path
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: git_filter_source_repo
+  17: <unknown>
+  18: <unknown>
+  19: git_midx_writer_dump
+  20: git_filter_source_repo
+  21: git_midx_writer_dump
+  22: BaseThreadInitThunk
+  23: RtlUserThreadStart
+   0.147492400s  INFO prepare_target{force=false package_id=cpufeatures v0.2.17 target="cpufeatures"}: cargo::core::compiler::fingerprint: fingerprint error for cpufeatures v0.2.17/Check { test: false }/TargetInner { ..: lib_target("cpufeatures", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\cpufeatures-0.2.17\\src\\lib.rs", Edition2018) }
+   0.147518500s  INFO prepare_target{force=false package_id=cpufeatures v0.2.17 target="cpufeatures"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\cpufeatures-3020ffd0b9e8c469\lib-cpufeatures`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.148189600s  INFO prepare_target{force=false package_id=serde_json v1.0.145 target="serde_json"}: cargo::core::compiler::fingerprint: fingerprint error for serde_json v1.0.145/Check { test: false }/TargetInner { ..: lib_target("serde_json", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\serde_json-1.0.145\\src\\lib.rs", Edition2021) }
+   0.148209900s  INFO prepare_target{force=false package_id=serde_json v1.0.145 target="serde_json"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\serde_json-1577f9380d3f9d3d\lib-serde_json`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: <unknown>
+  16: <unknown>
+  17: git_midx_writer_dump
+  18: git_filter_source_repo
+  19: git_midx_writer_dump
+  20: BaseThreadInitThunk
+  21: RtlUserThreadStart
+   0.148869600s  INFO prepare_target{force=false package_id=itoa v1.0.15 target="itoa"}: cargo::core::compiler::fingerprint: fingerprint error for itoa v1.0.15/Check { test: false }/TargetInner { ..: lib_target("itoa", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\itoa-1.0.15\\src\\lib.rs", Edition2018) }
+   0.148888400s  INFO prepare_target{force=false package_id=itoa v1.0.15 target="itoa"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\itoa-2179d09a8cbaa087\lib-itoa`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.149403900s  INFO prepare_target{force=false package_id=memchr v2.7.6 target="memchr"}: cargo::core::compiler::fingerprint: fingerprint error for memchr v2.7.6/Check { test: false }/TargetInner { benched: false, ..: lib_target("memchr", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\memchr-2.7.6\\src\\lib.rs", Edition2021) }
+   0.149421000s  INFO prepare_target{force=false package_id=memchr v2.7.6 target="memchr"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\memchr-f6b4808565e1c4aa\lib-memchr`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.149978300s  INFO prepare_target{force=false package_id=ryu v1.0.20 target="ryu"}: cargo::core::compiler::fingerprint: fingerprint error for ryu v1.0.20/Check { test: false }/TargetInner { ..: lib_target("ryu", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\ryu-1.0.20\\src\\lib.rs", Edition2018) }
+   0.149996200s  INFO prepare_target{force=false package_id=ryu v1.0.20 target="ryu"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\ryu-2aad64c2fa5ccf5a\lib-ryu`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.150650000s  INFO prepare_target{force=false package_id=serde_core v1.0.228 target="serde_core"}: cargo::core::compiler::fingerprint: fingerprint error for serde_core v1.0.228/Check { test: false }/TargetInner { ..: lib_target("serde_core", ["lib"], "C:\\Users\\Mateusz\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\serde_core-1.0.228\\src\\lib.rs", Edition2021) }
+   0.150670400s  INFO prepare_target{force=false package_id=serde_core v1.0.228 target="serde_core"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\serde_core-5df0f16387e83d5f\lib-serde_core`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_path
+  10: git_filter_source_path
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_filter_source_repo
+  15: git_filter_source_repo
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.153897000s  INFO prepare_target{force=false package_id=chacha20_rng v0.1.0 (C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng) target="chacha20_rng"}: cargo::core::compiler::fingerprint: fingerprint error for chacha20_rng v0.1.0 (C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng)/Check { test: true }/TargetInner { name: "chacha20_rng", doc: true, ..: with_path("C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\chacha20_rng\\src\\main.rs", Edition2021) }
+   0.153940300s  INFO prepare_target{force=false package_id=chacha20_rng v0.1.0 (C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng) target="chacha20_rng"}: cargo::core::compiler::fingerprint:     err: failed to read `C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng\target\debug\.fingerprint\chacha20_rng-f7faa66466791cce\test-bin-chacha20_rng`
+
+Caused by:
+    Nie można odnaleźć określonego pliku. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+    Checking typenum v1.19.0
+    Checking ryu v1.0.20
+    Checking cpufeatures v0.2.17
+    Checking itoa v1.0.15
+    Checking memchr v2.7.6
+    Checking cfg-if v1.0.4
+    Checking serde_core v1.0.228
+    Checking generic-array v0.14.7
+    Checking crypto-common v0.1.7
+    Checking inout v0.1.4
+    Checking cipher v0.4.4
+    Checking serde_json v1.0.145
+    Checking chacha20 v0.9.1
+    Checking chacha20_rng v0.1.0 (C:\Users\Mateusz\Documents\MEGAsync\Studia\Sem 5\IO\rng_algorithms\IO_RNG\chacha20_rng)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.86s
