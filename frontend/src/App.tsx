@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { NavigationSidebar } from "./components/NavigationSidebar/navigation-sidebar";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "sonner";
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
         <NavigationSidebar />
         <SidebarTrigger />
         <Outlet />
+        <Toaster />
       </SidebarProvider>
     </ThemeProvider>
   );
