@@ -106,19 +106,26 @@ class PythonRNGRunner(IRNGRunner):
 
     def _load_module(self, path: str):
         """Ładuje moduł Python dynamicznie"""
+        # If path is just a filename, resolve it relative to project root
         path_obj = Path(path)
-
+        
+        if not path_obj.is_absolute():
+            # Get project root (parent of backend directory)
+            backend_dir = Path(__file__).parent.parent.parent.parent
+            project_root = backend_dir.parent
+            path_obj = project_root / path
+        
         if not path_obj.exists():
-            raise FileNotFoundError(f"Module not found: {path}")
+            raise FileNotFoundError(f"Module not found: {path_obj}")
 
         if not path_obj.suffix == '.py':
-            raise ValueError(f"Not a Python file: {path}")
+            raise ValueError(f"Not a Python file: {path_obj}")
 
         module_name = path_obj.stem
-        spec = importlib.util.spec_from_file_location(module_name, path)
+        spec = importlib.util.spec_from_file_location(module_name, str(path_obj))
 
         if spec is None or spec.loader is None:
-            raise RuntimeError(f"Cannot load: {path}")
+            raise RuntimeError(f"Cannot load: {path_obj}")
 
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
