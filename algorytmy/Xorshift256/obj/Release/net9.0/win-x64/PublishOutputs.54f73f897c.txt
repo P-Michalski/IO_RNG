@@ -1,0 +1,2 @@
+C:\Users\kania\Documents\MEGAsync\Studia\Sem 5\IO\IO_RNG\IO_RNG\algorytmy\Xorshift256\bin\Release\net9.0\win-x64\publish\Xoshiro256.pdb
+C:\Users\kania\Documents\MEGAsync\Studia\Sem 5\IO\IO_RNG\IO_RNG\algorytmy\Xorshift256\bin\Release\net9.0\win-x64\publish\Xoshiro256.exe

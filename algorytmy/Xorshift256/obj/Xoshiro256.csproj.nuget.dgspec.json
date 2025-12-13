@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\Xoshiro256.csproj": {}
+    "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\Xoshiro256.csproj": {
+    "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\Xoshiro256.csproj",
+        "projectUniqueName": "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj",
         "projectName": "Xoshiro256",
-        "projectPath": "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\Xoshiro256.csproj",
-        "packagesPath": "C:\\Users\\Mateusz\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\obj\\",
+        "projectPath": "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj",
+        "packagesPath": "C:\\Users\\kania\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Mateusz\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\kania\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,7 +26,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -45,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net9.0": {
@@ -54,7 +53,7 @@
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[9.0.11, )",
+              "version": "[9.0.1, )",
               "autoReferenced": true
             }
           },
@@ -72,15 +71,15 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-              "version": "[9.0.11, 9.0.11]"
+              "version": "[9.0.1, 9.0.1]"
             },
             {
               "name": "Microsoft.NETCore.App.Runtime.win-x64",
-              "version": "[9.0.11, 9.0.11]"
+              "version": "[9.0.1, 9.0.1]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-              "version": "[9.0.11, 9.0.11]"
+              "version": "[9.0.1, 9.0.1]"
             }
           ],
           "frameworkReferences": {
@@ -88,7 +87,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {

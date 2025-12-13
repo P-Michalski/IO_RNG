@@ -2,7 +2,7 @@
   "version": 3,
   "targets": {
     "net9.0": {
-      "Microsoft.NET.ILLink.Tasks/9.0.11": {
+      "Microsoft.NET.ILLink.Tasks/9.0.1": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.ILLink.Tasks.props": {}
@@ -10,7 +10,7 @@
       }
     },
     "net9.0/win-x64": {
-      "Microsoft.NET.ILLink.Tasks/9.0.11": {
+      "Microsoft.NET.ILLink.Tasks/9.0.1": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.ILLink.Tasks.props": {}
@@ -19,10 +19,10 @@
     }
   },
   "libraries": {
-    "Microsoft.NET.ILLink.Tasks/9.0.11": {
-      "sha512": "vvB9rtDmWaXgYkViT00KORBVmA3pcYsHlgd9vOPqL9sf5bKy3rvLMF1+sI1uUfVj28S3itirHlHmX5/kcpZKNw==",
+    "Microsoft.NET.ILLink.Tasks/9.0.1": {
+      "sha512": "BKFAkdhUUJivAoKuSWcT23WH9E+AWQMJootzt9X+lnesOD2a2yNIe1ZQFtxB8H3ayskLBD5gYyIbj5GIfw7rZg==",
       "type": "package",
-      "path": "microsoft.net.illink.tasks/9.0.11",
+      "path": "microsoft.net.illink.tasks/9.0.1",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
@@ -36,7 +36,7 @@
         "build/Microsoft.NET.ILLink.Analyzers.props",
         "build/Microsoft.NET.ILLink.Tasks.props",
         "build/Microsoft.NET.ILLink.targets",
-        "microsoft.net.illink.tasks.9.0.11.nupkg.sha512",
+        "microsoft.net.illink.tasks.9.0.1.nupkg.sha512",
         "microsoft.net.illink.tasks.nuspec",
         "tools/net472/ILLink.Tasks.dll",
         "tools/net472/ILLink.Tasks.dll.config",
@@ -73,27 +73,27 @@
   },
   "projectFileDependencyGroups": {
     "net9.0": [
-      "Microsoft.NET.ILLink.Tasks >= 9.0.11"
+      "Microsoft.NET.ILLink.Tasks >= 9.0.1"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Mateusz\\.nuget\\packages\\": {},
+    "C:\\Users\\kania\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\Xoshiro256.csproj",
+      "projectUniqueName": "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj",
       "projectName": "Xoshiro256",
-      "projectPath": "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\Xoshiro256.csproj",
-      "packagesPath": "C:\\Users\\Mateusz\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\obj\\",
+      "projectPath": "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj",
+      "packagesPath": "C:\\Users\\kania\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Mateusz\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\kania\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -102,7 +102,6 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -121,7 +120,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net9.0": {
@@ -130,7 +129,7 @@
           "Microsoft.NET.ILLink.Tasks": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[9.0.11, )",
+            "version": "[9.0.1, )",
             "autoReferenced": true
           }
         },
@@ -148,15 +147,15 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-            "version": "[9.0.11, 9.0.11]"
+            "version": "[9.0.1, 9.0.1]"
           },
           {
             "name": "Microsoft.NETCore.App.Runtime.win-x64",
-            "version": "[9.0.11, 9.0.11]"
+            "version": "[9.0.1, 9.0.1]"
           },
           {
             "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-            "version": "[9.0.11, 9.0.11]"
+            "version": "[9.0.1, 9.0.1]"
           }
         ],
         "frameworkReferences": {
@@ -164,7 +163,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {

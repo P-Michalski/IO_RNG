@@ -1,13 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "QFfP2u6FCrs=",
+  "dgSpecHash": "6svKrJRfz2k=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Mateusz\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\rng_algorithms\\IO_RNG\\Xorshift256\\Xoshiro256.csproj",
+  "projectFilePath": "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Mateusz\\.nuget\\packages\\microsoft.net.illink.tasks\\9.0.11\\microsoft.net.illink.tasks.9.0.11.nupkg.sha512",
-    "C:\\Users\\Mateusz\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\9.0.11\\microsoft.netcore.app.runtime.win-x64.9.0.11.nupkg.sha512",
-    "C:\\Users\\Mateusz\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\9.0.11\\microsoft.windowsdesktop.app.runtime.win-x64.9.0.11.nupkg.sha512",
-    "C:\\Users\\Mateusz\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\9.0.11\\microsoft.aspnetcore.app.runtime.win-x64.9.0.11.nupkg.sha512"
+    "C:\\Users\\kania\\.nuget\\packages\\microsoft.net.illink.tasks\\9.0.1\\microsoft.net.illink.tasks.9.0.1.nupkg.sha512",
+    "C:\\Users\\kania\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\9.0.1\\microsoft.netcore.app.runtime.win-x64.9.0.1.nupkg.sha512",
+    "C:\\Users\\kania\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\9.0.1\\microsoft.windowsdesktop.app.runtime.win-x64.9.0.1.nupkg.sha512",
+    "C:\\Users\\kania\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\9.0.1\\microsoft.aspnetcore.app.runtime.win-x64.9.0.1.nupkg.sha512"
   ],
   "logs": []
 }
