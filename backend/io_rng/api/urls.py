@@ -7,7 +7,8 @@ from rest_framework.routers import DefaultRouter
 from io_rng.api.views import RNGViewSet, TestResultViewSet
 
 # Router automatycznie generuje URLe dla ViewSetów
-router = DefaultRouter()
+# trailing_slash=False pozwala na URLe bez slash na końcu (bardziej RESTowe)
+router = DefaultRouter(trailing_slash=False)
 router.register(r'rngs', RNGViewSet, basename='rng')
 router.register(r'test-results', TestResultViewSet, basename='testresult')
 

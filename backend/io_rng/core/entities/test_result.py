@@ -29,6 +29,7 @@ class TestResult:
     id: Optional[int] = None
     error_message: Optional[str] = None
     created_at: Optional[datetime] = None
+    generated_bits: Optional[list] = None  # Wygenerowany ciąg bitów użyty w teście
 
     def __post_init__(self):
         """Walidacja"""

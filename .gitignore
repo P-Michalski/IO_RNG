@@ -71,3 +71,7 @@ htmlcov/
 
 # Thumbnails
 ._*
+
+# Claude Code
+.claude/
+.claude.json

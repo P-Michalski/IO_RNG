@@ -8,7 +8,9 @@ from rest_framework.response import Response
 from io_rng.api.serializers import (
     RNGSerializer,
     TestResultSerializer,
-    RunTestRequestSerializer
+    RunTestRequestSerializer,
+    GenerateRequestSerializer,
+    GenerateResponseSerializer
 )
 from io_rng.core.entities.rng import RNG, Language, Algorithm
 from io_rng.core.use_cases.run_rng_test import RunRNGTestUseCase
@@ -152,6 +154,91 @@ class RNGViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['post'])
+    def generate(self, request, pk=None):
+        """
+        POST /api/rngs/{id}/generate/
+        Generuje ciąg bitów bez testowania - zwraca surowe bity + czas wykonania
+        """
+        import time
+        from io_rng.infrastructure.runners.universal_adapter import UniversalRNGAdapter
+        from io_rng.core.entities.test_result import DataType
+
+        serializer = GenerateRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        count = data['count']
+        seed = data.get('seed')
+        parameters = data.get('parameters')
+
+        # Pobierz RNG
+        rng = self.rng_repository.get_by_id(int(pk))
+        if not rng:
+            return Response(
+                {"detail": "RNG not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Znajdź odpowiedni runner
+        runner = None
+        for r in self.runners:
+            if r.can_run(rng):
+                runner = r
+                break
+
+        if not runner:
+            return Response(
+                {"detail": f"No runner available for {rng.language.value}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Generuj bity
+            start_time = time.perf_counter()
+
+            # Załaduj moduł i użyj adaptera
+            module = runner._load_module(rng)
+            effective_params = parameters or rng.parameters
+            adapter = UniversalRNGAdapter(module, effective_params)
+
+            # Wygeneruj surowe dane
+            raw_data, data_type = adapter.generate_raw(count, seed)
+
+            # Konwertuj do bitów jeśli trzeba
+            if data_type == DataType.BITS:
+                bits = raw_data
+            elif data_type == DataType.INTEGERS:
+                # Konwertuj integery do bitów
+                bits = []
+                for num in raw_data:
+                    # Weź najmłodszy bit
+                    bits.append(num & 1)
+            else:
+                # Konwertuj floaty [0,1] do bitów
+                bits = [1 if x > 0.5 else 0 for x in raw_data]
+
+            execution_time = (time.perf_counter() - start_time) * 1000  # ms
+
+            # Przygotuj odpowiedź
+            response_data = {
+                'bits': bits[:count],  # Upewnij się że nie ma za dużo
+                'count': len(bits[:count]),
+                'execution_time_ms': round(execution_time, 3),
+                'rng_id': rng.id,
+                'rng_name': rng.name,
+                'seed': seed
+            }
+
+            response_serializer = GenerateResponseSerializer(response_data)
+            return Response(response_serializer.data)
+
+        except Exception as e:
+            return Response(
+                {"detail": f"Generation failed: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     @action(detail=True, methods=['get'])
     def test_results(self, request, pk=None):
         """GET /api/rngs/{id}/test_results/ - Wyniki testów dla RNG"""
@@ -185,3 +272,14 @@ class TestResultViewSet(viewsets.ViewSet):
 
         serializer = TestResultSerializer(result)
         return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        """DELETE /api/test-results/{id}/ - Usuwa wynik testu"""
+        success = self.repository.delete(int(pk))
+        if not success:
+            return Response(
+                {"detail": "Not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

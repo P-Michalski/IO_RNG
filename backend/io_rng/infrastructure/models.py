@@ -37,6 +37,7 @@ class TestResultModel(models.Model):
     samples_count = models.IntegerField()
     statistics = models.JSONField()
     error_message = models.TextField(null=True, blank=True)
+    generated_bits = models.JSONField(null=True, blank=True)  # Wygenerowany ciąg bitów użyty w teście
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
