@@ -1,13 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "6svKrJRfz2k=",
+  "dgSpecHash": "mf9aYng+z0U=",
   "success": true,
   "projectFilePath": "C:\\Users\\kania\\Documents\\MEGAsync\\Studia\\Sem 5\\IO\\IO_RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj",
-  "expectedPackageFiles": [
-    "C:\\Users\\kania\\.nuget\\packages\\microsoft.net.illink.tasks\\9.0.1\\microsoft.net.illink.tasks.9.0.1.nupkg.sha512",
-    "C:\\Users\\kania\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\9.0.1\\microsoft.netcore.app.runtime.win-x64.9.0.1.nupkg.sha512",
-    "C:\\Users\\kania\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\9.0.1\\microsoft.windowsdesktop.app.runtime.win-x64.9.0.1.nupkg.sha512",
-    "C:\\Users\\kania\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\9.0.1\\microsoft.aspnetcore.app.runtime.win-x64.9.0.1.nupkg.sha512"
-  ],
+  "expectedPackageFiles": [],
   "logs": []
 }

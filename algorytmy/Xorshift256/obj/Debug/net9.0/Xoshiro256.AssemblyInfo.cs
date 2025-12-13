@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Xoshiro256")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8ab6bbb1030c119ae35399006abd1b4c3307bb2a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+93782f9cc63e38f61ffa426eb7a1629303eee6cc")]
 [assembly: System.Reflection.AssemblyProductAttribute("Xoshiro256")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Xoshiro256")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
