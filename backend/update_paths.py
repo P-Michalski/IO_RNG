@@ -24,15 +24,17 @@ for row in rows:
     print(f"  ID: {row[0]}, Name: {row[1]}, Path: {row[2]}")
 print()
 
-# Update paths to relative (just filename, will be resolved at runtime)
+# Update paths to include algorytmy folder
 updates = []
 
 for row in rows:
     id, name, old_path = row
     # Extract just the filename
     filename = os.path.basename(old_path)
-    updates.append((filename, id))
-    print(f"Updating ID {id}: {old_path} -> {filename}")
+    # Add algorytmy folder
+    new_path = f"algorytmy/{filename}"
+    updates.append((new_path, id))
+    print(f"Updating ID {id}: {old_path} -> {new_path}")
 
 # Execute updates
 for new_path, id in updates:
@@ -44,10 +46,10 @@ conn.commit()
 cursor.execute('SELECT id, name, code_path FROM rngs')
 updated_rows = cursor.fetchall()
 
-print("\nUpdated paths (now just filenames):")
+print("\nUpdated paths:")
 for row in updated_rows:
     print(f"  ID: {row[0]}, Name: {row[1]}, Path: {row[2]}")
 
 conn.close()
 print("\nDatabase updated successfully!")
-print("Note: Paths are now relative filenames. The backend code will resolve them at runtime.")
+print("Note: Paths now include 'algorytmy/' folder. The backend code will resolve them at runtime.")
