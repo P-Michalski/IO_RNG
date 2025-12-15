@@ -26,6 +26,7 @@ export const routes: RouteObject[] = [
 
       { path: "/wiki", element: <Navigate to="/wiki/algorithms" replace /> },
       { path: "/wiki/algorithms", element: <AlgorithmsWiki /> },
+      { path: "/wiki/algorithms/:algorithmId", element: <AlgorithmsWiki /> },
       { path: "/wiki/methodology", element: <MethodologyWiki /> },
 
       { path: "/about", element: <About /> },
