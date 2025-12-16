@@ -63,7 +63,7 @@ export const Tests = () => {
   useEffect(() => {
     const fetchRngs = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/rngs/");
+        const response = await fetch("http://localhost:8000/api/rngs");
         if (!response.ok) throw new Error("Failed to fetch RNGs");
         const data = await response.json();
         setRngs(data.filter((rng: RNG) => rng.is_active));
@@ -81,7 +81,7 @@ export const Tests = () => {
     setIsSubmitting(true);
     try {
       const response = await fetch(
-        `http://localhost:8000/api/rngs/${values.rng_id}/run_test/`,
+        `http://localhost:8000/api/rngs/${values.rng_id}/run_test`,
         {
           method: "POST",
           headers: {

@@ -16,8 +16,8 @@ export const Results = () => {
       try {
         setLoading(true);
         const [resultsRes, rngsRes] = await Promise.all([
-          fetch("http://localhost:8000/api/test-results/"),
-          fetch("http://localhost:8000/api/rngs/"),
+          fetch("http://localhost:8000/api/test-results"),
+          fetch("http://localhost:8000/api/rngs"),
         ]);
 
         if (!resultsRes.ok || !rngsRes.ok) {
