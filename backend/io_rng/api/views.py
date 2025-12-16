@@ -198,7 +198,7 @@ class RNGViewSet(viewsets.ViewSet):
             start_time = time.perf_counter()
 
             # Załaduj moduł i użyj adaptera
-            module = runner._load_module(rng)
+            module = runner._load_module(rng.code_path)
             effective_params = parameters or rng.parameters
             adapter = UniversalRNGAdapter(module, effective_params)
 
