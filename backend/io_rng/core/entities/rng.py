@@ -28,6 +28,7 @@ class Algorithm(Enum):
     SYSTEM = "system"
     CUSTOM = "custom"
     AWC = "awc"
+    BLUM_BLUM_SHUB = "Blum Blum Shub"
 
 
 @dataclass
