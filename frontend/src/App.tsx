@@ -9,7 +9,9 @@ function App() {
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <SidebarProvider>
         <NavigationSidebar />
-        <SidebarTrigger />
+        <main>
+          <SidebarTrigger className="sticky top-0" />
+        </main>
         <Outlet />
         <Toaster />
       </SidebarProvider>
