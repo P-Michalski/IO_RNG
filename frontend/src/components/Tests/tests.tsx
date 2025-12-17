@@ -27,21 +27,118 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { type RNG } from "@/types/test-results";
 import { FlaskConical, Loader2, Sparkles } from "lucide-react";
 
-const testFormSchema = z.object({
-  rng_id: z.string().min(1, "Please select an RNG"),
-  test_name: z.enum(["frequency_test", "uniformity_test"], {
-    message: "Please select a test type",
-  }),
-  samples_count: z
-    .number()
-    .min(100, "Minimum 100 samples")
-    .max(10000000, "Maximum 10M samples"),
-  seed: z.number().int().min(0, "Seed must be positive"),
-});
+const NIST_TESTS = [
+  {
+    id: "nist_monobit",
+    name: "Monobit Test",
+    description: "Checks balance of 0s and 1s",
+  },
+  {
+    id: "nist_block_frequency",
+    name: "Block Frequency",
+    description: "Checks local balance in blocks",
+  },
+  {
+    id: "nist_runs",
+    name: "Runs Test",
+    description: "Checks number of transitions",
+  },
+  {
+    id: "nist_longest_run",
+    name: "Longest Run",
+    description: "Checks longest sequences of 1s",
+  },
+  {
+    id: "nist_matrix_rank",
+    name: "Binary Matrix Rank",
+    description: "Checks linear independence",
+  },
+  {
+    id: "nist_dft",
+    name: "Spectral (DFT)",
+    description: "Detects periodic patterns",
+  },
+  {
+    id: "nist_non_overlapping_template",
+    name: "Non-Overlapping Template",
+    description: "Searches for specific patterns",
+  },
+  {
+    id: "nist_overlapping_template",
+    name: "Overlapping Template",
+    description: "Searches for overlapping 111...1 patterns",
+  },
+  {
+    id: "nist_universal",
+    name: "Maurer's Universal",
+    description: "Measures compressibility",
+  },
+  {
+    id: "nist_linear_complexity",
+    name: "Linear Complexity",
+    description: "Measures LFSR complexity (Berlekamp-Massey)",
+  },
+  {
+    id: "nist_serial",
+    name: "Serial Test",
+    description: "Checks m-bit pattern frequencies",
+  },
+  {
+    id: "nist_approximate_entropy",
+    name: "Approximate Entropy",
+    description: "Measures pattern predictability",
+  },
+  {
+    id: "nist_cumulative_sums",
+    name: "Cumulative Sums",
+    description: "Checks systematic bias",
+  },
+  {
+    id: "nist_random_excursions",
+    name: "Random Excursions",
+    description: "Analyzes random walk cycles",
+  },
+  {
+    id: "nist_random_excursions_variant",
+    name: "Random Excursions Variant",
+    description: "Random walk with more states",
+  },
+] as const;
+
+const testFormSchema = z
+  .object({
+    rng_id: z.string().min(1, "Please select an RNG"),
+    test_type: z.enum(["single", "nist_suite"], {
+      message: "Please select a test type",
+    }),
+    single_test: z.enum(["frequency_test", "uniformity_test"]).optional(),
+    nist_tests: z.array(z.string()).optional(),
+    samples_count: z
+      .number()
+      .min(100, "Minimum 100 samples")
+      .max(10000000, "Maximum 10M samples"),
+    seed: z.number().int().min(0, "Seed must be positive"),
+  })
+  .refine(
+    (data) => {
+      if (data.test_type === "single") {
+        return !!data.single_test;
+      }
+      if (data.test_type === "nist_suite") {
+        return data.nist_tests && data.nist_tests.length > 0;
+      }
+      return false;
+    },
+    {
+      message: "Please select at least one test",
+      path: ["nist_tests"],
+    }
+  );
 
 type TestFormValues = z.infer<typeof testFormSchema>;
 
@@ -54,11 +151,15 @@ export const Tests = () => {
     resolver: zodResolver(testFormSchema),
     defaultValues: {
       rng_id: "",
-      test_name: "frequency_test",
+      test_type: "single",
+      single_test: "frequency_test",
+      nist_tests: [],
       samples_count: 100000,
       seed: 42,
     },
   });
+
+  const testType = form.watch("test_type");
 
   useEffect(() => {
     const fetchRngs = async () => {
@@ -80,27 +181,72 @@ export const Tests = () => {
   const onSubmit = async (values: TestFormValues) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch(
-        `http://localhost:8000/api/rngs/${values.rng_id}/run_test`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            test_name: values.test_name,
-            samples_count: values.samples_count,
-            seed: values.seed,
-          }),
+      if (values.test_type === "single" && values.single_test) {
+        // Run single test
+        await runSingleTest(
+          values.rng_id,
+          values.single_test,
+          values.samples_count,
+          values.seed
+        );
+      } else if (values.test_type === "nist_suite" && values.nist_tests) {
+        // Run multiple NIST tests
+        let passed = 0;
+        let failed = 0;
+
+        for (const testName of values.nist_tests) {
+          const result = await runSingleTest(
+            values.rng_id,
+            testName,
+            values.samples_count,
+            values.seed
+          );
+          if (result.passed) passed++;
+          else failed++;
         }
-      );
 
-      if (!response.ok) {
-        throw new Error("Test execution failed");
+        toast.success("NIST Test Suite Completed", {
+          description: `Passed: ${passed}, Failed: ${failed} out of ${values.nist_tests.length} tests`,
+        });
       }
+    } catch (error) {
+      toast.error("Error", {
+        description:
+          error instanceof Error ? error.message : "Failed to run tests",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-      const result = await response.json();
+  const runSingleTest = async (
+    rngId: string,
+    testName: string,
+    samplesCount: number,
+    seed: number
+  ) => {
+    const response = await fetch(
+      `http://localhost:8000/api/rngs/${rngId}/run_test`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          test_name: testName,
+          samples_count: samplesCount,
+          seed: seed,
+        }),
+      }
+    );
 
+    if (!response.ok) {
+      throw new Error("Test execution failed");
+    }
+
+    const result = await response.json();
+
+    if (form.watch("test_type") === "single") {
       if (result.passed) {
         toast.success("Test Passed! ✓", {
           description: `${formatTestName(
@@ -114,17 +260,15 @@ export const Tests = () => {
           )} completed with score: ${result.score.toFixed(2)}`,
         });
       }
-    } catch (error) {
-      toast.error("Error", {
-        description:
-          error instanceof Error ? error.message : "Failed to run test",
-      });
-    } finally {
-      setIsSubmitting(false);
     }
+
+    return result;
   };
 
   const formatTestName = (name: string) => {
+    const nistTest = NIST_TESTS.find((t) => t.id === name);
+    if (nistTest) return nistTest.name;
+
     return name
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -203,53 +347,164 @@ export const Tests = () => {
                 )}
               />
 
-              {/* Test Type */}
+              {/* Test Type Selection */}
               <FormField
                 control={form.control}
-                name="test_name"
+                name="test_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Test Type</FormLabel>
+                    <FormLabel>Test Category</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue>
-                            {field.value === "frequency_test" &&
-                              "Frequency Test"}
-                            {field.value === "uniformity_test" &&
-                              "Uniformity Test"}
-                          </SelectValue>
+                          <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="frequency_test">
+                        <SelectItem value="single">
                           <div className="flex flex-col">
-                            <span className="font-medium">Frequency Test</span>
+                            <span className="font-medium">Single Test</span>
                             <span className="text-xs text-muted-foreground">
-                              Chi-square goodness of fit test
+                              Run one statistical test
                             </span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="uniformity_test">
+                        <SelectItem value="nist_suite">
                           <div className="flex flex-col">
-                            <span className="font-medium">Uniformity Test</span>
+                            <span className="font-medium">NIST Test Suite</span>
                             <span className="text-xs text-muted-foreground">
-                              Mean and variance analysis
+                              Run multiple NIST tests
                             </span>
                           </div>
                         </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Select the statistical test to run
+                      Choose between single test or NIST test suite
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Single Test Selection */}
+              {testType === "single" && (
+                <FormField
+                  control={form.control}
+                  name="single_test"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Test Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue>
+                              {field.value === "frequency_test" &&
+                                "Frequency Test"}
+                              {field.value === "uniformity_test" &&
+                                "Uniformity Test"}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="frequency_test">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Frequency Test
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                Chi-square goodness of fit test
+                              </span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="uniformity_test">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Uniformity Test
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                Mean and variance analysis
+                              </span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Select the statistical test to run
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* NIST Tests Selection */}
+              {testType === "nist_suite" && (
+                <FormField
+                  control={form.control}
+                  name="nist_tests"
+                  render={() => (
+                    <FormItem>
+                      <div className="mb-4">
+                        <FormLabel className="text-base">NIST Tests</FormLabel>
+                        <FormDescription>
+                          Select which NIST tests to run
+                        </FormDescription>
+                      </div>
+                      <div className="space-y-3 max-h-96 overflow-y-auto pr-4">
+                        {NIST_TESTS.map((test) => (
+                          <FormField
+                            key={test.id}
+                            control={form.control}
+                            name="nist_tests"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={test.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(test.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([
+                                              ...(field.value || []),
+                                              test.id,
+                                            ])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== test.id
+                                              )
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="font-medium cursor-pointer">
+                                      {test.name}
+                                    </FormLabel>
+                                    <FormDescription className="text-xs">
+                                      {test.description}
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {/* Samples Count */}
               <FormField
@@ -313,12 +568,12 @@ export const Tests = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Running Test...
+                    Running {testType === "nist_suite" ? "Tests" : "Test"}...
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Run Test
+                    Run {testType === "nist_suite" ? "Tests" : "Test"}
                   </>
                 )}
               </Button>
