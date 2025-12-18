@@ -29,6 +29,11 @@ import {
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Definicje parametrów dla każdego algorytmu
 const ALGORITHM_PARAMS = {
@@ -191,13 +196,11 @@ export const Generator = () => {
           : advancedParams),
       };
 
-      // Zbuduj request body
       const requestBody: any = {
         count: n,
         parameters,
       };
 
-      // Dodaj seed na najwyższym poziomie tylko jeśli istnieje
       if (seed !== undefined) {
         requestBody.seed = seed;
       }
@@ -389,9 +392,14 @@ export const Generator = () => {
                   </div>
                   <ScrollBar orientation="horizontal" />
                 </ScrollArea>
-                <Button size="sm" variant="outline" onClick={copyBits}>
-                  <Copy className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="outline" onClick={copyBits}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Copy</TooltipContent>
+                </Tooltip>
               </div>
             </CardContent>
           </Card>
