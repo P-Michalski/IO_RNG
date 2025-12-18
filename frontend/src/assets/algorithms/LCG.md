@@ -7,6 +7,7 @@ Generator LCG opiera się na iteracyjnej funkcji liniowej z operacją modulo:
 $$x_{n+1} = (a \cdot x_n + c) \bmod m$$
 
 gdzie:
+
 - $x_n$ – bieżący stan generatora (liczba całkowita z zakresu $[0, m-1]$)
 - $x_0$ – wartość początkowa (seed), determinuje całą sekwencję
 - $a$ – mnożnik (multiplier), wpływa na rozproszenie wartości
@@ -36,6 +37,7 @@ W praktyce implementacji pozwala się na wybór między ekstrakcją MSB-first (n
 ### Popularne zestawy parametrów
 
 #### 1. GLIBC (31-bit)
+
 - $a = 1103515245$
 - $c = 12345$
 - $m = 2^{31}$
@@ -43,12 +45,14 @@ W praktyce implementacji pozwala się na wybór między ekstrakcją MSB-first (n
 - Dobra równowaga między prostotą a jakością
 
 #### 2. Numerical Recipes (32-bit)
+
 - $a = 1664525$
 - $c = 1013904223$
 - $m = 2^{32}$
 - Popularny w literaturze, choć ma pewne wady statystyczne
 
 #### 3. MSVC (Microsoft Visual C++)
+
 - $a = 214013$
 - $c = 2531011$
 - $m = 2^{32}$
@@ -60,7 +64,7 @@ W praktyce implementacji pozwala się na wybór między ekstrakcją MSB-first (n
 def lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value=None, msb_first=True):
     """
     Generuje strumień bitów używając LCG.
-    
+
     Args:
         seed: wartość początkowa x_0
         a, c, m: parametry LCG
@@ -70,30 +74,30 @@ def lcg_bit_stream(seed, a, c, m, n_bits, bits_per_value=None, msb_first=True):
     """
     x = seed
     output = []
-    
+
     while len(output) < n_bits:
         # Krok LCG - aktualizacja stanu
         x = (a * x + c) % m
-        
+
         # Ekstrakcja bitów (domyślnie MSB-first)
         bits = extract_bits(x, bits_per_value, msb_first)
         output.extend(bits[:n_bits - len(output)])
-    
+
     return output
 ```
-
-Implementacja w Pythonie wykorzystuje naturalne wsparcie dla arytmetyki o dowolnej precyzji, co pozwala na bezpieczne operacje z dużymi wartościami $m$ (np. $2^{64}$ i więcej).
 
 ### Zastosowania
 
 **Zastosowania praktyczne:**
+
 - Materiały edukacyjne i dydaktyczne – doskonały przykład generatora PRNG do nauki
 - Proste symulacje Monte Carlo – gdy nie są wymagane zaawansowane własności statystyczne
 - Generowanie danych testowych – szybkie tworzenie powtarzalnych sekwencji
 - Gry komputerowe (starsze) – generowanie map, pozycji przeciwników
-- Biblioteki standardowe języków programowania – np. `rand()` w C
+- Biblioteki standardowe języków programowania – np. rand() w C
 
 **Ograniczenia:**
+
 - **Kryptografia**: Absolutnie nie zalecany do zastosowań kryptograficznych z uwagi na całkowitą przewidywalność – znając kilka kolejnych wartości można odtworzyć parametry i przewidzieć całą sekwencję
 - **Symulacje wymagające wysokiej jakości losowości**: Korelacje między wartościami mogą prowadzić do błędnych wyników
 - **Aplikacje bezpieczeństwa**: Liniowa struktura umożliwia łatwe ataki kryptoanalityczne
@@ -101,30 +105,29 @@ Implementacja w Pythonie wykorzystuje naturalne wsparcie dla arytmetyki o dowoln
 ### Jakość statystyczna i problemy
 
 #### Wady strukturalne:
+
 1. **Korelacje liniowe**: Wartości $x_n$ i $x_{n+1}$ są ze sobą skorelowane
 2. **Test spektralny**: Punkty $(x_n, x_{n+1}, ..., x_{n+k})$ leżą na hiperpłaszczyznach w przestrzeni $k$-wymiarowej
 3. **Słabość młodszych bitów**: Najmłodsze bity mają bardzo krótkie okresy (np. ostatni bit ma okres 2)
 4. **Przewidywalność**: Całkowicie deterministyczny – seed determinuje całą sekwencję
 
 #### Testy statystyczne:
+
 - Marsaglia's Spectral Test – ujawnia strukturę kratową
 - Birthday Spacings Test – wykrywa korelacje
 - DIEHARD Battery – generatory LCG często nie przechodzą wszystkich testów
-- TestU01 – współczesny, kompleksowy zestaw testów statystycznych
 
 ### Kontekst historyczny i ciekawostki
 
 **Historia:**
+
 - Geneza LCG sięga prac **Derricka Henry'ego Lehmera** z 1949 roku, opublikowanych w artykule opisującym metodę dla maszyny ENIAC
 - W latach 50-70. XX wieku był de facto standardem generatorów pseudolosowych
 - Pierwsze implementacje sprzętowe pojawiły się w kalkulatorach naukowych lat 60.
 
-**Standardy:**
-- **MINSTD (Park-Miller, 1988)**: $a = 16807$, $c = 0$, $m = 2^{31} - 1$ – tzw. "minimalny standard", generator multiplikatywny
-- **MINSTD Revised (1993)**: $a = 48271$, $c = 0$, $m = 2^{31} - 1$ – ulepszona wersja
-
 **Ciekawostki:**
-- Funkcja `rand()` w wielu implementacjach C++ do dziś używa LCG (choć nowsze standardy zalecają Mersenne Twister)
+
+- Funkcja rand() w wielu implementacjach C++ do dziś używa LCG (choć nowsze standardy zalecają Mersenne Twister)
 - Generator był używany w systemie IBM System/360 (1964)
 - Donald Knuth poświęcił cały rozdział LCG w "The Art of Computer Programming" (Vol. 2)
 - Spektralny test wizualizacyjny: gdy narysujemy pary $(x_n, x_{n+1})$, widoczne są linie równoległe zamiast równomiernego rozłożenia punktów
@@ -140,6 +143,7 @@ Dzięki ekstremalnej prostocie LCG jest jednym z najszybszych generatorów, co c
 ### Przykłady obliczeniowe
 
 #### Przykład 1: Mały moduł
+
 Dla $a=5$, $c=3$, $m=16$, $x_0=7$:
 
 - $x_1 = (5 \cdot 7 + 3) \bmod 16 = 38 \bmod 16 = 6$
@@ -148,6 +152,7 @@ Dla $a=5$, $c=3$, $m=16$, $x_0=7$:
 - $x_4 = (5 \cdot 8 + 3) \bmod 16 = 43 \bmod 16 = 11$
 
 #### Przykład 2: Generator MINSTD
+
 Dla $a=16807$, $c=0$, $m=2^{31}-1=2147483647$, $x_0=1$:
 
 - $x_1 = (16807 \cdot 1) \bmod 2147483647 = 16807$
