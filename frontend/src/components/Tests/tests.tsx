@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { type RNG } from "@/types/test-results";
 import { FlaskConical, Loader2, Sparkles } from "lucide-react";
+import { ScrollArea } from "../ui/scroll-area";
 
 const NIST_TESTS = [
   {
@@ -457,49 +458,60 @@ export const Tests = () => {
                           Select which NIST tests to run
                         </FormDescription>
                       </div>
-                      <div className="space-y-3 max-h-96 overflow-y-auto pr-4">
-                        {NIST_TESTS.map((test) => (
-                          <FormField
-                            key={test.id}
-                            control={form.control}
-                            name="nist_tests"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={test.id}
-                                  className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(test.id)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([
-                                              ...(field.value || []),
-                                              test.id,
-                                            ])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== test.id
-                                              )
-                                            );
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <div className="space-y-1 leading-none">
-                                    <FormLabel className="font-medium cursor-pointer">
-                                      {test.name}
-                                    </FormLabel>
-                                    <FormDescription className="text-xs">
-                                      {test.description}
-                                    </FormDescription>
-                                  </div>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                        ))}
-                      </div>
+                      <ScrollArea className="h-96 border rounded-md">
+                        <div className="space-y-3 p-4">
+                          {NIST_TESTS.map((test) => (
+                            <FormField
+                              key={test.id}
+                              control={form.control}
+                              name="nist_tests"
+                              render={({ field }) => {
+                                const isChecked = field.value?.includes(
+                                  test.id
+                                );
+                                return (
+                                  <FormItem key={test.id}>
+                                    <label
+                                      htmlFor={test.id}
+                                      className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 cursor-pointer transition-colors hover:bg-accent/50 has-checked:bg-primary/5 has-checked:border-primary dark:has-checked:bg-primary/10"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          id={test.id}
+                                          checked={isChecked}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([
+                                                  ...(field.value || []),
+                                                  test.id,
+                                                ])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== test.id
+                                                  )
+                                                );
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <div className="flex-1 space-y-1 leading-none">
+                                        <FormLabel
+                                          htmlFor={test.id}
+                                          className="font-medium cursor-pointer"
+                                        >
+                                          {test.name}
+                                        </FormLabel>
+                                        <FormDescription className="text-xs">
+                                          {test.description}
+                                        </FormDescription>
+                                      </div>
+                                    </label>
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </ScrollArea>
                       <FormMessage />
                     </FormItem>
                   )}
