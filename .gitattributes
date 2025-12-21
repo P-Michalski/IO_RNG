@@ -9,3 +9,14 @@ frontend/build/** linguist-generated=true
 
 #shadcn/ui components
 frontend/src/components/ui/** linguist-generated=true
+
+# Rust - chacha20_rng
+algorytmy/chacha20_rng/target/** linguist-generated=true
+algorytmy/chacha20_rng/Cargo.lock linguist-generated=true
+algorytmy/chacha20_rng/src/main.rs linguist-detectable=true
+
+# C# - Xorshift256
+algorytmy/Xorshift256/bin/** linguist-generated=true
+algorytmy/Xorshift256/obj/** linguist-generated=true
+algorytmy/Xorshift256/*.csproj linguist-generated=true
+algorytmy/Xorshift256/Xoshiro256.cs linguist-detectable=true
