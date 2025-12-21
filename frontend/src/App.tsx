@@ -8,6 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "./components/ui/tooltip";
+import { LanguageProvider } from "./contexts/language-context";
 
 function App() {
   return (
@@ -17,19 +18,21 @@ function App() {
       defaultColorScheme="neutral"
       colorSchemeStorageKey="vite-ui-color-scheme"
     >
-      <SidebarProvider>
-        <NavigationSidebar />
-        <main>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarTrigger className="sticky top-0" />
-            </TooltipTrigger>
-            <TooltipContent>Toggle Sidebar</TooltipContent>
-          </Tooltip>
-        </main>
-        <Outlet />
-        <Toaster />
-      </SidebarProvider>
+      <LanguageProvider>
+        <SidebarProvider>
+          <NavigationSidebar />
+          <main>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SidebarTrigger className="sticky top-0" />
+              </TooltipTrigger>
+              <TooltipContent>Toggle Sidebar</TooltipContent>
+            </Tooltip>
+          </main>
+          <Outlet />
+          <Toaster />
+        </SidebarProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

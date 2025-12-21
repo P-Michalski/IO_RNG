@@ -4,25 +4,60 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { MarkdownRenderer } from "../markdown-renderer";
+import { useLanguage } from "@/contexts/language-context";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface Algorithm {
   id: string;
   name: string;
+  shortName?: string;
   file: string;
 }
 
 const algorithms: Algorithm[] = [
-  { id: "lcg", name: "Linear Congruential Generator (LCG)", file: "LCG.md" },
-  { id: "park-miller", name: "Park-Miller", file: "Park_Miller.md" },
-  { id: "pcg32", name: "PCG32", file: "PCG32.md" },
-  { id: "splitmix64", name: "SplitMix64", file: "SplitMix64.md" },
-  { id: "awcg", name: "Add-With-Carry Generator (AWCG)", file: "AWCG.md" },
-  { id: "python-rng", name: "Python Random (MT19937)", file: "PythonRNG.md" },
-  { id: "system-rng", name: "System RNG", file: "SystemRNG.md" },
-  { id: "blum-blum-shub", name: "Blum Blum Shub", file: "BlumBlumShub.md" },
-  { id: "chacha20", name: "ChaCha20", file: "ChaCha20.md" },
-  { id: "xorshift", name: "Xorshift/Xoshiro", file: "Xorshift_Xoshiro.md" },
+  {
+    id: "lcg",
+    name: "Linear Congruential Generator",
+    shortName: "LCG",
+    file: "LCG",
+  },
+  { id: "park-miller", name: "Park-Miller", file: "Park_Miller" },
+  { id: "pcg32", name: "PCG32", file: "PCG32" },
+  { id: "splitmix64", name: "SplitMix64", file: "SplitMix64" },
+  {
+    id: "awcg",
+    name: "Add-With-Carry Generator",
+    shortName: "AWCG",
+    file: "AWCG",
+  },
+  {
+    id: "python-rng",
+    name: "Python Random (MT19937)",
+    shortName: "Python RNG",
+    file: "PythonRNG",
+  },
+  { id: "system-rng", name: "System RNG", file: "SystemRNG" },
+  { id: "blum-blum-shub", name: "Blum Blum Shub", file: "BlumBlumShub" },
+  { id: "chacha20", name: "ChaCha20", file: "ChaCha20" },
+  { id: "xorshift", name: "Xorshift/Xoshiro", file: "Xorshift_Xoshiro" },
 ];
+
+const getName = (alg: Algorithm) => alg.shortName || alg.name;
+
+const translations = {
+  en: {
+    previous: "Previous",
+    next: "Next",
+    allAlgorithms: "All Algorithms",
+    algorithmNotFound: "Algorithm not found",
+  },
+  pl: {
+    previous: "Poprzedni",
+    next: "Następny",
+    allAlgorithms: "Wszystkie Algorytmy",
+    algorithmNotFound: "Nie znaleziono algorytmu",
+  },
+};
 
 export const AlgorithmsWiki = () => {
   const { algorithmId } = useParams<{ algorithmId: string }>();
@@ -30,6 +65,9 @@ export const AlgorithmsWiki = () => {
   const [content, setContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { language } = useLanguage();
+
+  const t = translations[language as keyof typeof translations];
 
   const currentIndex = algorithms.findIndex((alg) => alg.id === algorithmId);
   const currentAlgorithm = algorithms[currentIndex];
@@ -38,7 +76,6 @@ export const AlgorithmsWiki = () => {
     currentIndex < algorithms.length - 1 ? algorithms[currentIndex + 1] : null;
 
   useEffect(() => {
-    // Redirect to first algorithm if no algorithmId
     if (!algorithmId) {
       navigate(`/wiki/algorithms/${algorithms[0].id}`);
       return;
@@ -48,8 +85,13 @@ export const AlgorithmsWiki = () => {
       setLoading(true);
       setError(null);
       try {
+        const fileName =
+          language === "en"
+            ? `${currentAlgorithm.file}_eng.md`
+            : `${currentAlgorithm.file}.md`;
+
         const module = await import(
-          `../../../assets/algorithms/${currentAlgorithm.file}?raw`
+          `../../../assets/algorithms/${fileName}?raw`
         );
         setContent(module.default);
       } catch (err) {
@@ -62,7 +104,7 @@ export const AlgorithmsWiki = () => {
     if (currentAlgorithm) {
       loadMarkdown();
     }
-  }, [algorithmId, currentAlgorithm, navigate]);
+  }, [algorithmId, currentAlgorithm, navigate, language]);
 
   if (loading) {
     return (
@@ -85,46 +127,53 @@ export const AlgorithmsWiki = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto p-6 max-w-4xl overflow-hidden">
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl">{currentAlgorithm.name}</CardTitle>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-2xl sm:text-3xl font-bold tracking-tight wrap-break-word min-w-0">
+              {currentAlgorithm.name}
+            </CardTitle>
+            <div className="flex justify-end">
+              <LanguageSwitcher />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <MarkdownRenderer content={content} />
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mt-8 pt-6 border-t min-w-0">
             {prevAlgorithm ? (
               <Button
                 variant="outline"
                 onClick={() => navigate(`/wiki/algorithms/${prevAlgorithm.id}`)}
+                className="w-full sm:w-auto sm:max-w-[48%] min-w-0 justify-start"
               >
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Previous: {prevAlgorithm.name}
+                <ChevronLeft className="mr-1 h-4 w-4 shrink-0" />
+                {t.previous}: {getName(prevAlgorithm)}
               </Button>
             ) : (
-              <div />
+              <div className="hidden sm:block" />
             )}
 
             {nextAlgorithm ? (
               <Button
                 onClick={() => navigate(`/wiki/algorithms/${nextAlgorithm.id}`)}
+                className="w-full sm:w-auto sm:max-w-[48%] min-w-0 justify-end"
               >
-                Next: {nextAlgorithm.name}
-                <ChevronRight className="ml-2 h-4 w-4" />
+                {t.next}: {getName(nextAlgorithm)}
+                <ChevronRight className="h-4 w-4 shrink-0" />
               </Button>
             ) : (
-              <div />
+              <div className="hidden sm:block" />
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Sidebar TOC */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-lg">All Algorithms</CardTitle>
+          <CardTitle className="text-lg">{t.allAlgorithms}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {algorithms.map((alg) => (
