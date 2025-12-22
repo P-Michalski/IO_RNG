@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Loading } from "../Loading/loading";
+import { Error as ErrorComponent } from "../Error/error";
 
 // Definicje parametrów dla każdego algorytmu
 const ALGORITHM_PARAMS = {
@@ -152,6 +154,8 @@ export const Generator = () => {
     ALGORITHM_PARAMS[1].defaults
   );
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [initializing, setInitializing] = useState(true);
   const [result, setResult] = useState<{
     bits: number[];
     execution_time_ms: number;
@@ -160,6 +164,28 @@ export const Generator = () => {
     rng_name: string;
     seed: number | null;
   } | null>(null);
+
+  useEffect(() => {
+    const checkBackendConnection = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/rngs", {
+          method: "GET",
+        });
+
+        if (!response.ok) {
+          throw new Error("Backend API is not responding");
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to connect to backend"
+        );
+      } finally {
+        setInitializing(false);
+      }
+    };
+
+    checkBackendConnection();
+  }, []);
 
   const handleAlgorithmChange = (value: string) => {
     const algoId = parseInt(value) as AlgorithmId;
@@ -258,6 +284,25 @@ export const Generator = () => {
     zeros: { label: "Zeros", color: "var(--chart-1)" },
     ones: { label: "Ones", color: "var(--chart-2)" },
   } satisfies ChartConfig;
+
+  if (initializing) {
+    return (
+      <div className="container flex items-center justify-center min-h-screen mx-auto p-6">
+        <Loading message="Connecting to backend..." fullScreen />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container flex items-center justify-center min-h-screen mx-auto p-6">
+        <ErrorComponent
+          title="Backend Connection Error"
+          description={`Failed to connect to the backend API: ${error}. Please make sure the backend server is running on http://localhost:8000`}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="container p-6 mx-auto overflow-hidden">

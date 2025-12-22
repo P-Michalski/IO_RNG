@@ -32,6 +32,8 @@ import { toast } from "sonner";
 import { type RNG } from "@/types/test-results";
 import { FlaskConical, Loader2, Sparkles } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
+import { Loading } from "../Loading/loading";
+import { Error as ErrorComponent } from "../Error/error";
 
 const NIST_TESTS = [
   {
@@ -147,6 +149,7 @@ export const Tests = () => {
   const [rngs, setRngs] = useState<RNG[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<TestFormValues>({
     resolver: zodResolver(testFormSchema),
@@ -169,7 +172,8 @@ export const Tests = () => {
         if (!response.ok) throw new Error("Failed to fetch RNGs");
         const data = await response.json();
         setRngs(data.filter((rng: RNG) => rng.is_active));
-      } catch (error) {
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
         toast.error("Failed to load RNG algorithms");
       } finally {
         setLoading(false);
@@ -278,11 +282,18 @@ export const Tests = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen w-full">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="container flex items-center justify-center min-h-screen mx-auto p-6">
+        <Loading message="Loading Tests..." fullScreen />
       </div>
     );
   }
+
+  if (error)
+    return (
+      <div className="container flex items-center justify-center min-h-screen mx-auto p-6">
+        <ErrorComponent description={error} />
+      </div>
+    );
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">

@@ -48,11 +48,19 @@ export const Results = () => {
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <div className="container flex items-center justify-center min-h-screen mx-auto p-6">
+        <Loading message="Loading Results..." fullScreen />
+      </div>
+    );
   }
 
   if (error) {
-    return <ErrorComponent />;
+    return (
+      <div className="container flex items-center justify-center min-h-screen mx-auto p-6">
+        <ErrorComponent />
+      </div>
+    );
   }
 
   if (results.length === 0) {

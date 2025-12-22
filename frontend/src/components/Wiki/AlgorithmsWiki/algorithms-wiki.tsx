@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MarkdownRenderer } from "../markdown-renderer";
 import { useLanguage } from "@/contexts/language-context";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { Loading } from "@/components/Loading/loading";
+import { Error as ErrorComponent } from "@/components/Error/error";
 
 interface Algorithm {
   id: string;
@@ -108,20 +110,16 @@ export const AlgorithmsWiki = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="container flex items-center justify-center min-h-screen mx-auto p-6">
+        <Loading message="Loading Wiki..." fullScreen />
       </div>
     );
   }
 
   if (error || !currentAlgorithm) {
     return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-destructive">{error || "Algorithm not found"}</p>
-          </CardContent>
-        </Card>
+      <div className="container flex items-center justify-center min-h-screen mx-auto p-6">
+        <ErrorComponent description={error || "Algorithm not found"} />
       </div>
     );
   }

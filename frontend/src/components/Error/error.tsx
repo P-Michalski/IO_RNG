@@ -11,7 +11,17 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Spinner } from "../ui/spinner";
 
-export const Error = () => {
+interface ErrorProps {
+  title?: string;
+  description?: string;
+  showRefresh?: boolean;
+}
+
+export const Error = ({
+  title = "Error",
+  description = "An internal error has occurred. Please try again later.",
+  showRefresh = true,
+}: ErrorProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = () => {
@@ -26,29 +36,31 @@ export const Error = () => {
           <EmptyMedia variant="icon">
             <TriangleAlert />
           </EmptyMedia>
-          <EmptyTitle>Error</EmptyTitle>
-          <EmptyDescription>
-            An internal error has occurred. Please try again later.
+          <EmptyTitle>{title}</EmptyTitle>
+          <EmptyDescription className="wrap-break-words break-all hyphens-auto">
+            {description}
           </EmptyDescription>
         </EmptyHeader>
 
-        <EmptyContent>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? (
-                <>
-                  <Spinner /> Refreshing...
-                </>
-              ) : (
-                "Refresh"
-              )}
-            </Button>
-          </div>
-        </EmptyContent>
+        {showRefresh && (
+          <EmptyContent>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <>
+                    <Spinner /> Refreshing...
+                  </>
+                ) : (
+                  "Refresh"
+                )}
+              </Button>
+            </div>
+          </EmptyContent>
+        )}
       </Empty>
     </div>
   );
