@@ -16,13 +16,33 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { type TestResult } from "@/types/test-results";
-import { CheckCircle2, XCircle, Clock, Hash, ChevronRight } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Hash,
+  ChevronRight,
+  X,
+} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 interface TestResultCardProps {
   result: TestResult;
   rngName: string;
+  onDelete?: (id: number) => void;
 }
 
 const renderStatisticValue = (value: unknown) => {
@@ -71,8 +91,41 @@ const renderStatisticValue = (value: unknown) => {
   return <span className="text-sm font-medium">{String(value)}</span>;
 };
 
-export const TestResultCard = ({ result, rngName }: TestResultCardProps) => {
+export const TestResultCard = ({
+  result,
+  rngName,
+  onDelete,
+}: TestResultCardProps) => {
   const [open, setOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/test-results/${result.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete test result");
+      }
+
+      toast.success("Test result deleted successfully");
+      setAlertOpen(false);
+
+      onDelete?.(result.id);
+    } catch (error) {
+      console.error("Error deleting test result:", error);
+      toast.error("Failed to delete test result");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -109,9 +162,46 @@ export const TestResultCard = ({ result, rngName }: TestResultCardProps) => {
                     {formatTestName(result.test_name)}
                   </CardTitle>
                 </div>
-                <Badge variant={result.passed ? "default" : "destructive"}>
-                  {result.passed ? "Passed" : "Failed"}
-                </Badge>
+                <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+                  <AlertDialogTrigger
+                    asChild
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      disabled={isDeleting}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently
+                        delete this test result and remove it from the database.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete();
+                        }}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? "Deleting..." : "Confirm"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
               <CardDescription>{rngName}</CardDescription>
             </CardHeader>

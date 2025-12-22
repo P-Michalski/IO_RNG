@@ -4,6 +4,7 @@ import { TestResultCard } from "./test-result-card";
 import { type TestResult, type RNG } from "@/types/test-results";
 import { Loading } from "../Loading/loading";
 import { Error as ErrorComponent } from "../Error/error";
+import { toast } from "sonner";
 
 export const Results = () => {
   const [results, setResults] = useState<TestResult[]>([]);
@@ -11,33 +12,40 @@ export const Results = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [resultsRes, rngsRes] = await Promise.all([
-          fetch("http://localhost:8000/api/test-results"),
-          fetch("http://localhost:8000/api/rngs"),
-        ]);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [resultsRes, rngsRes] = await Promise.all([
+        fetch("http://localhost:8000/api/test-results"),
+        fetch("http://localhost:8000/api/rngs"),
+      ]);
 
-        if (!resultsRes.ok || !rngsRes.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const resultsData = await resultsRes.json();
-        const rngsData = await rngsRes.json();
-
-        setResults(resultsData);
-        setRngs(rngsData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
+      if (!resultsRes.ok || !rngsRes.ok) {
+        throw new Error("Failed to fetch data");
       }
-    };
 
+      const resultsData = await resultsRes.json();
+      const rngsData = await rngsRes.json();
+
+      setResults(resultsData);
+      setRngs(rngsData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+      toast.error("Failed to load results. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
+
+  const handleDelete = (id: number) => {
+    setResults((prevResults) =>
+      prevResults.filter((result) => result.id !== id)
+    );
+  };
 
   if (loading) {
     return <Loading />;
@@ -74,6 +82,7 @@ export const Results = () => {
             key={result.id}
             result={result}
             rngName={getRngName(result.rng_id)}
+            onDelete={handleDelete}
           />
         ))}
       </div>
