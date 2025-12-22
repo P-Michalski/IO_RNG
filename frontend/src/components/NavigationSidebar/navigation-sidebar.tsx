@@ -50,10 +50,14 @@ interface MenuItem {
 }
 
 export const NavigationSidebar = () => {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const { theme } = useTheme();
+
+  const handleNavClick = () => {
+    setOpenMobile(false);
+  };
 
   const ghRepo = {
     name: "IO_RNG",
@@ -139,7 +143,7 @@ export const NavigationSidebar = () => {
                     className="pl-1! group-data-[collapsible=icon]:p-1!"
                     tooltip={item.label}
                   >
-                    <NavLink to={item.path}>
+                    <NavLink to={item.path} onClick={handleNavClick}>
                       {item.icon}
                       <span>{item.label}</span>
                     </NavLink>
@@ -175,6 +179,7 @@ export const NavigationSidebar = () => {
                               <NavLink
                                 to={subItem.path}
                                 className="flex items-center gap-2 cursor-pointer"
+                                onClick={handleNavClick}
                               >
                                 {subItem.icon}
                                 <span>{subItem.label}</span>
@@ -206,7 +211,10 @@ export const NavigationSidebar = () => {
                             {wikiItems.map((subItem) => (
                               <SidebarMenuSubItem key={subItem.label}>
                                 <SidebarMenuButton asChild>
-                                  <NavLink to={subItem.path}>
+                                  <NavLink
+                                    to={subItem.path}
+                                    onClick={handleNavClick}
+                                  >
                                     {subItem.icon}
                                     <span>{subItem.label}</span>
                                   </NavLink>
@@ -225,7 +233,7 @@ export const NavigationSidebar = () => {
                       className="pl-1! group-data-[collapsible=icon]:p-1!"
                       tooltip={item.label}
                     >
-                      <NavLink to={item.path}>
+                      <NavLink to={item.path} onClick={handleNavClick}>
                         {item.icon}
                         <span>{item.label}</span>
                       </NavLink>
@@ -247,7 +255,7 @@ export const NavigationSidebar = () => {
                   className="pl-1! group-data-[collapsible=icon]:p-1!"
                   tooltip={settingsItem.label}
                 >
-                  <NavLink to={settingsItem.path}>
+                  <NavLink to={settingsItem.path} onClick={handleNavClick}>
                     {settingsItem.icon}
                     <span>{settingsItem.label}</span>
                   </NavLink>

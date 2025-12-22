@@ -125,7 +125,7 @@ export const AlgorithmsWiki = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl overflow-hidden">
+    <div className="container mx-auto p-8 max-w-4xl overflow-hidden">
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

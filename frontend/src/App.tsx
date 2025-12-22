@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "./components/ui/tooltip";
 import { LanguageProvider } from "./contexts/language-context";
+import { Footer } from "./components/Footer/footer";
 
 function App() {
   return (
@@ -21,15 +22,19 @@ function App() {
       <LanguageProvider>
         <SidebarProvider>
           <NavigationSidebar />
-          <main>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarTrigger className="sticky top-0" />
-              </TooltipTrigger>
-              <TooltipContent>Toggle Sidebar</TooltipContent>
-            </Tooltip>
+          <main className="flex flex-col min-h-screen w-full">
+            <div className="flex-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarTrigger className="sticky top-0" />
+                </TooltipTrigger>
+                <TooltipContent>Toggle Sidebar</TooltipContent>
+              </Tooltip>
+
+              <Outlet />
+            </div>
+            <Footer />
           </main>
-          <Outlet />
           <Toaster />
         </SidebarProvider>
       </LanguageProvider>

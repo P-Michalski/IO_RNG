@@ -6,7 +6,7 @@ import { Separator } from "../ui/separator";
 
 export const Settings = () => {
   return (
-    <div className="container mx-auto max-w-7xl p-6 space-y-4">
+    <div className="container mx-auto max-w-7xl p-8 space-y-4">
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>

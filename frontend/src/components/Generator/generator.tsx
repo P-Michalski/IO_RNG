@@ -305,7 +305,7 @@ export const Generator = () => {
   }
 
   return (
-    <div className="container p-6 mx-auto overflow-hidden">
+    <div className="container p-8 mx-auto overflow-hidden">
       <Card>
         <CardHeader>
           <CardTitle>RNG Bit Generator</CardTitle>

@@ -296,7 +296,7 @@ export const Tests = () => {
     );
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
+    <div className="container mx-auto p-8 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <FlaskConical className="h-8 w-8" />
