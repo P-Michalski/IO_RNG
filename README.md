@@ -1,2 +1,4 @@
 # IO_RNG
-App for displaying and comparing different PRNGs
+
+**_Work in progress_**
+App for testing and comparing different PRNGs.
