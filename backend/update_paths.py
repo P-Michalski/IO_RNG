@@ -31,7 +31,7 @@ for row in rows:
     id, name, old_path = row
     # Extract just the filename
     filename = os.path.basename(old_path)
-    # Add algorytmy folder
+    # Add algorytmy folderqqq4
     new_path = f"algorytmy/{filename}"
     updates.append((new_path, id))
     print(f"Updating ID {id}: {old_path} -> {new_path}")

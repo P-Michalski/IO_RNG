@@ -15,6 +15,7 @@ class Language(Enum):
     JAVASCRIPT = "javascript"
     RUST = "rust"
     GO = "go"
+    EXECUTABLE = "executable"  # Prekompilowane binaria (.exe, .out)
 
 
 class Algorithm(Enum):

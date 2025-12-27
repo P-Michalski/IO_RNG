@@ -6,6 +6,36 @@ from rest_framework import serializers
 from io_rng.core.entities.rng import Language, Algorithm
 
 
+# Lista dostępnych testów statystycznych (DRY - użyta w wielu serializerach)
+TEST_CHOICES = [
+    # Testy podstawowe
+    'frequency_test',
+    'uniformity_test',
+    # Pełny zestaw NIST (15 testów)
+    'nist_monobit',
+    'nist_block_frequency',
+    'nist_runs',
+    'nist_longest_run',
+    'nist_cumulative_sums',
+    'nist_approximate_entropy',
+    'nist_matrix_rank',
+    'nist_dft',
+    'nist_non_overlapping_template',
+    'nist_overlapping_template',
+    'nist_universal',
+    'nist_linear_complexity',
+    'nist_serial',
+    'nist_random_excursions',
+    'nist_random_excursions_variant',
+    # Diehard Suite (5 podstawowych testów)
+    'diehard_birthday_spacings',
+    'diehard_overlapping_permutations',
+    'diehard_binary_rank',
+    'diehard_bitstream',
+    'diehard_opso'
+]
+
+
 class RNGSerializer(serializers.Serializer):
     """Serializer dla RNG entity"""
 
@@ -46,7 +76,27 @@ class TestResultSerializer(serializers.Serializer):
     generated_bits = serializers.ListField(
         child=serializers.IntegerField(),
         required=False,
-        allow_null=True
+        allow_null=True,
+        help_text="Raw bit array (legacy format, use bits_compressed when available)"
+    )
+    # Pola kompresji base64 (opcjonalne, użyj z ?compressed=true)
+    bits_compressed = serializers.CharField(
+        required=False,
+        allow_null=True,
+        read_only=True,
+        help_text="Base64-encoded compressed bits"
+    )
+    bits_format = serializers.CharField(
+        required=False,
+        allow_null=True,
+        read_only=True,
+        help_text="Format: 'base64-bitpack' or 'array'"
+    )
+    bits_count = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        read_only=True,
+        help_text="Number of bits (for validation)"
     )
     created_at = serializers.DateTimeField(read_only=True)
 
@@ -55,27 +105,7 @@ class RunTestRequestSerializer(serializers.Serializer):
     """Serializer dla żądania uruchomienia testu"""
 
     test_name = serializers.ChoiceField(
-        choices=[
-            # Testy podstawowe
-            'frequency_test',
-            'uniformity_test',
-            # Pełny zestaw NIST (15 testów)
-            'nist_monobit',
-            'nist_block_frequency',
-            'nist_runs',
-            'nist_longest_run',
-            'nist_cumulative_sums',
-            'nist_approximate_entropy',
-            'nist_matrix_rank',
-            'nist_dft',
-            'nist_non_overlapping_template',
-            'nist_overlapping_template',
-            'nist_universal',
-            'nist_linear_complexity',
-            'nist_serial',
-            'nist_random_excursions',
-            'nist_random_excursions_variant'
-        ],
+        choices=TEST_CHOICES,
         default='frequency_test'
     )
     samples_count = serializers.IntegerField(
@@ -105,7 +135,20 @@ class GenerateResponseSerializer(serializers.Serializer):
 
     bits = serializers.ListField(
         child=serializers.IntegerField(min_value=0, max_value=1),
-        help_text="Wygenerowany ciąg bitów"
+        required=False,
+        allow_null=True,
+        help_text="Raw bit array (when compressed=false)"
+    )
+    # Pola kompresji base64 (opcjonalne, użyj z ?compressed=true)
+    bits_compressed = serializers.CharField(
+        required=False,
+        allow_null=True,
+        help_text="Base64-encoded compressed bits (when compressed=true)"
+    )
+    bits_format = serializers.CharField(
+        required=False,
+        allow_null=True,
+        help_text="Format: 'base64-bitpack' or 'array'"
     )
     count = serializers.IntegerField(help_text="Liczba wygenerowanych bitów")
     execution_time_ms = serializers.FloatField(help_text="Czas wykonania w milisekundach")
@@ -120,3 +163,35 @@ class RNGDetailSerializer(RNGSerializer):
     recent_tests = TestResultSerializer(many=True, read_only=True, source='test_results')
     test_count = serializers.IntegerField(read_only=True)
     average_score = serializers.FloatField(read_only=True)
+
+
+class CustomTestRequestSerializer(serializers.Serializer):
+    """Serializer dla żądania custom testu na własnych bitach"""
+
+    bits_compressed = serializers.CharField(
+        required=True,
+        help_text="Base64-encoded compressed bits (from generate endpoint)"
+    )
+    bits_count = serializers.IntegerField(
+        required=True,
+        min_value=100,
+        max_value=10000000,
+        help_text="Number of bits in compressed data"
+    )
+    test_name = serializers.ChoiceField(
+        choices=TEST_CHOICES,
+        required=True,
+        help_text="Test to run on the bits"
+    )
+
+
+class CustomTestResponseSerializer(serializers.Serializer):
+    """Serializer dla wyniku custom testu (bez zapisu do bazy)"""
+
+    test_name = serializers.CharField()
+    passed = serializers.BooleanField()
+    score = serializers.FloatField()
+    execution_time_ms = serializers.FloatField()
+    samples_count = serializers.IntegerField()
+    statistics = serializers.JSONField()
+    # Brak: rng_id, id, created_at (nie zapisujemy do bazy)

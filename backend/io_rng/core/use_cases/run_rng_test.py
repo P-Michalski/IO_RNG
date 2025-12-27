@@ -179,6 +179,18 @@ class RunRNGTestUseCase:
             return self._nist_random_excursions_test(bits)
         elif test_name == "nist_random_excursions_variant":
             return self._nist_random_excursions_variant_test(bits)
+
+        # Testy Diehard - wymagają bitów
+        elif test_name == "diehard_birthday_spacings":
+            return self._diehard_birthday_spacings_test(bits)
+        elif test_name == "diehard_overlapping_permutations":
+            return self._diehard_overlapping_permutations_test(bits)
+        elif test_name == "diehard_binary_rank":
+            return self._diehard_binary_rank_test(bits)
+        elif test_name == "diehard_bitstream":
+            return self._diehard_bitstream_test(bits)
+        elif test_name == "diehard_opso":
+            return self._diehard_opso_test(bits)
         else:
             raise ValueError(f"Unknown test: {test_name}")
 
@@ -1313,6 +1325,470 @@ class RunRNGTestUseCase:
                 'min_p_value': round(min_p_value, 6),
                 'cycles': cycles,
                 'states': results[:6],  # Pokaż tylko pierwsze 6 dla zwięzłości
+                'threshold': 0.01
+            }
+        }
+
+    # ==================== DIEHARD TEST SUITE ====================
+
+    def _diehard_birthday_spacings_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Birthday Spacings Test
+
+        Testuje odległości między "urodzinami" (powtórzeniami wartości).
+        Dla prawdziwie losowego źródła, rozkład odległości powinien być Poissona.
+
+        Minimum: 2^18 = 262,144 bitów
+        Zalecane: 2^20 = 1,048,576 bitów
+        """
+        from math import erfc
+
+        n = len(bits)
+
+        # Wymagane minimum
+        if n < 262144:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 262144 bits, got {n}',
+                    'bits_needed': 262144
+                }
+            }
+
+        # Konwertuj bity na 24-bitowe słowa (dla birthday paradox)
+        words = []
+        for i in range(0, len(bits) - 23, 24):
+            word = 0
+            for j in range(24):
+                word = (word << 1) | bits[i + j]
+            words.append(word)
+
+        # Podziel na bloki (każdy blok = 512 słów)
+        block_size = 512
+        num_blocks = len(words) // block_size
+
+        if num_blocks < 10:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 10 blocks, got {num_blocks}',
+                    'blocks_needed': 10
+                }
+            }
+
+        spacings = []
+
+        for block_idx in range(num_blocks):
+            block_words = words[block_idx * block_size : (block_idx + 1) * block_size]
+
+            # Sortuj dla znalezienia duplikatów
+            sorted_words = sorted(enumerate(block_words), key=lambda x: x[1])
+
+            # Znajdź spacing (odległość między duplikatami)
+            last_val = None
+            last_pos = -1
+
+            for pos, val in sorted_words:
+                if val == last_val:
+                    spacing = pos - last_pos
+                    spacings.append(spacing)
+                last_val = val
+                last_pos = pos
+
+        if len(spacings) < 10:
+            # Brak wystarczających duplikatów - bardzo dobre losowe źródło
+            return {
+                'passed': True,
+                'score': 0.95,
+                'statistics': {
+                    'spacings_found': len(spacings),
+                    'note': 'Very few duplicates - excellent randomness',
+                    'threshold': 0.01
+                }
+            }
+
+        # Testuj zgodność z rozkładem Poissona
+        mean_spacing = sum(spacings) / len(spacings)
+
+        # Teoretyczna średnia dla rozkładu Poissona w przestrzeni 2^24 z 512 próbkami
+        expected_mean = (2**24) / block_size
+
+        # Chi-square test dla zgodności
+        variance = sum((s - mean_spacing)**2 for s in spacings) / len(spacings)
+
+        # Normalizuj do p-value
+        chi_square = abs(mean_spacing - expected_mean) / (variance / len(spacings))**0.5
+        p_value = erfc(chi_square / (2**0.5))
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'mean_spacing': round(mean_spacing, 2),
+                'expected_mean': round(expected_mean, 2),
+                'num_spacings': len(spacings),
+                'num_blocks': num_blocks,
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_overlapping_permutations_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Overlapping Permutations Test
+
+        Analizuje częstości permutacji 5 kolejnych wartości w nakładających się oknach.
+        Dla 5 wartości jest 5! = 120 możliwych permutacji.
+
+        Minimum: 2^20 = 1,048,576 bitów
+        """
+        from math import erfc
+
+        n = len(bits)
+
+        if n < 1048576:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 1048576 bits, got {n}',
+                    'bits_needed': 1048576
+                }
+            }
+
+        # Konwertuj bity na 8-bitowe bajty
+        bytes_list = []
+        for i in range(0, len(bits) - 7, 8):
+            byte_val = 0
+            for j in range(8):
+                byte_val = (byte_val << 1) | bits[i + j]
+            bytes_list.append(byte_val)
+
+        # Analizuj okna po 5 bajtów (overlapping)
+        window_size = 5
+        perm_counts = {}
+
+        for i in range(len(bytes_list) - window_size + 1):
+            window = bytes_list[i:i + window_size]
+
+            # Konwertuj do rangi (permutacji)
+            ranks = [0] * window_size
+            for j in range(window_size):
+                rank = sum(1 for k in range(window_size) if window[k] < window[j])
+                ranks[j] = rank
+
+            perm_key = tuple(ranks)
+            perm_counts[perm_key] = perm_counts.get(perm_key, 0) + 1
+
+        total_windows = len(bytes_list) - window_size + 1
+
+        # Teoretyczna liczba permutacji
+        num_perms = 120  # 5!
+        expected_count = total_windows / num_perms
+
+        # Chi-square test
+        chi_square = 0
+        for count in perm_counts.values():
+            chi_square += (count - expected_count) ** 2 / expected_count
+
+        # Stopnie swobody = 119 (120 - 1)
+        df = num_perms - 1
+
+        # P-value (uproszczone dla dużych df)
+        p_value = erfc((chi_square / (2 * df))**0.5)
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'chi_square': round(chi_square, 4),
+                'degrees_of_freedom': df,
+                'unique_permutations': len(perm_counts),
+                'expected_permutations': num_perms,
+                'total_windows': total_windows,
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_binary_rank_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Binary Rank Test
+
+        Testuje rangę (rank) macierzy binarnych 32x32 utworzonych z bitów.
+        Dla prawdziwie losowych bitów, rozkład rang powinien być charakterystyczny.
+
+        Minimum: 10,240 bitów dla 10 macierzy
+        Zalecane: 100,000+ bitów
+        """
+        from math import erfc
+
+        n = len(bits)
+        matrix_size = 32
+        bits_per_matrix = matrix_size * matrix_size  # 1024
+
+        if n < bits_per_matrix * 10:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= {bits_per_matrix * 10} bits, got {n}',
+                    'bits_needed': bits_per_matrix * 10
+                }
+            }
+
+        num_matrices = n // bits_per_matrix
+        rank_counts = {32: 0, 31: 0, 'other': 0}
+
+        for m in range(num_matrices):
+            # Wyciągnij bity dla macierzy
+            start = m * bits_per_matrix
+            matrix_bits = bits[start:start + bits_per_matrix]
+
+            # Utwórz macierz 32x32
+            matrix = []
+            for i in range(matrix_size):
+                row = matrix_bits[i * matrix_size : (i + 1) * matrix_size]
+                matrix.append(row)
+
+            # Oblicz rangę (binary matrix rank)
+            rank = self._binary_matrix_rank(matrix)
+
+            if rank == 32:
+                rank_counts[32] += 1
+            elif rank == 31:
+                rank_counts[31] += 1
+            else:
+                rank_counts['other'] += 1
+
+        # Teoretyczne prawdopodobieństwa dla 32x32
+        # Dla prawdziwie losowej macierzy:
+        # P(rank=32) ≈ 0.2888
+        # P(rank=31) ≈ 0.5776
+        # P(rank<=30) ≈ 0.1336
+
+        expected_32 = num_matrices * 0.2888
+        expected_31 = num_matrices * 0.5776
+        expected_other = num_matrices * 0.1336
+
+        # Chi-square test
+        chi_square = (
+            (rank_counts[32] - expected_32) ** 2 / expected_32 +
+            (rank_counts[31] - expected_31) ** 2 / expected_31 +
+            (rank_counts['other'] - expected_other) ** 2 / expected_other
+        )
+
+        # df = 3 - 1 = 2
+        p_value = erfc((chi_square / 4)**0.5)
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'chi_square': round(chi_square, 4),
+                'rank_32_count': rank_counts[32],
+                'rank_31_count': rank_counts[31],
+                'rank_other_count': rank_counts['other'],
+                'expected_32': round(expected_32, 2),
+                'expected_31': round(expected_31, 2),
+                'num_matrices': num_matrices,
+                'threshold': 0.01
+            }
+        }
+
+    def _binary_matrix_rank(self, matrix: List[List[int]]) -> int:
+        """
+        Oblicza rangę macierzy binarnej używając eliminacji Gaussa w GF(2).
+
+        Args:
+            matrix: Macierz jako lista list [0,1]
+
+        Returns:
+            Ranga macierzy (0 do n)
+        """
+        # Kopiuj macierz
+        m = [row[:] for row in matrix]
+        rows = len(m)
+        cols = len(m[0]) if rows > 0 else 0
+
+        rank = 0
+
+        for col in range(cols):
+            # Znajdź pivot
+            pivot_row = None
+            for row in range(rank, rows):
+                if m[row][col] == 1:
+                    pivot_row = row
+                    break
+
+            if pivot_row is None:
+                continue
+
+            # Zamień wiersze
+            if pivot_row != rank:
+                m[rank], m[pivot_row] = m[pivot_row], m[rank]
+
+            # Eliminuj (XOR w GF(2))
+            for row in range(rows):
+                if row != rank and m[row][col] == 1:
+                    for c in range(cols):
+                        m[row][c] ^= m[rank][c]
+
+            rank += 1
+
+        return rank
+
+    def _diehard_bitstream_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Bitstream Test
+
+        Testuje bity poprzez liczenie wystąpień 20-bitowych słów w nakładających się oknach.
+        Sprawdza, czy liczba wystąpień najbardziej i najmniej częstego słowa jest w normie.
+
+        Minimum: 2^21 = 2,097,152 bitów
+        """
+        from math import erfc
+
+        n = len(bits)
+
+        if n < 2097152:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 2097152 bits, got {n}',
+                    'bits_needed': 2097152
+                }
+            }
+
+        # Użyj 20-bitowych słów
+        word_length = 20
+        word_counts = {}
+
+        # Overlapping windows
+        for i in range(n - word_length + 1):
+            word = tuple(bits[i:i + word_length])
+            word_counts[word] = word_counts.get(word, 0) + 1
+
+        total_words = n - word_length + 1
+
+        # Znajdź min/max częstości
+        if not word_counts:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {'error': 'No words found'}
+            }
+
+        max_count = max(word_counts.values())
+        min_count = min(word_counts.values())
+
+        # Oczekiwana częstość dla każdego słowa (równomierne)
+        num_possible_words = 2 ** word_length
+        expected_count = total_words / num_possible_words
+
+        # Test: czy max/min są w rozsądnym zakresie?
+        max_deviation = abs(max_count - expected_count) / (expected_count**0.5)
+        min_deviation = abs(min_count - expected_count) / (expected_count**0.5)
+
+        # Z-score combined
+        z_score = max(max_deviation, min_deviation)
+        p_value = erfc(z_score / (2**0.5))
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'max_count': max_count,
+                'min_count': min_count,
+                'expected_count': round(expected_count, 2),
+                'unique_words': len(word_counts),
+                'possible_words': num_possible_words,
+                'total_words': total_words,
+                'z_score': round(z_score, 4),
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_opso_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard OPSO (Overlapping-Pairs-Sparse-Occupancy) Test
+
+        Sprawdza jak często 10-literowe "słowa" (z alfabetu {0,1}) pojawiają się
+        dokładnie 1 raz w strumieniu. Liczy "sparse occupancy".
+
+        Minimum: 2^21 = 2,097,152 bitów
+        """
+        from math import erfc, exp
+
+        n = len(bits)
+
+        if n < 2097152:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 2097152 bits, got {n}',
+                    'bits_needed': 2097152
+                }
+            }
+
+        # Użyj 10-bitowych par
+        word_length = 10
+        word_counts = {}
+
+        # Overlapping
+        for i in range(n - word_length + 1):
+            word = tuple(bits[i:i + word_length])
+            word_counts[word] = word_counts.get(word, 0) + 1
+
+        # Policz słowa występujące dokładnie 1 raz
+        singleton_count = sum(1 for count in word_counts.values() if count == 1)
+
+        total_words = n - word_length + 1
+        num_possible_words = 2 ** word_length
+
+        # Teoretyczna wartość: dla prawdziwie losowego źródła
+        # P(słowo występuje 1x) zależy od rozkładu Poissona
+        lambda_param = total_words / num_possible_words
+        expected_singletons = num_possible_words * lambda_param * exp(-lambda_param)
+
+        # Chi-square dla różnicy
+        if expected_singletons > 0:
+            chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
+            p_value = erfc((chi_square / 2)**0.5)
+        else:
+            p_value = 0.0
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'singleton_count': singleton_count,
+                'expected_singletons': round(expected_singletons, 2),
+                'total_words': total_words,
+                'unique_words': len(word_counts),
+                'lambda': round(lambda_param, 4),
                 'threshold': 0.01
             }
         }

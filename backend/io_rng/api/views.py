@@ -19,6 +19,7 @@ from io_rng.infrastructure.repositories.django_repositories import (
     DjangoTestResultRepository
 )
 from io_rng.infrastructure.runners.python_runner import PythonRNGRunner
+from io_rng.infrastructure.runners.exe_runner import ExeRNGRunner
 
 
 class RNGViewSet(viewsets.ViewSet):
@@ -31,7 +32,10 @@ class RNGViewSet(viewsets.ViewSet):
         super().__init__(**kwargs)
         self.rng_repository = DjangoRNGRepository()
         self.result_repository = DjangoTestResultRepository()
-        self.runners = [PythonRNGRunner()]
+        self.runners = [
+            PythonRNGRunner(),
+            ExeRNGRunner()  # Obsługa prekompilowanych .exe generatorów
+        ]
 
     def list(self, request):
         """GET /api/rngs/ - Lista wszystkich RNG"""
@@ -117,9 +121,17 @@ class RNGViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def run_test(self, request, pk=None):
         """
-        POST /api/rngs/{id}/run_test/
+        POST /api/rngs/{id}/run_test/?compressed=true
         Uruchamia test dla RNG - to jest główna akcja!
+
+        Query params:
+            compressed (bool): If true, returns base64-compressed bits (default: false)
         """
+        from io_rng.utils.compression import compress_bits_to_base64
+
+        # Sprawdź parametr query dla kompresji
+        use_compression = request.query_params.get('compressed', 'false').lower() == 'true'
+
         serializer = RunTestRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -140,7 +152,30 @@ class RNGViewSet(viewsets.ViewSet):
                 parameters=data.get('parameters')
             )
 
-            result_serializer = TestResultSerializer(result)
+            # Modyfikuj response jeśli kompresja jest włączona
+            if use_compression and result.generated_bits:
+                # Dodaj skompresowaną wersję do response
+                result_data = {
+                    'id': result.id,
+                    'rng_id': result.rng_id,
+                    'test_name': result.test_name,
+                    'passed': result.passed,
+                    'score': result.score,
+                    'execution_time_ms': result.execution_time_ms,
+                    'samples_count': result.samples_count,
+                    'statistics': result.statistics,
+                    'error_message': result.error_message,
+                    'created_at': result.created_at,
+                    # Kompresja zamiast surowej listy
+                    'bits_compressed': compress_bits_to_base64(result.generated_bits),
+                    'bits_format': 'base64-bitpack',
+                    'bits_count': len(result.generated_bits)
+                }
+                result_serializer = TestResultSerializer(result_data)
+            else:
+                # Backward compatible - zwróć array
+                result_serializer = TestResultSerializer(result)
+
             return Response(result_serializer.data)
 
         except ValueError as e:
@@ -157,12 +192,19 @@ class RNGViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def generate(self, request, pk=None):
         """
-        POST /api/rngs/{id}/generate/
+        POST /api/rngs/{id}/generate/?compressed=true
         Generuje ciąg bitów bez testowania - zwraca surowe bity + czas wykonania
+
+        Query params:
+            compressed (bool): If true, returns base64-compressed bits (default: false)
         """
         import time
         from io_rng.infrastructure.runners.universal_adapter import UniversalRNGAdapter
         from io_rng.core.entities.test_result import DataType
+        from io_rng.utils.compression import compress_bits_to_base64
+
+        # Sprawdź parametr query dla kompresji
+        use_compression = request.query_params.get('compressed', 'false').lower() == 'true'
 
         serializer = GenerateRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -220,15 +262,30 @@ class RNGViewSet(viewsets.ViewSet):
 
             execution_time = (time.perf_counter() - start_time) * 1000  # ms
 
-            # Przygotuj odpowiedź
-            response_data = {
-                'bits': bits[:count],  # Upewnij się że nie ma za dużo
-                'count': len(bits[:count]),
-                'execution_time_ms': round(execution_time, 3),
-                'rng_id': rng.id,
-                'rng_name': rng.name,
-                'seed': seed
-            }
+            # Przygotuj odpowiedź z kompresją lub bez
+            bits_trimmed = bits[:count]  # Upewnij się że nie ma za dużo
+
+            if use_compression:
+                response_data = {
+                    'bits_compressed': compress_bits_to_base64(bits_trimmed),
+                    'bits_format': 'base64-bitpack',
+                    'count': len(bits_trimmed),
+                    'execution_time_ms': round(execution_time, 3),
+                    'rng_id': rng.id,
+                    'rng_name': rng.name,
+                    'seed': seed
+                }
+            else:
+                # Backward compatible - zwróć array
+                response_data = {
+                    'bits': bits_trimmed,
+                    'bits_format': 'array',
+                    'count': len(bits_trimmed),
+                    'execution_time_ms': round(execution_time, 3),
+                    'rng_id': rng.id,
+                    'rng_name': rng.name,
+                    'seed': seed
+                }
 
             response_serializer = GenerateResponseSerializer(response_data)
             return Response(response_serializer.data)
@@ -245,6 +302,61 @@ class RNGViewSet(viewsets.ViewSet):
         results = self.result_repository.get_by_rng(int(pk))
         serializer = TestResultSerializer(results, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['post'], url_path='test-custom')
+    def test_custom(self, request):
+        """
+        POST /api/rngs/test-custom/
+        Testuje custom bity bez generatora - NIE zapisuje do bazy.
+
+        Body:
+        {
+            "bits_compressed": "base64string",
+            "bits_count": 10000,
+            "test_name": "nist_monobit"
+        }
+        """
+        from io_rng.utils.compression import decompress_base64_to_bits
+        from io_rng.core.use_cases.test_custom_bits import TestCustomBitsUseCase
+        from io_rng.api.serializers import (
+            CustomTestRequestSerializer,
+            CustomTestResponseSerializer
+        )
+
+        # Waliduj request
+        serializer = CustomTestRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+
+        try:
+            # Dekompresuj bity
+            bits = decompress_base64_to_bits(
+                data['bits_compressed'],
+                data['bits_count']
+            )
+
+            # Wykonaj test
+            use_case = TestCustomBitsUseCase()
+            result = use_case.execute(
+                bits=bits,
+                test_name=data['test_name']
+            )
+
+            # Zwróć odpowiedź (bez zapisu)
+            response_serializer = CustomTestResponseSerializer(result)
+            return Response(response_serializer.data)
+
+        except ValueError as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {"detail": f"Test failed: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class TestResultViewSet(viewsets.ViewSet):
