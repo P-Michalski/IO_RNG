@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Loading } from "../Loading/loading";
 import { Error as ErrorComponent } from "../Error/error";
+import { extractBitsFromResponse } from "@/utils/compression";
 
 // Definicje parametrów dla każdego algorytmu
 const ALGORITHM_PARAMS = {
@@ -234,7 +235,7 @@ export const Generator = () => {
       console.log("Request body:", requestBody); // Debug
 
       const response = await fetch(
-        `http://localhost:8000/api/rngs/${selectedAlgo}/generate`,
+        `http://localhost:8000/api/rngs/${selectedAlgo}/generate?compressed=true`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -245,10 +246,15 @@ export const Generator = () => {
       if (!response.ok) throw new Error("Failed to generate bits");
 
       const data = await response.json();
-      setResult(data);
+
+      // Automatically decompress bits if compressed
+      const bits = extractBitsFromResponse(data);
+
+      setResult({ ...data, bits });
+
       toast.success("Success", {
         description: `Generated ${
-          data.bits.length
+          bits.length
         } bits in ${data.execution_time_ms.toFixed(3)}ms`,
       });
     } catch (error) {
