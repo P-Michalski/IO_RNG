@@ -30,10 +30,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { type RNG } from "@/types/test-results";
-import { FlaskConical, Loader2, Sparkles } from "lucide-react";
-import { ScrollArea } from "../ui/scroll-area";
+import { FlaskConical, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loading } from "../Loading/loading";
 import { Error as ErrorComponent } from "../Error/error";
+import {
+  extractBitsFromResponse,
+  compressBitsToBase64,
+} from "@/utils/compression";
+import { Textarea } from "@/components/ui/textarea";
 
 const NIST_TESTS = [
   {
@@ -113,14 +118,52 @@ const NIST_TESTS = [
   },
 ] as const;
 
+const DIEHARD_TESTS = [
+  {
+    id: "diehard_birthday_spacings",
+    name: "Birthday Spacings",
+    description: "Tests spacing between birthday collisions",
+    minSamples: 2_097_152,
+  },
+  {
+    id: "diehard_overlapping_permutations",
+    name: "Overlapping Permutations",
+    description: "Analyzes overlapping 5-letter word sequences",
+    minSamples: 1_048_576,
+  },
+  {
+    id: "diehard_binary_rank",
+    name: "Binary Rank",
+    description: "Tests rank of binary matrices",
+    minSamples: 10_240,
+  },
+  {
+    id: "diehard_bitstream",
+    name: "Bitstream",
+    description: "Checks overlapping 20-bit words",
+    minSamples: 2_097_152,
+  },
+  {
+    id: "diehard_opso",
+    name: "OPSO (Overlapping-Pairs-Sparse-Occupancy)",
+    description: "Tests sparse occupancy of word pairs",
+    minSamples: 2_097_152,
+  },
+] as const;
+
 const testFormSchema = z
   .object({
-    rng_id: z.string().min(1, "Please select an RNG"),
-    test_type: z.enum(["single", "nist_suite"], {
+    input_type: z.enum(["algorithm", "custom_bits"], {
+      message: "Please select input type",
+    }),
+    rng_id: z.string().optional(),
+    custom_bits: z.string().optional(),
+    test_type: z.enum(["single", "nist_suite", "diehard_suite"], {
       message: "Please select a test type",
     }),
     single_test: z.enum(["frequency_test", "uniformity_test"]).optional(),
     nist_tests: z.array(z.string()).optional(),
+    diehard_tests: z.array(z.string()).optional(),
     samples_count: z
       .number()
       .min(100, "Minimum 100 samples")
@@ -129,11 +172,30 @@ const testFormSchema = z
   })
   .refine(
     (data) => {
+      if (data.input_type === "algorithm") {
+        return !!data.rng_id && data.rng_id.length > 0;
+      }
+      if (data.input_type === "custom_bits") {
+        const bitCount = data.custom_bits?.replace(/\s/g, "").length || 0;
+        return bitCount >= 100;
+      }
+      return false;
+    },
+    {
+      message: "Please select an RNG or provide custom bits",
+      path: ["rng_id"],
+    }
+  )
+  .refine(
+    (data) => {
       if (data.test_type === "single") {
         return !!data.single_test;
       }
       if (data.test_type === "nist_suite") {
         return data.nist_tests && data.nist_tests.length > 0;
+      }
+      if (data.test_type === "diehard_suite") {
+        return data.diehard_tests && data.diehard_tests.length > 0;
       }
       return false;
     },
@@ -154,16 +216,24 @@ export const Tests = () => {
   const form = useForm<TestFormValues>({
     resolver: zodResolver(testFormSchema),
     defaultValues: {
+      input_type: "algorithm",
       rng_id: "",
+      custom_bits: "",
       test_type: "single",
       single_test: "frequency_test",
       nist_tests: [],
+      diehard_tests: [],
       samples_count: 100000,
       seed: 42,
     },
   });
 
   const testType = form.watch("test_type");
+  const samplesCount = form.watch("samples_count");
+  const inputType = form.watch("input_type");
+  const customBits = form.watch("custom_bits");
+
+  const customBitCount = customBits?.replace(/\s/g, "").length || 0;
 
   useEffect(() => {
     const fetchRngs = async () => {
@@ -187,31 +257,32 @@ export const Tests = () => {
     setIsSubmitting(true);
     try {
       if (values.test_type === "single" && values.single_test) {
-        // Run single test
-        await runSingleTest(
-          values.rng_id,
-          values.single_test,
-          values.samples_count,
-          values.seed
-        );
+        await runSingleTest(values, values.single_test);
       } else if (values.test_type === "nist_suite" && values.nist_tests) {
-        // Run multiple NIST tests
         let passed = 0;
         let failed = 0;
 
         for (const testName of values.nist_tests) {
-          const result = await runSingleTest(
-            values.rng_id,
-            testName,
-            values.samples_count,
-            values.seed
-          );
+          const result = await runSingleTest(values, testName);
           if (result.passed) passed++;
           else failed++;
         }
 
         toast.success("NIST Test Suite Completed", {
           description: `Passed: ${passed}, Failed: ${failed} out of ${values.nist_tests.length} tests`,
+        });
+      } else if (values.test_type === "diehard_suite" && values.diehard_tests) {
+        let passed = 0;
+        let failed = 0;
+
+        for (const testName of values.diehard_tests) {
+          const result = await runSingleTest(values, testName);
+          if (result.passed) passed++;
+          else failed++;
+        }
+
+        toast.success("Diehard Test Suite Completed", {
+          description: `Passed: ${passed}, Failed: ${failed} out of ${values.diehard_tests.length} tests`,
         });
       }
     } catch (error) {
@@ -224,34 +295,79 @@ export const Tests = () => {
     }
   };
 
-  const runSingleTest = async (
-    rngId: string,
-    testName: string,
-    samplesCount: number,
-    seed: number
-  ) => {
-    const response = await fetch(
-      `http://localhost:8000/api/rngs/${rngId}/run_test`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          test_name: testName,
-          samples_count: samplesCount,
-          seed: seed,
-        }),
-      }
-    );
+  const runSingleTest = async (values: TestFormValues, testName: string) => {
+    let result;
 
-    if (!response.ok) {
-      throw new Error("Test execution failed");
+    if (values.input_type === "custom_bits") {
+      // Parse custom bits
+      const bitsString = values.custom_bits!.replace(/\s/g, ""); // Remove whitespace
+      const bits = bitsString.split("").map((bit) => {
+        const parsed = parseInt(bit);
+        if (parsed !== 0 && parsed !== 1) {
+          throw new Error("Custom bits must contain only 0s and 1s");
+        }
+        return parsed;
+      });
+
+      if (bits.length === 0) {
+        throw new Error("No valid bits provided");
+      }
+
+      // Compress bits to base64
+      const bitsCompressed = compressBitsToBase64(bits);
+
+      // Call custom bits endpoint
+      const response = await fetch(
+        `http://localhost:8000/api/rngs/test-custom`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            bits_compressed: bitsCompressed,
+            bits_count: bits.length,
+            test_name: testName,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Test execution failed");
+      }
+
+      result = await response.json();
+    } else {
+      // Use algorithm endpoint
+      const response = await fetch(
+        `http://localhost:8000/api/rngs/${values.rng_id}/run_test?compressed=true`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            test_name: testName,
+            samples_count: values.samples_count,
+            seed: values.seed,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Test execution failed");
+      }
+
+      result = await response.json();
+
+      // Automatically decompress bits if they're in the response
+      if (result.generated_bits || result.bits_compressed) {
+        const bits = extractBitsFromResponse(result);
+        result.generated_bits = bits;
+      }
     }
 
-    const result = await response.json();
-
-    if (form.watch("test_type") === "single") {
+    if (values.test_type === "single") {
       if (result.passed) {
         toast.success("Test Passed! ✓", {
           description: `${formatTestName(
@@ -273,6 +389,9 @@ export const Tests = () => {
   const formatTestName = (name: string) => {
     const nistTest = NIST_TESTS.find((t) => t.id === name);
     if (nistTest) return nistTest.name;
+
+    const diehardTest = DIEHARD_TESTS.find((t) => t.id === name);
+    if (diehardTest) return diehardTest.name;
 
     return name
       .split("_")
@@ -311,53 +430,149 @@ export const Tests = () => {
         <CardHeader>
           <CardTitle>Test Configuration</CardTitle>
           <CardDescription>
-            Select an RNG algorithm and configure test parameters
+            Select an RNG algorithm or provide custom bits and configure test
+            parameters
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* RNG Selection */}
+              {/* Input Type Selection */}
               <FormField
                 control={form.control}
-                name="rng_id"
+                name="input_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>RNG Algorithm</FormLabel>
+                    <FormLabel>Input Type</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Reset related fields when switching input type
+                        if (value === "algorithm") {
+                          form.setValue("custom_bits", "");
+                        } else {
+                          form.setValue("rng_id", "");
+                        }
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select an RNG algorithm">
-                            {field.value &&
-                              rngs.find(
-                                (rng) => rng.id.toString() === field.value
-                              )?.name}
-                          </SelectValue>
+                          <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {rngs.map((rng) => (
-                          <SelectItem key={rng.id} value={rng.id.toString()}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{rng.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {rng.description}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="algorithm">
+                          <div className="flex flex-col">
+                            <span className="font-medium">Algorithm</span>
+                            <span className="text-xs text-muted-foreground">
+                              Generate bits from an RNG
+                            </span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="custom_bits">
+                          <div className="flex flex-col">
+                            <span className="font-medium">Custom Bits</span>
+                            <span className="text-xs text-muted-foreground">
+                              Test your own bit sequence
+                            </span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Choose the random number generator to test
+                      Choose to use an algorithm or provide custom bits
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* RNG Selection */}
+              {inputType === "algorithm" && (
+                <FormField
+                  control={form.control}
+                  name="rng_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>RNG Algorithm</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select an RNG algorithm">
+                              {field.value &&
+                                rngs.find(
+                                  (rng) => rng.id.toString() === field.value
+                                )?.name}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {rngs.map((rng) => (
+                            <SelectItem key={rng.id} value={rng.id.toString()}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{rng.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {rng.description}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Choose the random number generator to test
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Custom Bits Input (only for custom_bits input) */}
+              {inputType === "custom_bits" && (
+                <FormField
+                  control={form.control}
+                  name="custom_bits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Custom Bits</FormLabel>
+                      <FormControl>
+                        <ScrollArea className="h-[200px] w-full rounded-md border">
+                          <Textarea
+                            placeholder="Paste your bit sequence here (e.g., 0101101001...)"
+                            className="font-mono text-sm min-h-[200px] border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none break-all whitespace-pre-wrap"
+                            {...field}
+                            onChange={(e) => {
+                              const sanitized = e.target.value.replace(
+                                /[^01\s]/g,
+                                ""
+                              );
+                              field.onChange(sanitized);
+                            }}
+                          />
+                        </ScrollArea>
+                      </FormControl>
+                      <FormDescription>
+                        Enter a sequence of 0s and 1s. Spaces and line breaks
+                        will be ignored.
+                        <span className="block mt-1 font-medium">
+                          Bit count: {customBitCount}
+                          {customBitCount < 100 && (
+                            <span className="text-destructive ml-2">
+                              (minimum 100 required)
+                            </span>
+                          )}
+                        </span>
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {/* Test Type Selection */}
               <FormField
@@ -392,10 +607,21 @@ export const Tests = () => {
                             </span>
                           </div>
                         </SelectItem>
+                        <SelectItem value="diehard_suite">
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              Diehard Test Suite
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Run multiple Diehard tests
+                            </span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Choose between single test or NIST test suite
+                      Choose between single test, NIST test suite, or Diehard
+                      test suite
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -529,57 +755,172 @@ export const Tests = () => {
                 />
               )}
 
-              {/* Samples Count */}
-              <FormField
-                control={form.control}
-                name="samples_count"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Samples Count</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="100000"
-                        value={field.value}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Number of random samples to generate (100 - 10,000,000)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Diehard Tests Selection */}
+              {testType === "diehard_suite" && (
+                <FormField
+                  control={form.control}
+                  name="diehard_tests"
+                  render={() => (
+                    <FormItem>
+                      <div className="mb-4">
+                        <FormLabel className="text-base">
+                          Diehard Tests
+                        </FormLabel>
+                        <FormDescription>
+                          Select which Diehard tests to run (some tests require
+                          minimum bit counts)
+                        </FormDescription>
+                      </div>
+                      <ScrollArea className="h-96 border rounded-md">
+                        <div className="space-y-3 p-4">
+                          {DIEHARD_TESTS.map((test) => {
+                            const effectiveBitCount =
+                              inputType === "custom_bits"
+                                ? customBitCount
+                                : samplesCount;
+                            const isDisabled =
+                              effectiveBitCount < test.minSamples;
+                            const isChecked = form
+                              .watch("diehard_tests")
+                              ?.includes(test.id);
 
-              {/* Seed */}
-              <FormField
-                control={form.control}
-                name="seed"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Random Seed</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="42"
-                        value={field.value}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Initial seed value for reproducible results
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                            return (
+                              <FormField
+                                key={test.id}
+                                control={form.control}
+                                name="diehard_tests"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem key={test.id}>
+                                      <label
+                                        htmlFor={test.id}
+                                        className={`flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 transition-colors ${
+                                          isDisabled
+                                            ? "opacity-50 cursor-not-allowed bg-muted/30"
+                                            : "cursor-pointer hover:bg-accent/50 has-checked:bg-primary/5 has-checked:border-primary dark:has-checked:bg-primary/10"
+                                        }`}
+                                      >
+                                        <FormControl>
+                                          <Checkbox
+                                            id={test.id}
+                                            checked={isChecked && !isDisabled}
+                                            disabled={isDisabled}
+                                            onCheckedChange={(checked) => {
+                                              if (isDisabled) return;
+
+                                              return checked
+                                                ? field.onChange([
+                                                    ...(field.value || []),
+                                                    test.id,
+                                                  ])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                      (value) =>
+                                                        value !== test.id
+                                                    )
+                                                  );
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <div className="flex-1 space-y-1 leading-none">
+                                          <FormLabel
+                                            htmlFor={test.id}
+                                            className={`font-medium ${
+                                              isDisabled
+                                                ? "cursor-not-allowed"
+                                                : "cursor-pointer"
+                                            }`}
+                                          >
+                                            {test.name}
+                                          </FormLabel>
+                                          <FormDescription className="text-xs">
+                                            {test.description}
+                                          </FormDescription>
+                                          {isDisabled && (
+                                            <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                                              <AlertCircle className="h-3 w-3" />
+                                              Requires minimum{" "}
+                                              {test.minSamples.toLocaleString()}{" "}
+                                              {inputType === "custom_bits"
+                                                ? "bits"
+                                                : "samples"}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </label>
+                                    </FormItem>
+                                  );
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </ScrollArea>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Samples Count (only for algorithm input type) */}
+              {inputType === "algorithm" && (
+                <FormField
+                  control={form.control}
+                  name="samples_count"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Samples Count</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="100000"
+                          value={field.value}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Number of random samples to generate (100 - 10,000,000)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Seed (only for algorithm input type) */}
+              {inputType === "algorithm" && (
+                <FormField
+                  control={form.control}
+                  name="seed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Random Seed</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="42"
+                          value={field.value}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Initial seed value for reproducible results
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {/* Submit Button */}
               <Button
@@ -591,12 +932,19 @@ export const Tests = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Running {testType === "nist_suite" ? "Tests" : "Test"}...
+                    Running{" "}
+                    {testType === "nist_suite" || testType === "diehard_suite"
+                      ? "Tests"
+                      : "Test"}
+                    ...
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Run {testType === "nist_suite" ? "Tests" : "Test"}
+                    Run{" "}
+                    {testType === "nist_suite" || testType === "diehard_suite"
+                      ? "Tests"
+                      : "Test"}
                   </>
                 )}
               </Button>
