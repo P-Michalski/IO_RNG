@@ -26,8 +26,12 @@ export const NoResults = () => {
 
       <EmptyContent>
         <div className="flex gap-2">
-          {/* Need to add button functionality later on */}
-          <Button>Create Test</Button>
+          <Button>
+            <Link to="/tests" rel="noreferrer noopener">
+              Create Test
+            </Link>
+          </Button>
+          {/* Need to add button functionality later on or remove the button */}
           <Button variant="outline">Import Test</Button>
         </div>
       </EmptyContent>
