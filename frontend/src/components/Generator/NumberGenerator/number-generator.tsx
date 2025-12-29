@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Copy, TrendingUp } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Copy, TrendingUp, Volume2, VolumeX } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -37,6 +38,7 @@ import { extractBitsFromResponse } from "@/utils/compression";
 import { GeneratorForm } from "../generator-form";
 import { useGenerator } from "@/hooks/use-generator";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 
 interface NumberBlock {
   value: number;
@@ -64,9 +66,42 @@ export const NumberGenerator = () => {
   const [animatingNumbers, setAnimatingNumbers] = useState<Set<number>>(
     new Set()
   );
+
+  const [volume, setVolume] = useState(50); // 0-100
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const cancelGenerationRef = useRef(false);
 
   const generator = useGenerator();
+
+  useEffect(() => {
+    // Initialize audio
+    audioRef.current = new Audio("/sounds/pop.mp3");
+    audioRef.current.volume = volume / 100;
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume / 100;
+    }
+  }, [volume, isMuted]);
+
+  const playPopSound = () => {
+    if (audioRef.current && !isMuted) {
+      // Clone audio to allow overlapping sounds
+      const sound = audioRef.current.cloneNode() as HTMLAudioElement;
+      sound.volume = volume / 100;
+      sound.play().catch(() => {});
+    }
+  };
 
   const getAccentHueRange = (): { base: number; range: number } => {
     const root = document.documentElement;
@@ -153,6 +188,8 @@ export const NumberGenerator = () => {
   };
 
   const addNumberBlock = (num: number) => {
+    playPopSound();
+
     setNumberBlocks((prev) => {
       const existingIndex = prev.findIndex((block) => block.value === num);
 
@@ -274,7 +311,7 @@ export const NumberGenerator = () => {
               } else if (count <= 500) {
                 await new Promise((resolve) => setTimeout(resolve, 20));
               } else {
-                await new Promise((resolve) => setTimeout(resolve, 5));
+                await new Promise((resolve) => setTimeout(resolve, 10));
               }
             }
 
@@ -445,6 +482,43 @@ export const NumberGenerator = () => {
                 Animate Results
               </Label>
             </div>
+
+            {/* Volume Control - DODAJ TO */}
+            {animateResults && (
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="shrink-0"
+                >
+                  {isMuted ? (
+                    <VolumeX className="h-5 w-5" />
+                  ) : (
+                    <Volume2 className="h-5 w-5" />
+                  )}
+                </Button>
+                <div className="flex items-center gap-2 flex-1">
+                  <Slider
+                    value={[isMuted ? 0 : volume]}
+                    onValueChange={(value) => {
+                      setVolume(value[0]);
+                      if (value[0] > 0 && isMuted) {
+                        setIsMuted(false);
+                      }
+                    }}
+                    max={100}
+                    step={1}
+                    className="flex-1"
+                    disabled={isMuted}
+                  />
+                  <span className="text-sm text-muted-foreground w-10 text-right">
+                    {isMuted ? 0 : volume}%
+                  </span>
+                </div>
+              </div>
+            )}
           </>
         }
       />
@@ -519,6 +593,28 @@ export const NumberGenerator = () => {
               {numberBlocks.reduce((sum, block) => sum + block.count, 0)}
             </span>
           </div>
+          <DialogFooter className="flex-col items-center sm:items-center">
+            <p className="text-xs italic text-muted-foreground text-center">
+              Sound effect by{" "}
+              <a
+                href="https://pixabay.com/users/creatorshome-49707711/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=328170"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors"
+              >
+                CreatorsHome
+              </a>{" "}
+              from{" "}
+              <a
+                href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=328170"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors"
+              >
+                Pixabay
+              </a>
+            </p>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
