@@ -61,6 +61,11 @@ class ITestResultRepository(ABC):
         pass
 
     @abstractmethod
+    def get_all(self) -> List[TestResult]:
+        """Pobiera wszystkie wyniki testów"""
+        pass
+
+    @abstractmethod
     def get_latest(self, limit: int = 10) -> List[TestResult]:
         """Pobiera najnowsze wyniki"""
         pass

@@ -93,9 +93,9 @@ python manage.py createsuperuser
 - `GET /api/rngs/{id}/test_results` - Get test results for RNG
 
 ### Test Results
-- `GET /api/test-results` - List recent test results (paginated)
+- `GET /api/test-results` - List all test results
 - `GET /api/test-results/{id}` - Get specific test result
-- `DELETE /api/test-results/{id}` - **NEW**: Delete test result
+- `DELETE /api/test-results/{id}` - Delete test result
 
 ## RNG Runner System
 
@@ -144,7 +144,6 @@ Results include:
 - `passed` (bool) - Whether test passed critical threshold
 - `score` (0-1) - Quality score, 1.0 = perfect
 - `statistics` (dict) - Detailed test metrics (p-value, test-specific stats)
-- `generated_bits` (list) - **NEW**: Raw bit sequence used in test
 
 ## Generate Endpoint
 
@@ -185,6 +184,6 @@ CORS configured for Vite dev server at `localhost:5173` and `127.0.0.1:5173`.
 - Generator `code_path` is stored as relative filename only (e.g., `lcg.py`), resolved by runner implementations
 - Parameters for parametric generators (LCG: a/c/m, AWCG: r/s/base) can be passed in POST request or stored in RNG.parameters
 - All number generation flows through `UniversalRNGAdapter.generate_raw()` which returns `(data, DataType)`
-- **Test results now include `generated_bits` field** containing the raw bit sequence used in the test
 - Statistical tests: Basic tests (frequency, uniformity) operate on floats; NIST tests operate directly on bits
 - Delete endpoint available for cleaning up old test results
+- For recent changes and new features, see `NOWE_FUNKCJE.md`
