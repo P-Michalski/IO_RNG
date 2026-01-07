@@ -43,6 +43,8 @@ interface TestResultCardProps {
   result: TestResult;
   rngName: string;
   onDelete?: (id: number) => void;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 const renderStatisticValue = (value: unknown) => {
@@ -95,6 +97,8 @@ export const TestResultCard = ({
   result,
   rngName,
   onDelete,
+  isSelected = false,
+  onToggleSelect,
 }: TestResultCardProps) => {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -147,102 +151,108 @@ export const TestResultCard = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Card className="hover:border-primary transition-colors cursor-pointer">
-        <DialogTrigger asChild>
-          <div className="p-6">
-            <CardHeader className="p-0 mb-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  {result.passed ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-destructive" />
-                  )}
-                  <CardTitle className="text-lg">
-                    {formatTestName(result.test_name)}
-                  </CardTitle>
-                </div>
-                <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-                  <AlertDialogTrigger
-                    asChild
-                    onClick={(e) => e.stopPropagation()}
+      <Card
+        className={`hover:border-primary transition-all cursor-pointer ${
+          isSelected ? "ring-2 ring-primary border-primary bg-accent" : ""
+        }`}
+        onClick={onToggleSelect}
+      >
+        <div className="p-6">
+          <CardHeader className="p-0 mb-4">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {result.passed ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-destructive" />
+                )}
+                <CardTitle className="text-lg">
+                  {formatTestName(result.test_name)}
+                </CardTitle>
+              </div>
+              <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+                <AlertDialogTrigger
+                  asChild
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    disabled={isDeleting}
                   >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    <X className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      this test result and remove it from the database.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete();
+                      }}
                       disabled={isDeleting}
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Are you absolutely sure?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete this test result and remove it from the database.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete();
-                        }}
-                        disabled={isDeleting}
-                      >
-                        {isDeleting ? "Deleting..." : "Confirm"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-              <CardDescription>{rngName}</CardDescription>
-            </CardHeader>
+                      {isDeleting ? "Deleting..." : "Confirm"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+            <CardDescription>{rngName}</CardDescription>
+          </CardHeader>
 
-            <CardContent className="p-0 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Score</span>
-                <span className="font-medium">{result.score.toFixed(2)}</span>
-              </div>
+          <CardContent className="p-0 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Score</span>
+              <span className="font-medium">{result.score.toFixed(2)}</span>
+            </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <Hash className="h-3 w-3" />
-                  Samples
-                </span>
-                <span className="font-medium">
-                  {result.samples_count.toLocaleString()}
-                </span>
-              </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Hash className="h-3 w-3" />
+                Samples
+              </span>
+              <span className="font-medium">
+                {result.samples_count.toLocaleString()}
+              </span>
+            </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Time
-                </span>
-                <span className="font-medium">
-                  {result.execution_time_ms.toFixed(2)}ms
-                </span>
-              </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Time
+              </span>
+              <span className="font-medium">
+                {result.execution_time_ms.toFixed(2)}ms
+              </span>
+            </div>
 
+            <DialogTrigger asChild>
               <Button
                 variant="ghost"
                 className="w-full mt-4 justify-between"
                 size="sm"
+                onClick={(e) => e.stopPropagation()}
               >
                 View Details
                 <ChevronRight className="h-4 w-4" />
               </Button>
-            </CardContent>
-          </div>
-        </DialogTrigger>
+            </DialogTrigger>
+          </CardContent>
+        </div>
       </Card>
 
       <DialogContent className="max-w-2xl max-h-[80vh]">
