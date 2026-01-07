@@ -11,6 +11,7 @@ import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 interface PerformanceTrendsChartProps {
   title: string;
   data: Array<{ samples: number; passRate: number; score: number }>;
+  chartId?: string; // Optional for PDF capture
 }
 
 const performanceTrendChartConfig = {
@@ -27,6 +28,7 @@ const performanceTrendChartConfig = {
 export const PerformanceTrendsChart = ({
   title,
   data,
+  chartId,
 }: PerformanceTrendsChartProps) => {
   return (
     <Card className="min-w-0 overflow-hidden">
@@ -38,6 +40,8 @@ export const PerformanceTrendsChart = ({
           <ChartContainer
             config={performanceTrendChartConfig}
             className="h-[200px] w-full min-w-0"
+            data-chart-id={chartId}
+            data-chart-title={title}
           >
             <LineChart accessibilityLayer data={data}>
               <CartesianGrid vertical={false} />

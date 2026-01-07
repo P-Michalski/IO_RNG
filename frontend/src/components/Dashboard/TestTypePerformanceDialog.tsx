@@ -136,11 +136,16 @@ export const TestTypePerformanceDialog = ({
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-6 min-w-0">
                 {testPerformanceBySamples.map((test, idx) => (
-                  <PerformanceTrendsChart
+                  <div
                     key={idx}
-                    title={test.testName}
-                    data={test.data}
-                  />
+                    data-chart-id={`test-trend-${idx}`}
+                    data-chart-title={test.testName}
+                  >
+                    <PerformanceTrendsChart
+                      title={test.testName}
+                      data={test.data}
+                    />
+                  </div>
                 ))}
               </div>
             </ScrollArea>

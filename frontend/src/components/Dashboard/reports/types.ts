@@ -78,5 +78,21 @@ export interface ReportData {
     sampleDistribution?: string;
     rngComparison?: string;
     testComparison?: string;
+    // Dynamic trend charts
+    algorithmTrends?: Array<{
+      id: string;
+      title: string;
+      image: string;
+    }>;
+    testTrends?: Array<{
+      id: string;
+      title: string;
+      image: string;
+    }>;
+    // Chart colors from CSS variables
+    chartColors?: {
+      chart1: string; // Pass Rate color
+      chart2: string; // Score color
+    };
   };
 }

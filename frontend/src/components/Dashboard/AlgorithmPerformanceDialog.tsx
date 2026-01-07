@@ -141,11 +141,16 @@ export const AlgorithmPerformanceDialog = ({
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-6 min-w-0 ">
                 {rngPerformanceBySamples.map((rng, idx) => (
-                  <PerformanceTrendsChart
+                  <div
                     key={idx}
-                    title={rng.rngName}
-                    data={rng.data}
-                  />
+                    data-chart-id={`algorithm-trend-${rng.rngId}`}
+                    data-chart-title={rng.rngName}
+                  >
+                    <PerformanceTrendsChart
+                      title={rng.rngName}
+                      data={rng.data}
+                    />
+                  </div>
                 ))}
               </div>
             </ScrollArea>

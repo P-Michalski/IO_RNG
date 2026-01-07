@@ -224,4 +224,29 @@ export const styles = StyleSheet.create({
   pageBreak: {
     marginTop: 20,
   },
+
+  // Chart legend
+  chartLegend: {
+    flexDirection: "row",
+    gap: 16,
+    marginTop: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: "#f8fafc",
+    borderRadius: 4,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  legendBox: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+  },
+  legendText: {
+    fontSize: 9,
+    color: "#475569",
+  },
 });

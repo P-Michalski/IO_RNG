@@ -20,6 +20,7 @@ import { AlgorithmPerformanceDialog } from "./AlgorithmPerformanceDialog";
 import { TestTypePerformanceDialog } from "./TestTypePerformanceDialog";
 import { SampleSizeDistribution } from "./SampleSizeDistribution";
 import { ReportGenerator } from "./reports";
+import { HiddenChartsRenderer } from "./HiddenChartsRenderer";
 
 export const Dashboard = () => {
   const { results, rngs, loading, error, refetch } = useTestResults();
@@ -414,6 +415,12 @@ export const Dashboard = () => {
 
       {/* Sample Size Distribution */}
       <SampleSizeDistribution data={statistics.sampleDistribution} />
+
+      {/* Hidden charts for PDF generation */}
+      <HiddenChartsRenderer
+        rngPerformanceBySamples={statistics.rngPerformanceBySamples}
+        testPerformanceBySamples={statistics.testPerformanceBySamples}
+      />
     </div>
   );
 };

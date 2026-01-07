@@ -89,10 +89,29 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
         });
       }
 
+      setProgress(40);
+
+      // Collect dynamic trend charts for algorithms
+      const algorithmTrendElements = document.querySelectorAll(
+        '[data-chart-id^="algorithm-trend-"]'
+      );
+      const algorithmTrends: Array<{
+        id: string;
+        title: string;
+        image: string;
+      }> = [];
+
+      // Collect dynamic trend charts for tests
+      const testTrendElements = document.querySelectorAll(
+        '[data-chart-id^="test-trend-"]'
+      );
+      const testTrends: Array<{ id: string; title: string; image: string }> =
+        [];
+
       setProgress(50);
 
       // Convert charts to images
-      let chartImages = {};
+      let chartImages: any = {};
       if (chartElements.length > 0) {
         try {
           chartImages = await chartsToImages(chartElements, {
@@ -104,6 +123,100 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
           // Continue without charts
         }
       }
+
+      setProgress(60);
+
+      // Convert algorithm trend charts
+      if (algorithmTrendElements.length > 0) {
+        try {
+          for (const element of Array.from(algorithmTrendElements)) {
+            const htmlElement = element as HTMLElement;
+            const chartId = htmlElement.getAttribute("data-chart-id") || "";
+            const chartTitle =
+              htmlElement.getAttribute("data-chart-title") || "";
+
+            const image = await chartsToImages(
+              [{ id: chartId, element: htmlElement }],
+              { scale: 2, backgroundColor: "#ffffff" }
+            );
+
+            algorithmTrends.push({
+              id: chartId,
+              title: chartTitle,
+              image: image[chartId],
+            });
+          }
+        } catch (error) {
+          console.warn("Could not capture algorithm trend charts:", error);
+        }
+      }
+
+      setProgress(65);
+
+      // Convert test trend charts
+      if (testTrendElements.length > 0) {
+        try {
+          for (const element of Array.from(testTrendElements)) {
+            const htmlElement = element as HTMLElement;
+            const chartId = htmlElement.getAttribute("data-chart-id") || "";
+            const chartTitle =
+              htmlElement.getAttribute("data-chart-title") || "";
+
+            const image = await chartsToImages(
+              [{ id: chartId, element: htmlElement }],
+              { scale: 2, backgroundColor: "#ffffff" }
+            );
+
+            testTrends.push({
+              id: chartId,
+              title: chartTitle,
+              image: image[chartId],
+            });
+          }
+        } catch (error) {
+          console.warn("Could not capture test trend charts:", error);
+        }
+      }
+
+      // Add trend charts to chartImages
+      if (algorithmTrends.length > 0) {
+        chartImages.algorithmTrends = algorithmTrends;
+      }
+      if (testTrends.length > 0) {
+        chartImages.testTrends = testTrends;
+      }
+
+      // Get chart colors from CSS variables
+      // Create canvas element to properly convert oklch colors to hex
+      const getColorAsHex = (varName: string): string => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return "#3b82f6";
+
+        // Get the CSS variable value
+        const rootStyles = getComputedStyle(document.documentElement);
+        const colorValue = rootStyles.getPropertyValue(varName).trim();
+
+        // Draw with the color and read back the RGB value
+        ctx.fillStyle = colorValue;
+        ctx.fillRect(0, 0, 1, 1);
+        const imageData = ctx.getImageData(0, 0, 1, 1).data;
+
+        // Convert to hex
+        const r = imageData[0];
+        const g = imageData[1];
+        const b = imageData[2];
+        return `#${((1 << 24) + (r << 16) + (g << 8) + b)
+          .toString(16)
+          .slice(1)}`;
+      };
+
+      chartImages.chartColors = {
+        chart1: getColorAsHex("--chart-1"),
+        chart2: getColorAsHex("--chart-2"),
+      };
 
       setProgress(70);
 
