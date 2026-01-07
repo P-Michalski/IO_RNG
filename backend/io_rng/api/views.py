@@ -121,17 +121,9 @@ class RNGViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def run_test(self, request, pk=None):
         """
-        POST /api/rngs/{id}/run_test/?compressed=true
+        POST /api/rngs/{id}/run_test/
         Uruchamia test dla RNG - to jest główna akcja!
-
-        Query params:
-            compressed (bool): If true, returns base64-compressed bits (default: false)
         """
-        from io_rng.utils.compression import compress_bits_to_base64
-
-        # Sprawdź parametr query dla kompresji
-        use_compression = request.query_params.get('compressed', 'false').lower() == 'true'
-
         serializer = RunTestRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -152,30 +144,7 @@ class RNGViewSet(viewsets.ViewSet):
                 parameters=data.get('parameters')
             )
 
-            # Modyfikuj response jeśli kompresja jest włączona
-            if use_compression and result.generated_bits:
-                # Dodaj skompresowaną wersję do response
-                result_data = {
-                    'id': result.id,
-                    'rng_id': result.rng_id,
-                    'test_name': result.test_name,
-                    'passed': result.passed,
-                    'score': result.score,
-                    'execution_time_ms': result.execution_time_ms,
-                    'samples_count': result.samples_count,
-                    'statistics': result.statistics,
-                    'error_message': result.error_message,
-                    'created_at': result.created_at,
-                    # Kompresja zamiast surowej listy
-                    'bits_compressed': compress_bits_to_base64(result.generated_bits),
-                    'bits_format': 'base64-bitpack',
-                    'bits_count': len(result.generated_bits)
-                }
-                result_serializer = TestResultSerializer(result_data)
-            else:
-                # Backward compatible - zwróć array
-                result_serializer = TestResultSerializer(result)
-
+            result_serializer = TestResultSerializer(result)
             return Response(result_serializer.data)
 
         except ValueError as e:
@@ -367,9 +336,8 @@ class TestResultViewSet(viewsets.ViewSet):
         self.repository = DjangoTestResultRepository()
 
     def list(self, request):
-        """GET /api/test-results/ - Najnowsze wyniki"""
-        limit = int(request.query_params.get('limit', 20))
-        results = self.repository.get_latest(limit)
+        """GET /api/test-results/ - Wszystkie wyniki"""
+        results = self.repository.get_all()
         serializer = TestResultSerializer(results, many=True)
         return Response(serializer.data)
 

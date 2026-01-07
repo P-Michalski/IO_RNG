@@ -73,12 +73,6 @@ class TestResultSerializer(serializers.Serializer):
     samples_count = serializers.IntegerField()
     statistics = serializers.JSONField()
     error_message = serializers.CharField(required=False, allow_null=True)
-    generated_bits = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=False,
-        allow_null=True,
-        help_text="Raw bit array (legacy format, use bits_compressed when available)"
-    )
     # Pola kompresji base64 (opcjonalne, użyj z ?compressed=true)
     bits_compressed = serializers.CharField(
         required=False,

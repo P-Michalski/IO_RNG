@@ -111,8 +111,7 @@ class DjangoTestResultRepository(ITestResultRepository):
             execution_time_ms=result.execution_time_ms,
             samples_count=result.samples_count,
             statistics=result.statistics,
-            error_message=result.error_message,
-            generated_bits=result.generated_bits
+            error_message=result.error_message
         )
         model.save()
 
@@ -126,7 +125,7 @@ class DjangoTestResultRepository(ITestResultRepository):
         except TestResultModel.DoesNotExist:
             return None
 
-    def get_by_rng(self, rng_id: int) -> List[TestResult]:  # ← usuń limit z sygnatury!
+    def get_by_rng(self, rng_id: int) -> List[TestResult]:
         """Pobiera wyniki dla danego RNG"""
         models = TestResultModel.objects.filter(
             rng_id=rng_id
@@ -134,7 +133,12 @@ class DjangoTestResultRepository(ITestResultRepository):
 
         return [self._to_entity(m) for m in models]
 
-    def get_latest(self, limit: int = 10) -> List[TestResult]:  # ← to pasuje do interface!
+    def get_all(self) -> List[TestResult]:
+        """Pobiera wszystkie wyniki testów"""
+        models = TestResultModel.objects.all().order_by('-created_at')
+        return [self._to_entity(m) for m in models]
+
+    def get_latest(self, limit: int = 10) -> List[TestResult]:
         """Pobiera najnowsze wyniki"""
         models = TestResultModel.objects.all().order_by('-created_at')[:limit]
         return [self._to_entity(m) for m in models]
@@ -159,6 +163,5 @@ class DjangoTestResultRepository(ITestResultRepository):
             samples_count=model.samples_count,
             statistics=model.statistics,
             error_message=model.error_message,
-            created_at=model.created_at,
-            generated_bits=model.generated_bits
+            created_at=model.created_at
         )

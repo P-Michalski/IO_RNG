@@ -114,8 +114,7 @@ class RunRNGTestUseCase:
             score=test_result['score'],
             execution_time_ms=execution_time,
             samples_count=samples_count,
-            statistics=test_result['statistics'],
-            generated_bits=bits  # Zapisz wygenerowane bity
+            statistics=test_result['statistics']
         )
 
         # 6. Zapisz wynik
