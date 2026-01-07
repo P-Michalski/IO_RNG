@@ -1,6 +1,10 @@
 import { Outlet } from "react-router-dom";
 import { NavigationSidebar } from "./components/NavigationSidebar/navigation-sidebar";
-import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "./components/ui/sidebar";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "sonner";
 import {
@@ -10,6 +14,7 @@ import {
 } from "./components/ui/tooltip";
 import { LanguageProvider } from "./contexts/language-context";
 import { Footer } from "./components/Footer/footer";
+import { TestResultsProvider } from "./contexts/test-results-context";
 
 function App() {
   return (
@@ -20,23 +25,28 @@ function App() {
       colorSchemeStorageKey="vite-ui-color-scheme"
     >
       <LanguageProvider>
-        <SidebarProvider>
-          <NavigationSidebar />
-          <main className="flex flex-col min-h-screen w-full">
-            <div className="flex-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SidebarTrigger className="sticky top-0" />
-                </TooltipTrigger>
-                <TooltipContent>Toggle Sidebar</TooltipContent>
-              </Tooltip>
-
-              <Outlet />
+        <TestResultsProvider>
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full">
+              <NavigationSidebar />
+              <SidebarInset className="flex flex-col flex-1 min-w-0">
+                <header className="sticky top-0 z-10 bg-background border-b">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarTrigger />
+                    </TooltipTrigger>
+                    <TooltipContent>Toggle Sidebar</TooltipContent>
+                  </Tooltip>
+                </header>
+                <main className="flex-1">
+                  <Outlet />
+                </main>
+                <Footer />
+              </SidebarInset>
             </div>
-            <Footer />
-          </main>
-          <Toaster />
-        </SidebarProvider>
+            <Toaster />
+          </SidebarProvider>
+        </TestResultsProvider>
       </LanguageProvider>
     </ThemeProvider>
   );
