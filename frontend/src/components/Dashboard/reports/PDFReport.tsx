@@ -22,13 +22,24 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
     return num.toFixed(decimals);
   };
 
+  // Get theme colors with fallbacks
+  const primaryColor = data.chartImages?.themeColors?.primary || "#3b82f6";
+  const primaryForeground =
+    data.chartImages?.themeColors?.primaryForeground || "#ffffff";
+  const mutedColor = data.chartImages?.themeColors?.muted || "#f1f5f9";
+  const borderColor = data.chartImages?.themeColors?.border || "#e2e8f0";
+
   return (
     <Document>
       {/* Page 1: Summary & Overview */}
       <Page size="A4" style={styles.page}>
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Test Results Report</Text>
+        <View
+          style={[styles.header, { borderBottom: `2 solid ${primaryColor}` }]}
+        >
+          <Text style={[styles.title, { color: primaryColor }]}>
+            Test Results Report
+          </Text>
           <Text style={styles.subtitle}>
             Comprehensive Analysis of RNG Algorithm Testing
           </Text>
@@ -86,7 +97,10 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
             <View
               style={[
                 styles.progressBarFill,
-                { width: `${data.summary.overallPassRate}%` },
+                {
+                  width: `${data.summary.overallPassRate}%`,
+                  backgroundColor: primaryColor,
+                },
               ]}
             />
           </View>
@@ -114,18 +128,51 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
 
           {/* Top Algorithms Table */}
           <View style={[styles.table, styles.mt3]} wrap>
-            <View style={styles.tableHeader} fixed>
-              <Text style={styles.tableCellHeader}>Algorithm</Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+            <View
+              style={[
+                styles.tableHeader,
+                {
+                  backgroundColor: primaryColor,
+                  borderBottom: `2 solid ${borderColor}`,
+                },
+              ]}
+              fixed
+            >
+              <Text
+                style={[styles.tableCellHeader, { color: primaryForeground }]}
+              >
+                Algorithm
+              </Text>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Pass Rate
               </Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Avg Score
               </Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Avg Time (ms)
               </Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Tests
               </Text>
             </View>
@@ -186,18 +233,51 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
 
           {/* Test Types Table */}
           <View style={[styles.table, styles.mt3]} wrap>
-            <View style={styles.tableHeader} fixed>
-              <Text style={styles.tableCellHeader}>Test Type</Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+            <View
+              style={[
+                styles.tableHeader,
+                {
+                  backgroundColor: primaryColor,
+                  borderBottom: `2 solid ${borderColor}`,
+                },
+              ]}
+              fixed
+            >
+              <Text
+                style={[styles.tableCellHeader, { color: primaryForeground }]}
+              >
+                Test Type
+              </Text>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Pass Rate
               </Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Avg Score
               </Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Avg Time (ms)
               </Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Tests
               </Text>
             </View>
@@ -256,12 +336,34 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
 
           {/* Sample Size Table */}
           <View style={[styles.table, styles.mt3]}>
-            <View style={styles.tableHeader}>
-              <Text style={styles.tableCellHeader}>Sample Range</Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+            <View
+              style={[
+                styles.tableHeader,
+                {
+                  backgroundColor: primaryColor,
+                  borderBottom: `2 solid ${borderColor}`,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.tableCellHeader, { color: primaryForeground }]}
+              >
+                Sample Range
+              </Text>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Test Count
               </Text>
-              <Text style={[styles.tableCellHeader, { textAlign: "right" }]}>
+              <Text
+                style={[
+                  styles.tableCellHeader,
+                  { textAlign: "right", color: primaryForeground },
+                ]}
+              >
                 Avg Time (ms)
               </Text>
             </View>
@@ -350,15 +452,37 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
               >
                 <Text style={styles.sectionSubtitle}>{rng.rngName}</Text>
                 <View style={styles.table} wrap>
-                  <View style={styles.tableHeader} fixed>
-                    <Text style={styles.tableCellHeader}>Samples</Text>
+                  <View
+                    style={[
+                      styles.tableHeader,
+                      {
+                        backgroundColor: primaryColor,
+                        borderBottom: `2 solid ${borderColor}`,
+                      },
+                    ]}
+                    fixed
+                  >
                     <Text
-                      style={[styles.tableCellHeader, { textAlign: "right" }]}
+                      style={[
+                        styles.tableCellHeader,
+                        { color: primaryForeground },
+                      ]}
+                    >
+                      Samples
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCellHeader,
+                        { textAlign: "right", color: primaryForeground },
+                      ]}
                     >
                       Pass Rate
                     </Text>
                     <Text
-                      style={[styles.tableCellHeader, { textAlign: "right" }]}
+                      style={[
+                        styles.tableCellHeader,
+                        { textAlign: "right", color: primaryForeground },
+                      ]}
                     >
                       Avg Score
                     </Text>

@@ -218,6 +218,14 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
         chart2: getColorAsHex("--chart-2"),
       };
 
+      // Get theme colors
+      chartImages.themeColors = {
+        primary: getColorAsHex("--primary"),
+        primaryForeground: getColorAsHex("--primary-foreground"),
+        muted: getColorAsHex("--muted"),
+        border: getColorAsHex("--border"),
+      };
+
       setProgress(70);
 
       // Step 3: Generate PDF (20%)

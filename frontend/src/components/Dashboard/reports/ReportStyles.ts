@@ -12,13 +12,11 @@ export const styles = StyleSheet.create({
   // Header
   header: {
     marginBottom: 30,
-    borderBottom: "2 solid #3b82f6",
     paddingBottom: 15,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#1e40af",
     marginBottom: 8,
   },
   subtitle: {
@@ -92,8 +90,6 @@ export const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f1f5f9",
-    borderBottom: "2 solid #cbd5e1",
     paddingVertical: 8,
     paddingHorizontal: 10,
   },
@@ -182,7 +178,6 @@ export const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: "#3b82f6",
   },
 
   // Footer

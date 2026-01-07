@@ -94,5 +94,12 @@ export interface ReportData {
       chart1: string; // Pass Rate color
       chart2: string; // Score color
     };
+    // Theme colors from CSS variables
+    themeColors?: {
+      primary: string; // Primary color for headers, progress bars
+      primaryForeground: string; // Text on primary color
+      muted: string; // Muted backgrounds
+      border: string; // Border color
+    };
   };
 }
