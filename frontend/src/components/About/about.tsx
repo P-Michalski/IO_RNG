@@ -143,7 +143,7 @@ export const About = () => {
       <div className="space-y-2 text-center">
         <h1 className="text-4xl font-bold tracking-tight">About IO_RNG</h1>
         <p className="text-muted-foreground text-lg">
-          Random Number Generator Testing Platform
+          Random Number Generator Testing & Analysis Platform
         </p>
       </div>
 
@@ -155,10 +155,12 @@ export const About = () => {
         <CardContent className="space-y-4">
           <p className="text-muted-foreground leading-relaxed">
             IO_RNG is a comprehensive platform for testing and analyzing
-            pseudorandom number generators (PRNGs). The project implements
-            various pseudorandom number generation algorithms including LCG,
-            Park-Miller, PCG32, Python's built-in RNG, SplitMix64, Xorshift,
-            Xoshiro256, AWCG, Blum Blum Shub, ChaCha20, and system RNG.
+            pseudorandom number generators (PRNGs). The project implements{" "}
+            <strong>11 different algorithms</strong> including classical
+            generators (LCG, Park-Miller, AWCG), modern fast PRNGs (PCG32,
+            SplitMix64, Xorshift, Xoshiro256**), cryptographically secure
+            generators (Blum Blum Shub, ChaCha20), and system RNGs (Python's
+            built-in, OS RNG).
           </p>
 
           <div
@@ -170,19 +172,100 @@ export const About = () => {
           >
             <div className="overflow-hidden">
               <div className="space-y-4">
-                <p className="text-muted-foreground leading-relaxed">
-                  The platform provides statistical testing capabilities using
-                  the NIST Test Suite and basic statistical tests (Frequency
-                  Test, Uniformity Test). Users can generate random bit
-                  sequences, run comprehensive statistical tests, and analyze
-                  results through an intuitive web interface.
-                </p>
-                <p className="text-muted-foreground leading-relaxed">
-                  Built with a modern tech stack featuring Django REST Framework
-                  for the backend and React with TypeScript for the frontend,
-                  the project follows Clean Architecture principles ensuring
-                  maintainability and scalability.
-                </p>
+                <div>
+                  <h3 className="font-semibold mb-2 text-foreground">
+                    Statistical Testing Suite
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    The platform provides extensive testing capabilities with{" "}
+                    <strong>15 NIST Test Suite tests</strong> (including
+                    Monobit, Runs, Matrix Rank, FFT, Overlapping/Non-Overlapping
+                    Templates, Universal Statistical, Linear Complexity, Serial,
+                    Approximate Entropy, Cumulative Sums, and Random
+                    Excursions), <strong>5 Diehard Battery tests</strong>{" "}
+                    (Birthday Spacings, Overlapping Permutations, Binary Rank,
+                    Bitstream, OPSO), and{" "}
+                    <strong>2 basic statistical tests</strong> (Chi-square
+                    Frequency Test, Uniformity Test).
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2 text-foreground">
+                    Advanced Features
+                  </h3>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>
+                      <strong>Interactive Dashboard</strong> - Real-time
+                      visualization of test results with comprehensive charts
+                      and analytics
+                    </li>
+                    <li>
+                      <strong>Batch Testing</strong> - Run multiple tests
+                      simultaneously with different sample sizes and parameters
+                    </li>
+                    <li>
+                      <strong>PDF Report Generation</strong> - Export detailed
+                      reports with charts and statistical analysis
+                    </li>
+                    <li>
+                      <strong>Custom Bit Testing</strong> - Test your own bit
+                      sequences without saving to database
+                    </li>
+                    <li>
+                      <strong>Bit Compression</strong> - Efficient storage with
+                      94% space reduction using base64 encoding
+                    </li>
+                    <li>
+                      <strong>Cross-Platform Support</strong> - Python, Rust,
+                      and C# generators with unified interface
+                    </li>
+                    <li>
+                      <strong>Parametric Generators</strong> - Customize LCG and
+                      AWCG with your own parameters (multiplier, increment,
+                      modulus)
+                    </li>
+                    <li>
+                      <strong>Comprehensive Wiki</strong> - Detailed
+                      documentation for all 11 implemented algorithms and 22
+                      statistical tests, available in both Polish and English
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2 text-foreground">
+                    Technical Implementation
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Built with modern technologies:{" "}
+                    <strong>Django REST Framework</strong> for the backend with
+                    Clean Architecture principles,{" "}
+                    <strong>React + TypeScript</strong> for the frontend with
+                    Tailwind CSS and shadcn/ui components,{" "}
+                    <strong>SQLite</strong> database for efficient data storage,
+                    and <strong>Recharts</strong> for interactive data
+                    visualization. The project supports multiple programming
+                    languages through a universal adapter pattern, enabling
+                    seamless integration of Python modules, compiled executables
+                    (Rust, C#), and system RNGs.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2 text-foreground">
+                    Use Cases
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Perfect for researchers, students, and developers who need
+                    to evaluate RNG quality for cryptographic applications,
+                    statistical simulations, Monte Carlo methods, gaming
+                    applications, or educational purposes. Compare different
+                    algorithms, understand their statistical properties through
+                    our extensive wiki, and make informed decisions about which
+                    generator to use for your specific requirements.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
