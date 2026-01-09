@@ -9,6 +9,7 @@ export interface TestResult {
   statistics: Record<string, any>;
   error_message: string | null;
   created_at: string;
+  test_parameters?: Record<string, any>;
 }
 
 export interface RNG {

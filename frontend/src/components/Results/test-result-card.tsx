@@ -330,6 +330,35 @@ export const TestResultCard = ({
               </div>
             )}
 
+            {/* Test Parameters */}
+            {result.test_parameters &&
+              Object.keys(result.test_parameters).length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">
+                    Test Parameters
+                  </h3>
+                  <div className="rounded-lg border p-4 space-y-2">
+                    {Object.entries(result.test_parameters).map(
+                      ([key, value]) => (
+                        <div
+                          key={key}
+                          className="flex items-center justify-between py-1 border-b last:border-b-0"
+                        >
+                          <span className="text-sm text-muted-foreground capitalize">
+                            {formatKey(key)}
+                          </span>
+                          <span className="text-sm font-medium">
+                            {typeof value === "object"
+                              ? JSON.stringify(value)
+                              : String(value)}
+                          </span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
             {/* Metadata */}
             <div>
               <h3 className="text-lg font-semibold mb-3">Metadata</h3>

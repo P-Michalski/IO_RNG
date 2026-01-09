@@ -18,6 +18,9 @@ export interface TestFormValues {
   diehard_tests?: string[];
   samples_count: number;
   seed: number;
+  algorithm_params?: Record<string, any>;
+  advanced_params?: Record<string, any>;
+  use_defaults?: boolean;
 }
 
 export interface TestSession {
@@ -64,6 +67,9 @@ const defaultConfig: TestFormValues = {
   diehard_tests: [],
   samples_count: 100000,
   seed: 42,
+  algorithm_params: {},
+  advanced_params: {},
+  use_defaults: true,
 };
 
 export const useTestStore = create<TestStore>()(

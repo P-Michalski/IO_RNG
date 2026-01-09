@@ -69,6 +69,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Link } from "react-router-dom";
+import {
+  ALGORITHM_PARAMS,
+  type AlgorithmId,
+} from "../Generator/generator-form";
+import { Separator } from "@/components/ui/separator";
 
 const NIST_TESTS = [
   {
@@ -275,10 +280,24 @@ export const Tests = () => {
       diehard_tests: [],
       samples_count: 100000,
       seed: 42,
+      algorithm_params: {},
+      advanced_params: {},
+      use_defaults: true,
     },
   });
 
   const previousTabRef = useRef<string>(activeTab);
+
+  // State for algorithm parameters
+  const [algorithmParams, setAlgorithmParams] = useState<Record<string, any>>(
+    activeSession?.config?.algorithm_params || {}
+  );
+  const [advancedParams, setAdvancedParams] = useState<Record<string, any>>(
+    activeSession?.config?.advanced_params || {}
+  );
+  const [useDefaults, setUseDefaults] = useState(
+    activeSession?.config?.use_defaults ?? true
+  );
 
   useEffect(() => {
     // Only reset if we actually switched tabs AND activeSession exists
@@ -288,6 +307,10 @@ export const Tests = () => {
         form.reset(activeSession.config, {
           keepDefaultValues: false,
         });
+        // Also reset params state
+        setAlgorithmParams(activeSession.config.algorithm_params || {});
+        setAdvancedParams(activeSession.config.advanced_params || {});
+        setUseDefaults(activeSession.config.use_defaults ?? true);
       });
       previousTabRef.current = activeTab;
     }
@@ -297,8 +320,31 @@ export const Tests = () => {
   const samplesCount = form?.watch("samples_count");
   const inputType = form?.watch("input_type");
   const customBits = form?.watch("custom_bits");
+  const rngId = form?.watch("rng_id");
 
   const customBitCount = customBits?.replace(/\s/g, "").length || 0;
+
+  // Load algorithm parameters when RNG changes
+  useEffect(() => {
+    if (rngId && inputType === "algorithm") {
+      const selectedRng = rngs.find((rng) => rng.id.toString() === rngId);
+      if (selectedRng && selectedRng.id in ALGORITHM_PARAMS) {
+        const algoId = selectedRng.id as AlgorithmId;
+        const algoConfig = ALGORITHM_PARAMS[algoId];
+
+        // Always load fresh parameters for the selected algorithm
+        setAlgorithmParams({ ...algoConfig.params });
+        setAdvancedParams({ ...algoConfig.defaults });
+      } else {
+        setAlgorithmParams({});
+        setAdvancedParams({});
+      }
+    } else if (inputType === "custom_bits") {
+      // Clear params when switching to custom bits
+      setAlgorithmParams({});
+      setAdvancedParams({});
+    }
+  }, [rngId, inputType, rngs]);
 
   // Focus edit input when editing starts
   useEffect(() => {
@@ -375,7 +421,12 @@ export const Tests = () => {
     const handler = setTimeout(() => {
       if (activeSession) {
         const values = form.getValues();
-        updateSessionConfig(activeTab, values);
+        updateSessionConfig(activeTab, {
+          ...values,
+          algorithm_params: algorithmParams,
+          advanced_params: advancedParams,
+          use_defaults: useDefaults,
+        });
       }
     }, 500);
 
@@ -390,6 +441,9 @@ export const Tests = () => {
     form.watch("nist_tests"),
     form.watch("diehard_tests"),
     form.watch("seed"),
+    algorithmParams,
+    advancedParams,
+    useDefaults,
     activeTab,
     activeSession,
     updateSessionConfig,
@@ -590,6 +644,10 @@ export const Tests = () => {
               test_name: testName,
               samples_count: values.samples_count,
               seed: values.seed,
+              parameters: {
+                ...values.algorithm_params,
+                ...values.advanced_params,
+              },
             }),
             signal,
           }
@@ -1152,6 +1210,95 @@ export const Tests = () => {
                             )}
                           />
                         )}
+
+                        {/* Algorithm Parameters Section */}
+                        {inputType === "algorithm" &&
+                          rngId &&
+                          Object.keys(algorithmParams).length > 0 && (
+                            <>
+                              <Separator />
+                              <div className="space-y-3">
+                                <FormLabel>Algorithm Parameters</FormLabel>
+                                {Object.entries(algorithmParams).map(
+                                  ([key, value]) => (
+                                    <div key={key} className="space-y-2">
+                                      <FormLabel
+                                        htmlFor={`algo-${key}`}
+                                        className="text-sm capitalize"
+                                      >
+                                        {key.replace("_", " ")}
+                                      </FormLabel>
+                                      <Input
+                                        id={`algo-${key}`}
+                                        value={value}
+                                        onChange={(e) =>
+                                          setAlgorithmParams({
+                                            ...algorithmParams,
+                                            [key]: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  )
+                                )}
+                              </div>
+
+                              <Separator />
+
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id="useDefaults"
+                                    checked={useDefaults}
+                                    onCheckedChange={(checked) =>
+                                      setUseDefaults(checked as boolean)
+                                    }
+                                  />
+                                  <FormLabel
+                                    htmlFor="useDefaults"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    Use default advanced parameters
+                                  </FormLabel>
+                                </div>
+
+                                <div className="space-y-3">
+                                  <FormLabel>Advanced Parameters</FormLabel>
+                                  {Object.entries(
+                                    useDefaults
+                                      ? rngId &&
+                                        (parseInt(rngId) as AlgorithmId) in
+                                          ALGORITHM_PARAMS
+                                        ? ALGORITHM_PARAMS[
+                                            parseInt(rngId) as AlgorithmId
+                                          ].defaults
+                                        : {}
+                                      : advancedParams
+                                  ).map(([key, value]) => (
+                                    <div key={key} className="space-y-2">
+                                      <FormLabel
+                                        htmlFor={`adv-${key}`}
+                                        className="text-sm capitalize"
+                                      >
+                                        {key.replace("_", " ")}
+                                      </FormLabel>
+                                      <Input
+                                        id={`adv-${key}`}
+                                        value={value}
+                                        onChange={(e) =>
+                                          setAdvancedParams({
+                                            ...advancedParams,
+                                            [key]: e.target.value,
+                                          })
+                                        }
+                                        disabled={useDefaults}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </>
+                          )}
 
                         {/* Custom Bits Input */}
                         {inputType === "custom_bits" && (
