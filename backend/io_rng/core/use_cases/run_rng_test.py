@@ -1204,39 +1204,52 @@ class RunRNGTestUseCase:
                 'statistics': {'error': 'Need at least 200 blocks (minimum 100000 bits for M=500)'}
             }
 
-        def berlekamp_massey(bits):
+        def berlekamp_massey(bits_block):
             """Algorytm Berlekamp-Massey - oblicza złożoność liniową"""
-            n = len(bits)
-            c = [0] * n
-            b = [0] * n
+            if HAS_NUMPY and isinstance(bits_block, np.ndarray):
+                # Numpy version - konwertuj do listy dla BM
+                bits_list = bits_block.tolist()
+            else:
+                bits_list = bits_block
+
+            n_bm = len(bits_list)
+            c = [0] * n_bm
+            b = [0] * n_bm
             c[0] = b[0] = 1
             L = 0
             m = -1
-            N = 0
+            N_bm = 0
 
-            while N < n:
-                d = bits[N]
+            while N_bm < n_bm:
+                d = bits_list[N_bm]
                 for i in range(1, L + 1):
-                    d ^= c[i] & bits[N - i]
+                    d ^= c[i] & bits_list[N_bm - i]
 
                 if d == 1:
                     t = c[:]
-                    for i in range(n - N + m):
-                        c[N - m + i] ^= b[i]
-                    if L <= N // 2:
-                        L = N + 1 - L
-                        m = N
+                    for i in range(n_bm - N_bm + m):
+                        c[N_bm - m + i] ^= b[i]
+                    if L <= N_bm // 2:
+                        L = N_bm + 1 - L
+                        m = N_bm
                         b = t
-                N += 1
+                N_bm += 1
 
             return L
 
         # Oblicz złożoność dla każdego bloku
-        complexities = []
-        for i in range(N):
-            block = bits[i * M:(i + 1) * M]
-            L = berlekamp_massey(block)
-            complexities.append(L)
+        if HAS_NUMPY:
+            # Numpy version - reshape na bloki i przetwórz
+            bits_arr = np.array(bits[:N * M], dtype=np.int8)
+            blocks = bits_arr.reshape(N, M)
+            complexities = [berlekamp_massey(blocks[i]) for i in range(N)]
+        else:
+            # Fallback
+            complexities = []
+            for i in range(N):
+                block = bits[i * M:(i + 1) * M]
+                L = berlekamp_massey(block)
+                complexities.append(L)
 
         # Oczekiwana wartość
         mu = M / 2.0 + (9.0 + (-1) ** (M + 1)) / 36.0 - (M / 3.0 + 2.0 / 9.0) / (2 ** M)
@@ -1687,12 +1700,21 @@ class RunRNGTestUseCase:
             }
 
         # Konwertuj bity na 8-bitowe bajty
-        bytes_list = []
-        for i in range(0, len(bits) - 7, 8):
-            byte_val = 0
-            for j in range(8):
-                byte_val = (byte_val << 1) | bits[i + j]
-            bytes_list.append(byte_val)
+        if HAS_NUMPY:
+            # Numpy version - szybsza konwersja bitów na bajty
+            num_bytes = (len(bits) - 7) // 8
+            bits_arr = np.array(bits[:num_bytes * 8], dtype=np.int8)
+            bits_reshaped = bits_arr.reshape(num_bytes, 8)
+            powers = 2 ** np.arange(7, -1, -1, dtype=np.int32)
+            bytes_list = (bits_reshaped * powers).sum(axis=1).tolist()
+        else:
+            # Fallback
+            bytes_list = []
+            for i in range(0, len(bits) - 7, 8):
+                byte_val = 0
+                for j in range(8):
+                    byte_val = (byte_val << 1) | bits[i + j]
+                bytes_list.append(byte_val)
 
         # Analizuj okna po 5 bajtów (overlapping)
         window_size = 5
