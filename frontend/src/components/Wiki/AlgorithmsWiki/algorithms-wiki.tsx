@@ -77,6 +77,11 @@ export const AlgorithmsWiki = () => {
   const nextAlgorithm =
     currentIndex < algorithms.length - 1 ? algorithms[currentIndex + 1] : null;
 
+  const handleNavigation = (path: string) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    navigate(path);
+  };
+
   useEffect(() => {
     if (!algorithmId) {
       navigate(`/wiki/algorithms/${algorithms[0].id}`);
@@ -144,11 +149,15 @@ export const AlgorithmsWiki = () => {
             {prevAlgorithm ? (
               <Button
                 variant="outline"
-                onClick={() => navigate(`/wiki/algorithms/${prevAlgorithm.id}`)}
-                className="w-full sm:w-auto sm:max-w-[48%] min-w-0 justify-start"
+                onClick={() =>
+                  handleNavigation(`/wiki/algorithms/${prevAlgorithm.id}`)
+                }
+                className="w-full sm:w-auto sm:max-w-[48%] min-w-0 justify-start overflow-hidden"
               >
                 <ChevronLeft className="mr-1 h-4 w-4 shrink-0" />
-                {t.previous}: {getName(prevAlgorithm)}
+                <span className="truncate">
+                  {t.previous}: {getName(prevAlgorithm)}
+                </span>
               </Button>
             ) : (
               <div className="hidden sm:block" />
@@ -156,11 +165,15 @@ export const AlgorithmsWiki = () => {
 
             {nextAlgorithm ? (
               <Button
-                onClick={() => navigate(`/wiki/algorithms/${nextAlgorithm.id}`)}
-                className="w-full sm:w-auto sm:max-w-[48%] min-w-0 justify-end"
+                onClick={() =>
+                  handleNavigation(`/wiki/algorithms/${nextAlgorithm.id}`)
+                }
+                className="w-full sm:w-auto sm:max-w-[48%] min-w-0 justify-end overflow-hidden"
               >
-                {t.next}: {getName(nextAlgorithm)}
-                <ChevronRight className="h-4 w-4 shrink-0" />
+                <span className="truncate">
+                  {t.next}: {getName(nextAlgorithm)}
+                </span>
+                <ChevronRight className="ml-1 h-4 w-4 shrink-0" />
               </Button>
             ) : (
               <div className="hidden sm:block" />
@@ -178,10 +191,10 @@ export const AlgorithmsWiki = () => {
             <Button
               key={alg.id}
               variant={alg.id === algorithmId ? "default" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => navigate(`/wiki/algorithms/${alg.id}`)}
+              className="w-full justify-start overflow-hidden"
+              onClick={() => handleNavigation(`/wiki/algorithms/${alg.id}`)}
             >
-              {alg.name}
+              <span className="truncate">{alg.name}</span>
             </Button>
           ))}
         </CardContent>
