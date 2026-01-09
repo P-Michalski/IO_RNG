@@ -669,17 +669,38 @@ class RunRNGTestUseCase:
         if m < 2:
             m = 2
 
-        def compute_phi(m_local):
-            patterns = {}
-            for i in range(n):
-                pattern = tuple(bits[(i + j) % n] for j in range(m_local))
-                patterns[pattern] = patterns.get(pattern, 0) + 1
+        # OPTYMALIZACJA: Użyj numpy dla pattern counting
+        if HAS_NUMPY:
+            def compute_phi_numpy(m_local):
+                bits_arr = np.array(bits, dtype=np.int8)
+                # Generuj overlapping patterns jako integery
+                patterns = np.zeros(n, dtype=np.int32)
+                powers = 2 ** np.arange(m_local - 1, -1, -1, dtype=np.int32)
 
-            phi = sum((count / n) * math.log((count / n)) for count in patterns.values())
-            return phi
+                for i in range(n):
+                    pattern_bits = np.array([bits_arr[(i + j) % n] for j in range(m_local)])
+                    patterns[i] = np.sum(pattern_bits * powers)
 
-        phi_m = compute_phi(m)
-        phi_m_plus_1 = compute_phi(m + 1)
+                # Policz unikalne wzorce
+                unique, counts = np.unique(patterns, return_counts=True)
+                phi = np.sum((counts / n) * np.log(counts / n))
+                return phi
+
+            phi_m = compute_phi_numpy(m)
+            phi_m_plus_1 = compute_phi_numpy(m + 1)
+        else:
+            # Fallback: oryginalna implementacja
+            def compute_phi(m_local):
+                patterns = {}
+                for i in range(n):
+                    pattern = tuple(bits[(i + j) % n] for j in range(m_local))
+                    patterns[pattern] = patterns.get(pattern, 0) + 1
+
+                phi = sum((count / n) * math.log((count / n)) for count in patterns.values())
+                return phi
+
+            phi_m = compute_phi(m)
+            phi_m_plus_1 = compute_phi(m + 1)
 
         apen = phi_m - phi_m_plus_1
 
@@ -918,20 +939,41 @@ class RunRNGTestUseCase:
             }
 
         N = n // M
-        blocks = [bits[i * M:(i + 1) * M] for i in range(N)]
 
-        # Zlicz wystąpienia w każdym bloku
-        counts = []
-        for block in blocks:
-            count = 0
-            i = 0
-            while i <= len(block) - m:
-                if block[i:i + m] == template:
-                    count += 1
-                    i += m  # Przeskocz template (non-overlapping)
-                else:
-                    i += 1
-            counts.append(count)
+        # OPTYMALIZACJA: Użyj numpy dla bloków
+        if HAS_NUMPY:
+            bits_arr = np.array(bits[:N * M], dtype=np.int8)
+            blocks_arr = bits_arr.reshape(N, M)
+            template_arr = np.array(template, dtype=np.int8)
+
+            counts = []
+            for block in blocks_arr:
+                count = 0
+                i = 0
+                while i <= len(block) - m:
+                    # Szybsze porównanie używając numpy
+                    if np.array_equal(block[i:i + m], template_arr):
+                        count += 1
+                        i += m  # Przeskocz template (non-overlapping)
+                    else:
+                        i += 1
+                counts.append(count)
+        else:
+            # Fallback: oryginalna implementacja
+            blocks = [bits[i * M:(i + 1) * M] for i in range(N)]
+
+            # Zlicz wystąpienia w każdym bloku
+            counts = []
+            for block in blocks:
+                count = 0
+                i = 0
+                while i <= len(block) - m:
+                    if block[i:i + m] == template:
+                        count += 1
+                        i += m  # Przeskocz template (non-overlapping)
+                    else:
+                        i += 1
+                counts.append(count)
 
         # Oczekiwana liczba wystąpień
         mu = (M - m + 1) / (2 ** m)
@@ -1066,22 +1108,49 @@ class RunRNGTestUseCase:
                 'statistics': {'error': f'Minimum {(Q + 100) * L} bits required'}
             }
 
-        # Inicjalizacja tablicy
-        T = {}
+        # OPTYMALIZACJA: Konwertuj bloki bitów na integery używając numpy
+        if HAS_NUMPY:
+            # Przygotuj tablicę bitów
+            total_blocks = Q + K
+            bits_arr = np.array(bits[:total_blocks * L], dtype=np.int8)
+            blocks_arr = bits_arr.reshape(total_blocks, L)
 
-        # Faza inicjalizacji (pierwsze Q bloków)
-        for i in range(1, Q + 1):
-            block = tuple(bits[(i - 1) * L:i * L])
-            T[block] = i
+            # Konwertuj każdy blok na integer (szybsza wersja tuple)
+            powers = 2 ** np.arange(L - 1, -1, -1, dtype=np.int32)
+            block_ints = np.sum(blocks_arr * powers, axis=1)
 
-        # Faza testowa
-        sum_log = 0.0
-        for i in range(Q + 1, Q + K + 1):
-            block = tuple(bits[(i - 1) * L:i * L])
-            if block in T:
-                distance = i - T[block]
-                sum_log += math.log2(distance)
-            T[block] = i
+            # Inicjalizacja tablicy (pierwsze Q bloków)
+            T = {}
+            for i in range(Q):
+                block_val = int(block_ints[i])
+                T[block_val] = i + 1
+
+            # Faza testowa
+            sum_log = 0.0
+            for i in range(Q, total_blocks):
+                block_val = int(block_ints[i])
+                idx = i + 1
+                if block_val in T:
+                    distance = idx - T[block_val]
+                    sum_log += math.log2(distance)
+                T[block_val] = idx
+        else:
+            # Fallback: oryginalna implementacja
+            T = {}
+
+            # Faza inicjalizacji (pierwsze Q bloków)
+            for i in range(1, Q + 1):
+                block = tuple(bits[(i - 1) * L:i * L])
+                T[block] = i
+
+            # Faza testowa
+            sum_log = 0.0
+            for i in range(Q + 1, Q + K + 1):
+                block = tuple(bits[(i - 1) * L:i * L])
+                if block in T:
+                    distance = i - T[block]
+                    sum_log += math.log2(distance)
+                T[block] = i
 
         fn = sum_log / K
 
@@ -1236,21 +1305,46 @@ class RunRNGTestUseCase:
         if m < 2:
             m = 2
 
-        def psi_sq(m_local, bits_seq):
-            """Oblicza psi^2_m"""
-            n_local = len(bits_seq)
-            patterns = {}
+        # OPTYMALIZACJA: Użyj numpy dla pattern counting
+        if HAS_NUMPY:
+            def psi_sq_numpy(m_local, bits_seq):
+                """Oblicza psi^2_m używając numpy"""
+                n_local = len(bits_seq)
+                bits_arr = np.array(bits_seq, dtype=np.int8)
 
-            for i in range(n_local):
-                pattern = tuple(bits_seq[(i + j) % n_local] for j in range(m_local))
-                patterns[pattern] = patterns.get(pattern, 0) + 1
+                # Generuj overlapping patterns jako integery
+                patterns = np.zeros(n_local, dtype=np.int32)
+                powers = 2 ** np.arange(m_local - 1, -1, -1, dtype=np.int32)
 
-            sum_val = sum(count ** 2 for count in patterns.values())
-            return (2 ** m_local / n_local) * sum_val - n_local
+                for i in range(n_local):
+                    pattern_bits = np.array([bits_arr[(i + j) % n_local] for j in range(m_local)])
+                    patterns[i] = np.sum(pattern_bits * powers)
 
-        psi2_m = psi_sq(m, bits)
-        psi2_m1 = psi_sq(m - 1, bits)
-        psi2_m2 = psi_sq(m - 2, bits)
+                # Policz unikalne wzorce i ich częstości
+                unique, counts = np.unique(patterns, return_counts=True)
+                sum_val = np.sum(counts ** 2)
+                return (2 ** m_local / n_local) * sum_val - n_local
+
+            psi2_m = psi_sq_numpy(m, bits)
+            psi2_m1 = psi_sq_numpy(m - 1, bits)
+            psi2_m2 = psi_sq_numpy(m - 2, bits)
+        else:
+            # Fallback: oryginalna implementacja
+            def psi_sq(m_local, bits_seq):
+                """Oblicza psi^2_m"""
+                n_local = len(bits_seq)
+                patterns = {}
+
+                for i in range(n_local):
+                    pattern = tuple(bits_seq[(i + j) % n_local] for j in range(m_local))
+                    patterns[pattern] = patterns.get(pattern, 0) + 1
+
+                sum_val = sum(count ** 2 for count in patterns.values())
+                return (2 ** m_local / n_local) * sum_val - n_local
+
+            psi2_m = psi_sq(m, bits)
+            psi2_m1 = psi_sq(m - 1, bits)
+            psi2_m2 = psi_sq(m - 2, bits)
 
         delta1 = psi2_m - psi2_m1
         delta2 = psi2_m - 2 * psi2_m1 + psi2_m2
@@ -1475,13 +1569,25 @@ class RunRNGTestUseCase:
                 }
             }
 
-        # Konwertuj bity na 24-bitowe słowa (dla birthday paradox)
-        words = []
-        for i in range(0, len(bits) - 23, 24):
-            word = 0
-            for j in range(24):
-                word = (word << 1) | bits[i + j]
-            words.append(word)
+        # OPTYMALIZACJA: Konwertuj bity na 24-bitowe słowa używając numpy
+        if HAS_NUMPY:
+            word_length = 24
+            num_words = (len(bits) - 23) // 24
+            if num_words > 0:
+                bits_arr = np.array(bits[:num_words * word_length], dtype=np.int8)
+                bits_reshaped = bits_arr.reshape(num_words, word_length)
+                powers = 2 ** np.arange(word_length - 1, -1, -1, dtype=np.int32)
+                words = (bits_reshaped * powers).sum(axis=1).tolist()
+            else:
+                words = []
+        else:
+            # Fallback: oryginalna implementacja
+            words = []
+            for i in range(0, len(bits) - 23, 24):
+                word = 0
+                for j in range(24):
+                    word = (word << 1) | bits[i + j]
+                words.append(word)
 
         # Podziel na bloki (każdy blok = 512 słów)
         block_size = 512
@@ -1853,12 +1959,30 @@ class RunRNGTestUseCase:
 
         # Użyj 20-bitowych słów
         word_length = 20
-        word_counts = {}
 
-        # Overlapping windows
-        for i in range(n - word_length + 1):
-            word = tuple(bits[i:i + word_length])
-            word_counts[word] = word_counts.get(word, 0) + 1
+        # OPTYMALIZACJA: Użyj numpy dla sliding window
+        if HAS_NUMPY:
+            bits_arr = np.array(bits, dtype=np.int8)
+            total_words = n - word_length + 1
+
+            # Konwertuj sliding windows na integery
+            words = np.zeros(total_words, dtype=np.int32)
+            powers = 2 ** np.arange(word_length - 1, -1, -1, dtype=np.int32)
+
+            for i in range(total_words):
+                words[i] = np.sum(bits_arr[i:i + word_length] * powers)
+
+            # Policz unikalne słowa
+            unique_words, counts = np.unique(words, return_counts=True)
+            word_counts = dict(zip(unique_words, counts))
+        else:
+            # Fallback: oryginalna implementacja
+            word_counts = {}
+
+            # Overlapping windows
+            for i in range(n - word_length + 1):
+                word = tuple(bits[i:i + word_length])
+                word_counts[word] = word_counts.get(word, 0) + 1
 
         total_words = n - word_length + 1
 
@@ -1929,15 +2053,35 @@ class RunRNGTestUseCase:
 
         # Użyj 10-bitowych par
         word_length = 10
-        word_counts = {}
 
-        # Overlapping
-        for i in range(n - word_length + 1):
-            word = tuple(bits[i:i + word_length])
-            word_counts[word] = word_counts.get(word, 0) + 1
+        # OPTYMALIZACJA: Użyj numpy dla sliding window
+        if HAS_NUMPY:
+            bits_arr = np.array(bits, dtype=np.int8)
+            total_words = n - word_length + 1
 
-        # Policz słowa występujące dokładnie 1 raz
-        singleton_count = sum(1 for count in word_counts.values() if count == 1)
+            # Konwertuj sliding windows na integery
+            words = np.zeros(total_words, dtype=np.int32)
+            powers = 2 ** np.arange(word_length - 1, -1, -1, dtype=np.int32)
+
+            for i in range(total_words):
+                words[i] = np.sum(bits_arr[i:i + word_length] * powers)
+
+            # Policz unikalne słowa i ich częstości
+            unique_words, counts = np.unique(words, return_counts=True)
+
+            # Policz singletons (count == 1)
+            singleton_count = int(np.sum(counts == 1))
+        else:
+            # Fallback: oryginalna implementacja
+            word_counts = {}
+
+            # Overlapping
+            for i in range(n - word_length + 1):
+                word = tuple(bits[i:i + word_length])
+                word_counts[word] = word_counts.get(word, 0) + 1
+
+            # Policz słowa występujące dokładnie 1 raz
+            singleton_count = sum(1 for count in word_counts.values() if count == 1)
 
         total_words = n - word_length + 1
         num_possible_words = 2 ** word_length
@@ -1965,7 +2109,7 @@ class RunRNGTestUseCase:
                 'singleton_count': singleton_count,
                 'expected_singletons': round(expected_singletons, 2),
                 'total_words': total_words,
-                'unique_words': len(word_counts),
+                'unique_words': len(unique_words) if HAS_NUMPY else len(word_counts),
                 'lambda': round(lambda_param, 4),
                 'threshold': 0.01
             }
