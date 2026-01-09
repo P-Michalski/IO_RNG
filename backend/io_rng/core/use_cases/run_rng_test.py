@@ -5,6 +5,19 @@ Run RNG Test Use Case
 from typing import Dict, Any, List
 import time
 
+# Numpy/Scipy imports dla optymalizacji wydajności
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+
+try:
+    from scipy.fft import fft
+    HAS_SCIPY_FFT = True
+except ImportError:
+    HAS_SCIPY_FFT = False
+
 from io_rng.core.entities.rng import RNG
 from io_rng.core.entities.test_result import TestResult
 from io_rng.core.interfaces.rng_runner import IRNGRunner
@@ -600,12 +613,18 @@ class RunRNGTestUseCase:
 
         n = len(bits)
 
-        # Forward cumulative sum
-        s = [0]
-        for bit in bits:
-            s.append(s[-1] + (1 if bit == 1 else -1))
-
-        z_forward = max(abs(val) for val in s)
+        # OPTYMALIZACJA: Użyj numpy dla kumulatywnej sumy
+        if HAS_NUMPY:
+            # Konwertuj bity do +1/-1 i oblicz kumulatywną sumę
+            bits_arr = np.array(bits, dtype=np.int8) * 2 - 1
+            s = np.concatenate(([0], np.cumsum(bits_arr)))
+            z_forward = int(np.max(np.abs(s)))  # Konwertuj do int dla JSON
+        else:
+            # Fallback: oryginalna implementacja
+            s = [0]
+            for bit in bits:
+                s.append(s[-1] + (1 if bit == 1 else -1))
+            z_forward = max(abs(val) for val in s)
 
         # Test statistic
         sum_val = 0.0
@@ -961,15 +980,29 @@ class RunRNGTestUseCase:
 
         N = n // M
 
-        # Zlicz wystąpienia w każdym bloku (overlapping)
+        # OPTYMALIZACJA: Użyj numpy dla sliding window
         counts = []
-        for i in range(N):
-            block = bits[i * M:(i + 1) * M]
-            count = 0
-            for j in range(len(block) - m + 1):
-                if block[j:j + m] == template:
-                    count += 1
-            counts.append(min(count, 5))  # Cap at 5
+        if HAS_NUMPY:
+            bits_arr = np.array(bits[:N * M], dtype=np.int8)
+            blocks_arr = bits_arr.reshape(N, M)
+
+            # Dla każdego bloku, użyj rolling sum aby znaleźć wzorzec 111111111
+            for block in blocks_arr:
+                # Sprawdź gdzie suma 9 kolejnych bitów == 9 (wszystkie jedynki)
+                count = 0
+                for j in range(M - m + 1):
+                    if np.sum(block[j:j + m]) == m:
+                        count += 1
+                counts.append(min(count, 5))  # Cap at 5
+        else:
+            # Fallback: oryginalna implementacja
+            for i in range(N):
+                block = bits[i * M:(i + 1) * M]
+                count = 0
+                for j in range(len(block) - m + 1):
+                    if block[j:j + m] == template:
+                        count += 1
+                counts.append(min(count, 5))  # Cap at 5
 
         # Prawdopodobieństwa teoretyczne
         lambda_param = (M - m + 1) / (2 ** m)
@@ -1253,19 +1286,21 @@ class RunRNGTestUseCase:
 
         n = len(bits)
 
-        # Konwertuj do +1/-1
-        X = [2 * bit - 1 for bit in bits]
+        # OPTYMALIZACJA: Użyj numpy dla partial sums
+        if HAS_NUMPY:
+            # Konwertuj bity do +1/-1 i oblicz kumulatywną sumę
+            X = np.array(bits, dtype=np.int8) * 2 - 1
+            S = np.concatenate(([0], np.cumsum(X)))
 
-        # Oblicz partial sums
-        S = [0]
-        for x in X:
-            S.append(S[-1] + x)
-
-        # Zlicz cykle (powroty do 0)
-        cycles = 0
-        for i in range(1, len(S)):
-            if S[i] == 0:
-                cycles += 1
+            # Zlicz cykle (powroty do 0)
+            cycles = int(np.sum(S == 0))  # Konwertuj do int dla JSON
+        else:
+            # Fallback: oryginalna implementacja
+            X = [2 * bit - 1 for bit in bits]
+            S = [0]
+            for x in X:
+                S.append(S[-1] + x)
+            cycles = sum(1 for i in range(1, len(S)) if S[i] == 0)
 
         if cycles < 500:
             return {
@@ -1283,7 +1318,10 @@ class RunRNGTestUseCase:
         # Zlicz wizyty w każdym stanie
         results = []
         for x in states:
-            visits = sum(1 for s in S if s == x)
+            if HAS_NUMPY:
+                visits = int(np.sum(S == x))  # Konwertuj do int dla JSON
+            else:
+                visits = sum(1 for s in S if s == x)
 
             # Oczekiwana liczba wizyt
             expected = cycles * self._excursion_probability(x)
@@ -1341,16 +1379,21 @@ class RunRNGTestUseCase:
 
         n = len(bits)
 
-        # Konwertuj do +1/-1
-        X = [2 * bit - 1 for bit in bits]
+        # OPTYMALIZACJA: Użyj numpy dla partial sums
+        if HAS_NUMPY:
+            # Konwertuj bity do +1/-1 i oblicz kumulatywną sumę
+            X = np.array(bits, dtype=np.int8) * 2 - 1
+            S = np.concatenate(([0], np.cumsum(X)))
 
-        # Oblicz partial sums
-        S = [0]
-        for x in X:
-            S.append(S[-1] + x)
-
-        # Zlicz cykle
-        cycles = sum(1 for i in range(1, len(S)) if S[i] == 0)
+            # Zlicz cykle
+            cycles = int(np.sum(S == 0))  # Konwertuj do int dla JSON
+        else:
+            # Fallback: oryginalna implementacja
+            X = [2 * bit - 1 for bit in bits]
+            S = [0]
+            for x in X:
+                S.append(S[-1] + x)
+            cycles = sum(1 for i in range(1, len(S)) if S[i] == 0)
 
         if cycles < 500:
             return {
@@ -1370,7 +1413,10 @@ class RunRNGTestUseCase:
 
         for x in states:
             # Zlicz wizyty
-            visits = sum(1 for s in S if s == x)
+            if HAS_NUMPY:
+                visits = int(np.sum(S == x))  # Konwertuj do int dla JSON
+            else:
+                visits = sum(1 for s in S if s == x)
 
             # Test statistic
             if cycles > 0:
@@ -1621,26 +1667,44 @@ class RunRNGTestUseCase:
         num_matrices = n // bits_per_matrix
         rank_counts = {32: 0, 31: 0, 'other': 0}
 
-        for m in range(num_matrices):
-            # Wyciągnij bity dla macierzy
-            start = m * bits_per_matrix
-            matrix_bits = bits[start:start + bits_per_matrix]
+        # OPTYMALIZACJA: Użyj numpy dla macierzy
+        if HAS_NUMPY:
+            bits_arr = np.array(bits[:num_matrices * bits_per_matrix], dtype=np.int8)
+            # Reshape do tensora macierzy [num_matrices, matrix_size, matrix_size]
+            matrices = bits_arr.reshape(num_matrices, matrix_size, matrix_size)
 
-            # Utwórz macierz 32x32
-            matrix = []
-            for i in range(matrix_size):
-                row = matrix_bits[i * matrix_size : (i + 1) * matrix_size]
-                matrix.append(row)
+            # Oblicz rangę dla każdej macierzy
+            for matrix in matrices:
+                rank = self._binary_matrix_rank_numpy(matrix)
 
-            # Oblicz rangę (binary matrix rank)
-            rank = self._binary_matrix_rank(matrix)
+                if rank == 32:
+                    rank_counts[32] += 1
+                elif rank == 31:
+                    rank_counts[31] += 1
+                else:
+                    rank_counts['other'] += 1
+        else:
+            # Fallback: oryginalna implementacja
+            for m in range(num_matrices):
+                # Wyciągnij bity dla macierzy
+                start = m * bits_per_matrix
+                matrix_bits = bits[start:start + bits_per_matrix]
 
-            if rank == 32:
-                rank_counts[32] += 1
-            elif rank == 31:
-                rank_counts[31] += 1
-            else:
-                rank_counts['other'] += 1
+                # Utwórz macierz 32x32
+                matrix = []
+                for i in range(matrix_size):
+                    row = matrix_bits[i * matrix_size : (i + 1) * matrix_size]
+                    matrix.append(row)
+
+                # Oblicz rangę (binary matrix rank)
+                rank = self._binary_matrix_rank(matrix)
+
+                if rank == 32:
+                    rank_counts[32] += 1
+                elif rank == 31:
+                    rank_counts[31] += 1
+                else:
+                    rank_counts['other'] += 1
 
         # Teoretyczne prawdopodobieństwa dla 32x32
         # Dla prawdziwie losowej macierzy:
