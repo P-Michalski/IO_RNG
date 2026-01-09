@@ -368,17 +368,26 @@ class RunRNGTestUseCase:
                 'statistics': {'error': 'Not enough bits for block test'}
             }
 
-        # Chi-square statistic
-        chi_square = 0.0
-        proportions = []
-
-        for i in range(num_blocks):
-            block = bits[i * block_size:(i + 1) * block_size]
-            proportion = sum(block) / block_size
-            proportions.append(proportion)
-            chi_square += (proportion - 0.5) ** 2
-
-        chi_square *= 4 * block_size
+        # OPTYMALIZACJA: Użyj numpy dla szybszych operacji na blokach
+        if HAS_NUMPY:
+            bits_arr = np.array(bits[:num_blocks * block_size], dtype=np.int8)
+            # Reshape do macierzy bloków
+            blocks = bits_arr.reshape(num_blocks, block_size)
+            # Oblicz proporcje dla wszystkich bloków naraz
+            proportions = np.sum(blocks, axis=1) / block_size
+            # Chi-square
+            chi_square = np.sum((proportions - 0.5) ** 2) * 4 * block_size
+            proportions = proportions.tolist()
+        else:
+            # Fallback: oryginalna implementacja
+            chi_square = 0.0
+            proportions = []
+            for i in range(num_blocks):
+                block = bits[i * block_size:(i + 1) * block_size]
+                proportion = sum(block) / block_size
+                proportions.append(proportion)
+                chi_square += (proportion - 0.5) ** 2
+            chi_square *= 4 * block_size
 
         # P-value using incomplete gamma function approximation
         p_value = erfc(math.sqrt(chi_square / 2))
@@ -407,25 +416,48 @@ class RunRNGTestUseCase:
         from math import erfc
 
         n = len(bits)
-        ones = sum(bits)
-        pi = ones / n
 
-        # Pre-test: proporcja jedynek musi być bliska 0.5
-        if abs(pi - 0.5) >= 2 / math.sqrt(n):
-            return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': 'Pre-test failed: proportion of ones not close to 0.5',
-                    'proportion': round(pi, 6)
+        # OPTYMALIZACJA: Użyj numpy dla zliczania
+        if HAS_NUMPY:
+            bits_arr = np.array(bits, dtype=np.int8)
+            ones = np.sum(bits_arr)
+            pi = ones / n
+
+            # Pre-test
+            if abs(pi - 0.5) >= 2 / math.sqrt(n):
+                return {
+                    'passed': False,
+                    'score': 0.0,
+                    'statistics': {
+                        'error': 'Pre-test failed: proportion of ones not close to 0.5',
+                        'proportion': round(pi, 6)
+                    }
                 }
-            }
 
-        # Zlicz runs
-        runs = 1
-        for i in range(1, n):
-            if bits[i] != bits[i - 1]:
-                runs += 1
+            # Zlicz runs używając diff (przejścia = zmiana wartości)
+            # runs = 1 + liczba zmian
+            runs = int(1 + np.sum(np.diff(bits_arr) != 0))  # Konwertuj do int dla JSON
+        else:
+            # Fallback: oryginalna implementacja
+            ones = sum(bits)
+            pi = ones / n
+
+            # Pre-test: proporcja jedynek musi być bliska 0.5
+            if abs(pi - 0.5) >= 2 / math.sqrt(n):
+                return {
+                    'passed': False,
+                    'score': 0.0,
+                    'statistics': {
+                        'error': 'Pre-test failed: proportion of ones not close to 0.5',
+                        'proportion': round(pi, 6)
+                    }
+                }
+
+            # Zlicz runs
+            runs = 1
+            for i in range(1, n):
+                if bits[i] != bits[i - 1]:
+                    runs += 1
 
         # Expected value
         expected_runs = 2 * n * pi * (1 - pi)
@@ -484,18 +516,45 @@ class RunRNGTestUseCase:
         num_blocks = n // M
         frequencies = [0] * (K + 1)
 
-        # Dla każdego bloku znajdź najdłuższy run jedynek
-        for i in range(num_blocks):
-            block = bits[i * M:(i + 1) * M]
-            max_run = 0
-            current_run = 0
+        # OPTYMALIZACJA: Użyj numpy dla bloków (częściowa optymalizacja)
+        if HAS_NUMPY and num_blocks > 0:
+            bits_arr = np.array(bits[:num_blocks * M], dtype=np.int8)
+            blocks_arr = bits_arr.reshape(num_blocks, M)
 
-            for bit in block:
-                if bit == 1:
-                    current_run += 1
-                    max_run = max(max_run, current_run)
+            # Dla każdego bloku znajdź najdłuższy run jedynek
+            for block in blocks_arr:
+                max_run = 0
+                current_run = 0
+                for bit in block:
+                    if bit == 1:
+                        current_run += 1
+                        max_run = max(max_run, current_run)
+                    else:
+                        current_run = 0
+
+                # Przypisz do kategorii
+                if max_run <= v_values[0]:
+                    frequencies[0] += 1
+                elif max_run >= v_values[-1]:
+                    frequencies[K] += 1
                 else:
-                    current_run = 0
+                    for j in range(len(v_values) - 1):
+                        if v_values[j] < max_run <= v_values[j + 1]:
+                            frequencies[j + 1] += 1
+                            break
+        else:
+            # Fallback: oryginalna implementacja
+            for i in range(num_blocks):
+                block = bits[i * M:(i + 1) * M]
+                max_run = 0
+                current_run = 0
+
+                for bit in block:
+                    if bit == 1:
+                        current_run += 1
+                        max_run = max(max_run, current_run)
+                    else:
+                        current_run = 0
 
             # Przypisz do kategorii
             if max_run <= v_values[0]:
@@ -684,25 +743,43 @@ class RunRNGTestUseCase:
 
             return rank
 
-        # Przetwórz każdą macierz
-        for i in range(num_matrices):
-            # Pobierz M*Q bitów
-            block = bits[i * M * Q:(i + 1) * M * Q]
+        # OPTYMALIZACJA: Użyj numpy dla macierzy
+        if HAS_NUMPY:
+            bits_arr = np.array(bits[:num_matrices * M * Q], dtype=np.int8)
+            # Reshape do tensora macierzy [num_matrices, M, Q]
+            matrices = bits_arr.reshape(num_matrices, M, Q)
 
-            # Utwórz macierz M x Q
-            matrix = []
-            for row in range(M):
-                matrix.append(block[row * Q:(row + 1) * Q])
+            # Oblicz rangę dla każdej macierzy
+            for matrix in matrices:
+                # Użyj numpy dla eliminacji Gaussa (szybsze operacje)
+                rank = self._binary_matrix_rank_numpy(matrix)
 
-            # Oblicz rangę
-            rank = compute_rank(matrix)
+                if rank == M:
+                    rank_counts[M] += 1
+                elif rank == M - 1:
+                    rank_counts[M-1] += 1
+                else:
+                    rank_counts['other'] += 1
+        else:
+            # Fallback: oryginalna implementacja
+            for i in range(num_matrices):
+                # Pobierz M*Q bitów
+                block = bits[i * M * Q:(i + 1) * M * Q]
 
-            if rank == M:
-                rank_counts[M] += 1
-            elif rank == M - 1:
-                rank_counts[M-1] += 1
-            else:
-                rank_counts['other'] += 1
+                # Utwórz macierz M x Q
+                matrix = []
+                for row in range(M):
+                    matrix.append(block[row * Q:(row + 1) * Q])
+
+                # Oblicz rangę
+                rank = compute_rank(matrix)
+
+                if rank == M:
+                    rank_counts[M] += 1
+                elif rank == M - 1:
+                    rank_counts[M-1] += 1
+                else:
+                    rank_counts['other'] += 1
 
         # Prawdopodobieństwa teoretyczne dla M=Q=32
         pi = {
@@ -1603,6 +1680,47 @@ class RunRNGTestUseCase:
                 'threshold': 0.01
             }
         }
+
+    def _binary_matrix_rank_numpy(self, matrix: np.ndarray) -> int:
+        """
+        Oblicza rangę macierzy binarnej używając eliminacji Gaussa w GF(2) z numpy.
+        ZNACZNIE szybsze niż wersja z listami.
+
+        Args:
+            matrix: Macierz numpy jako array [0,1]
+
+        Returns:
+            Ranga macierzy (0 do n)
+        """
+        # Kopiuj macierz (numpy copy jest szybkie)
+        m = matrix.copy()
+        rows, cols = m.shape
+        rank = 0
+
+        for col in range(cols):
+            # Znajdź pivot
+            pivot_rows = np.where(m[rank:rows, col] == 1)[0]
+            if len(pivot_rows) == 0:
+                continue
+
+            pivot_row = pivot_rows[0] + rank
+
+            # Zamień wiersze (numpy swap jest szybki)
+            if pivot_row != rank:
+                m[[rank, pivot_row]] = m[[pivot_row, rank]]
+
+            # Eliminuj (XOR w GF(2)) - użyj numpy broadcasting
+            # Znajdź wiersze z 1 w tej kolumnie (poza pivot)
+            rows_to_eliminate = np.where(m[:, col] == 1)[0]
+            rows_to_eliminate = rows_to_eliminate[rows_to_eliminate != rank]
+
+            # XOR tych wierszy z pivot row
+            for row in rows_to_eliminate:
+                m[row] ^= m[rank]
+
+            rank += 1
+
+        return rank
 
     def _binary_matrix_rank(self, matrix: List[List[int]]) -> int:
         """
