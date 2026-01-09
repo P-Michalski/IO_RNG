@@ -795,6 +795,7 @@ class RunRNGTestUseCase:
             }
         }
 
+
     def _nist_non_overlapping_template_test(self, bits: List[int],
                                             template: List[int] = None) -> Dict[str, Any]:
         """
