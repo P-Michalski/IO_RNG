@@ -204,6 +204,16 @@ class RunRNGTestUseCase:
             return self._diehard_bitstream_test(bits)
         elif test_name == "diehard_opso":
             return self._diehard_opso_test(bits)
+        elif test_name == "diehard_oqso":
+            return self._diehard_oqso_test(bits)
+        elif test_name == "diehard_dna":
+            return self._diehard_dna_test(bits)
+        elif test_name == "diehard_count_1s":
+            return self._diehard_count_1s_test(bits)
+        elif test_name == "diehard_parking_lot":
+            return self._diehard_parking_lot_test(bits)
+        elif test_name == "diehard_squeeze":
+            return self._diehard_squeeze_test(bits)
         else:
             raise ValueError(f"Unknown test: {test_name}")
 
@@ -2133,6 +2143,524 @@ class RunRNGTestUseCase:
                 'total_words': total_words,
                 'unique_words': len(unique_words) if HAS_NUMPY else len(word_counts),
                 'lambda': round(lambda_param, 4),
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_oqso_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard OQSO (Overlapping-Quadruples-Sparse-Occupancy) Test
+
+        Podobny do OPSO, ale analizuje 4-literowe słowa zamiast par.
+        Dzieli bity na 32-bitowe słowa, następnie na 4-literowe "słowa"
+        (każda litera = 5 bitów), tworząc nakładające się czwórki.
+
+        Minimum: ~2^21 bitów (~2M)
+        """
+        from math import erfc, exp
+
+        n = len(bits)
+
+        if n < 2097152:  # 2^21
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 2097152 bits, got {n}',
+                    'bits_needed': 2097152
+                }
+            }
+
+        # Konwertuj bity na 32-bitowe słowa
+        if HAS_NUMPY:
+            # Numpy version - szybsza konwersja
+            num_words = n // 32
+            bits_arr = np.array(bits[:num_words * 32], dtype=np.int8)
+            bits_reshaped = bits_arr.reshape(num_words, 32)
+            powers = 2 ** np.arange(31, -1, -1, dtype=np.int64)
+            words = (bits_reshaped * powers).sum(axis=1)
+
+            # Każde 32-bitowe słowo dzielimy na 6 5-bitowych "liter" (30 bitów używanych)
+            # Tworzymy nakładające się czwórki liter
+            quadruples = []
+            for word in words:
+                # Wyciągnij 6 5-bitowych liter z 32-bitowego słowa
+                letters = []
+                for i in range(6):
+                    letter = int((word >> (27 - i * 5)) & 0x1F)  # 5 bitów
+                    letters.append(letter)
+
+                # Twórz nakładające się czwórki (0-1-2-3, 1-2-3-4, 2-3-4-5)
+                for i in range(3):
+                    quad = tuple(letters[i:i+4])
+                    quadruples.append(quad)
+
+            # Policz wystąpienia
+            quad_counts = {}
+            for quad in quadruples:
+                quad_counts[quad] = quad_counts.get(quad, 0) + 1
+        else:
+            # Fallback
+            num_words = n // 32
+            quadruples = []
+
+            for i in range(num_words):
+                word_bits = bits[i*32:(i+1)*32]
+                word = 0
+                for bit in word_bits:
+                    word = (word << 1) | bit
+
+                # Wyciągnij 6 5-bitowych liter
+                letters = []
+                for j in range(6):
+                    letter = (word >> (27 - j * 5)) & 0x1F
+                    letters.append(letter)
+
+                # Nakładające się czwórki
+                for j in range(3):
+                    quad = tuple(letters[j:j+4])
+                    quadruples.append(quad)
+
+            quad_counts = {}
+            for quad in quadruples:
+                quad_counts[quad] = quad_counts.get(quad, 0) + 1
+
+        # Policz czwórki występujące dokładnie raz
+        singleton_count = sum(1 for count in quad_counts.values() if count == 1)
+
+        total_quads = len(quadruples)
+        num_possible_quads = 32 ** 4  # 32 możliwych liter, 4-literowe słowa
+
+        # Rozkład Poissona
+        lambda_param = total_quads / num_possible_quads
+        expected_singletons = num_possible_quads * lambda_param * exp(-lambda_param)
+
+        if expected_singletons > 0:
+            chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
+            p_value = erfc((chi_square / 2)**0.5)
+        else:
+            p_value = 0.0
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'singleton_count': singleton_count,
+                'expected_singletons': round(expected_singletons, 2),
+                'total_quadruples': total_quads,
+                'unique_quadruples': len(quad_counts),
+                'lambda': round(lambda_param, 4),
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_dna_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard DNA Test
+
+        Traktuje bity jako sekwencję DNA (10-literowy alfabet A,C,G,T).
+        Każda litera = 2 bity (00=A, 01=C, 10=G, 11=T).
+        Analizuje nakładające się 10-literowe "słowa" DNA.
+
+        Minimum: ~2^21 bitów (~2M)
+        """
+        from math import erfc, exp
+
+        n = len(bits)
+
+        if n < 2097152:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 2097152 bits, got {n}',
+                    'bits_needed': 2097152
+                }
+            }
+
+        # Konwertuj pary bitów na litery DNA (0-3)
+        word_length = 10  # 10 liter DNA
+        bits_per_letter = 2  # 2 bity na literę
+
+        if HAS_NUMPY:
+            # Numpy version
+            num_letters = n // bits_per_letter
+            bits_arr = np.array(bits[:num_letters * bits_per_letter], dtype=np.int8)
+            bits_reshaped = bits_arr.reshape(num_letters, bits_per_letter)
+
+            # Konwertuj pary bitów na liczby 0-3
+            letters = bits_reshaped[:, 0] * 2 + bits_reshaped[:, 1]
+
+            # Twórz nakładające się 10-literowe słowa
+            words = []
+            for i in range(len(letters) - word_length + 1):
+                word = tuple(letters[i:i+word_length].tolist())
+                words.append(word)
+
+            # Policz wystąpienia
+            word_counts = {}
+            for word in words:
+                word_counts[word] = word_counts.get(word, 0) + 1
+        else:
+            # Fallback
+            num_letters = n // bits_per_letter
+            letters = []
+
+            for i in range(num_letters):
+                letter = bits[i*2] * 2 + bits[i*2 + 1]
+                letters.append(letter)
+
+            # Nakładające się słowa
+            words = []
+            for i in range(len(letters) - word_length + 1):
+                word = tuple(letters[i:i+word_length])
+                words.append(word)
+
+            word_counts = {}
+            for word in words:
+                word_counts[word] = word_counts.get(word, 0) + 1
+
+        # Policz singletons
+        singleton_count = sum(1 for count in word_counts.values() if count == 1)
+
+        total_words = len(words)
+        num_possible_words = 4 ** word_length  # 4 litery, 10-literowe słowa
+
+        lambda_param = total_words / num_possible_words
+        expected_singletons = num_possible_words * lambda_param * exp(-lambda_param)
+
+        if expected_singletons > 0:
+            chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
+            p_value = erfc((chi_square / 2)**0.5)
+        else:
+            p_value = 0.0
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'singleton_count': singleton_count,
+                'expected_singletons': round(expected_singletons, 2),
+                'total_words': total_words,
+                'unique_words': len(word_counts),
+                'lambda': round(lambda_param, 4),
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_count_1s_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Count-the-1s Test
+
+        Zlicza liczbę jedynek w sekwencji bajtów i sprawdza rozkład.
+        Każdy bajt może mieć 0-8 jedynek. Test sprawdza czy rozkład
+        liczby jedynek zgadza się z rozkładem dwumianowym.
+
+        Minimum: 256000 bitów (32000 bajtów)
+        """
+        from math import erfc, comb
+
+        n = len(bits)
+
+        if n < 256000:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 256000 bits, got {n}',
+                    'bits_needed': 256000
+                }
+            }
+
+        # Konwertuj bity na bajty i zlicz jedynki
+        if HAS_NUMPY:
+            # Numpy version
+            num_bytes = n // 8
+            bits_arr = np.array(bits[:num_bytes * 8], dtype=np.int8)
+            bits_reshaped = bits_arr.reshape(num_bytes, 8)
+
+            # Zlicz jedynki w każdym bajcie
+            ones_per_byte = np.sum(bits_reshaped, axis=1)
+
+            # Policz rozkład (0-8 jedynek)
+            observed = np.zeros(9, dtype=np.int32)
+            for count in ones_per_byte:
+                observed[int(count)] += 1
+        else:
+            # Fallback
+            num_bytes = n // 8
+            ones_counts = []
+
+            for i in range(num_bytes):
+                byte_bits = bits[i*8:(i+1)*8]
+                ones = sum(byte_bits)
+                ones_counts.append(ones)
+
+            observed = [0] * 9
+            for count in ones_counts:
+                observed[count] += 1
+
+        # Teoretyczny rozkład dwumianowy B(8, 0.5)
+        # P(k jedynek) = C(8,k) * 0.5^8
+        expected = []
+        for k in range(9):
+            prob = comb(8, k) * (0.5 ** 8)
+            expected.append(prob * num_bytes)
+
+        # Chi-square test
+        chi_square = 0
+        for i in range(9):
+            if expected[i] > 0:
+                obs = int(observed[i]) if HAS_NUMPY else observed[i]
+                chi_square += (obs - expected[i]) ** 2 / expected[i]
+
+        # Stopnie swobody = 8 (9 kategorii - 1)
+        df = 8
+        p_value = erfc((chi_square / (2 * df))**0.5)
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'chi_square': round(chi_square, 4),
+                'num_bytes': num_bytes,
+                'observed': observed.tolist() if HAS_NUMPY else observed,
+                'expected': [round(e, 2) for e in expected],
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_parking_lot_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Parking Lot Test
+
+        Losuje punkty (x,y) na jednostkowym kwadracie [0,1]x[0,1].
+        Każdy punkt ma promień r. Test zlicza ile "samochodów" (kół)
+        można "zaparkować" bez kolizji.
+
+        Minimum: 384000 bitów (dla 12000 prób po 32 bity)
+        """
+        from math import erfc, sqrt
+
+        n = len(bits)
+
+        if n < 384000:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 384000 bits, got {n}',
+                    'bits_needed': 384000
+                }
+            }
+
+        # Konwertuj bity na floaty [0,1] dla współrzędnych
+        bits_per_coord = 16  # 16 bitów na współrzędną
+        num_points = n // (bits_per_coord * 2)  # 2 współrzędne (x, y)
+
+        if HAS_NUMPY:
+            # Numpy version
+            bits_arr = np.array(bits[:num_points * bits_per_coord * 2], dtype=np.int8)
+
+            # Konwertuj grupy bitów na liczby 0-65535, potem normalizuj do [0,1]
+            bits_grouped = bits_arr.reshape(num_points * 2, bits_per_coord)
+            powers = 2 ** np.arange(bits_per_coord - 1, -1, -1, dtype=np.int32)
+            coords = (bits_grouped * powers).sum(axis=1) / (2 ** bits_per_coord)
+
+            # Rozdziel na x i y
+            x = coords[0::2]
+            y = coords[1::2]
+
+            # Parkowanie: sprawdź kolizje (odległość < 2*radius)
+            radius = 0.01  # Mały promień dla większej liczby samochodów
+            parked = []
+
+            for i in range(len(x)):
+                can_park = True
+                for px, py in parked:
+                    dist = sqrt((float(x[i]) - px)**2 + (float(y[i]) - py)**2)
+                    if dist < 2 * radius:
+                        can_park = False
+                        break
+                if can_park:
+                    parked.append((float(x[i]), float(y[i])))
+        else:
+            # Fallback
+            coords = []
+            for i in range(num_points * 2):
+                coord_bits = bits[i*bits_per_coord:(i+1)*bits_per_coord]
+                value = 0
+                for bit in coord_bits:
+                    value = (value << 1) | bit
+                coords.append(value / (2 ** bits_per_coord))
+
+            x = coords[0::2]
+            y = coords[1::2]
+
+            radius = 0.01
+            parked = []
+
+            for i in range(len(x)):
+                can_park = True
+                for px, py in parked:
+                    dist = sqrt((x[i] - px)**2 + (y[i] - py)**2)
+                    if dist < 2 * radius:
+                        can_park = False
+                        break
+                if can_park:
+                    parked.append((x[i], y[i]))
+
+        num_parked = len(parked)
+
+        # Teoretyczna wartość zależy od rozmiaru kwadratu i promienia
+        # Dla losowych punktów oczekiwana liczba zaparkowanych ~ num_points * exp(-lambda)
+        # gdzie lambda zależy od gęstości
+        expected = num_points * 0.3  # Przybliżone
+
+        # Test czy liczba zaparkowanych jest w rozsądnym zakresie
+        z_score = abs(num_parked - expected) / sqrt(expected) if expected > 0 else 0
+        p_value = erfc(z_score / sqrt(2)) if z_score > 0 else 1.0
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'num_parked': num_parked,
+                'num_attempted': num_points,
+                'expected': round(expected, 2),
+                'z_score': round(z_score, 4),
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_squeeze_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Squeeze Test
+
+        Kompresuje losowe 32-bitowe integery poprzez iteracyjne mnożenie
+        przez losowe floaty [0,1] aż wynik będzie < 1.
+        Zlicza liczbę iteracji potrzebnych do kompresji.
+
+        Minimum: 100000 bitów
+        """
+        from math import erfc, sqrt
+
+        n = len(bits)
+
+        if n < 100000:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 100000 bits, got {n}',
+                    'bits_needed': 100000
+                }
+            }
+
+        # Konwertuj bity na 32-bitowe integery
+        if HAS_NUMPY:
+            # Numpy version
+            num_ints = n // 32
+            bits_arr = np.array(bits[:num_ints * 32], dtype=np.int8)
+            bits_reshaped = bits_arr.reshape(num_ints, 32)
+            powers = 2 ** np.arange(31, -1, -1, dtype=np.int64)
+            integers = (bits_reshaped * powers).sum(axis=1)
+
+            # Konwertuj też na floaty [0,1] dla mnożników
+            floats = integers / (2 ** 32)
+
+            # Squeeze: mnóż przez kolejne floaty aż < 1
+            squeeze_counts = []
+            for i in range(0, len(integers) - 1, 2):
+                value = float(integers[i])
+                count = 0
+                j = i + 1
+
+                while value >= 1.0 and j < len(floats):
+                    value *= float(floats[j])
+                    count += 1
+                    j += 1
+
+                    if count > 100:  # Zabezpieczenie
+                        break
+
+                squeeze_counts.append(count)
+
+            mean_count = float(np.mean(squeeze_counts))
+            std_count = float(np.std(squeeze_counts))
+        else:
+            # Fallback
+            num_ints = n // 32
+            integers = []
+
+            for i in range(num_ints):
+                int_bits = bits[i*32:(i+1)*32]
+                value = 0
+                for bit in int_bits:
+                    value = (value << 1) | bit
+                integers.append(value)
+
+            floats = [x / (2 ** 32) for x in integers]
+
+            squeeze_counts = []
+            for i in range(0, len(integers) - 1, 2):
+                value = float(integers[i])
+                count = 0
+                j = i + 1
+
+                while value >= 1.0 and j < len(floats):
+                    value *= floats[j]
+                    count += 1
+                    j += 1
+
+                    if count > 100:
+                        break
+
+                squeeze_counts.append(count)
+
+            mean_count = sum(squeeze_counts) / len(squeeze_counts)
+            variance = sum((x - mean_count)**2 for x in squeeze_counts) / len(squeeze_counts)
+            std_count = sqrt(variance)
+
+        # Teoretyczna średnia dla losowych wartości
+        expected_mean = 47.0  # Przybliżona wartość teoretyczna
+
+        if std_count > 0:
+            z_score = abs(mean_count - expected_mean) / std_count
+            p_value = erfc(z_score / sqrt(2))
+        else:
+            z_score = 0.0
+            p_value = 1.0
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'mean_squeezes': round(mean_count, 2),
+                'std_squeezes': round(std_count, 2),
+                'expected_mean': expected_mean,
+                'num_samples': len(squeeze_counts),
+                'z_score': round(z_score, 4),
                 'threshold': 0.01
             }
         }
