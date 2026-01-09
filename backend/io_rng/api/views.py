@@ -208,13 +208,17 @@ class RNGViewSet(viewsets.ViewSet):
             # Generuj bity
             start_time = time.perf_counter()
 
-            # Załaduj moduł i użyj adaptera
-            module = runner._load_module(rng.code_path)
-            effective_params = parameters or rng.parameters
-            adapter = UniversalRNGAdapter(module, effective_params)
-
-            # Wygeneruj surowe dane
-            raw_data, data_type = adapter.generate_raw(count, seed)
+            # ExeRNGRunner używa generate_raw() bezpośrednio, PythonRNGRunner przez adapter
+            if hasattr(runner, '_load_module'):
+                # PythonRNGRunner - załaduj moduł i użyj adaptera
+                module = runner._load_module(rng.code_path)
+                effective_params = parameters or rng.parameters
+                adapter = UniversalRNGAdapter(module, effective_params)
+                raw_data, data_type = adapter.generate_raw(count, seed)
+            else:
+                # ExeRNGRunner lub inny - użyj generate_raw() bezpośrednio
+                effective_params = parameters or rng.parameters
+                raw_data, data_type = runner.generate_raw(rng, count, seed, effective_params)
 
             # Konwertuj do bitów jeśli trzeba
             if data_type == DataType.BITS:
