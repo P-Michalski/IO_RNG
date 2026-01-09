@@ -4,6 +4,18 @@ Run RNG Test Use Case
 from typing import Dict, Any, List
 import time
 
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+
+try:
+    from scipy.fft import fft
+    HAS_SCIPY_FFT = True
+except ImportError:
+    HAS_SCIPY_FFT = False
+
 from io_rng.core.entities.rng import RNG
 from io_rng.core.entities.test_result import TestResult
 from io_rng.core.interfaces.rng_runner import IRNGRunner
@@ -96,8 +108,21 @@ class RunRNGTestUseCase:
                 # Konwertuj floaty [0,1] do bitów
                 bits = [1 if x > 0.5 else 0 for x in raw_data]
 
-            # Konwertuj do floatów dla testów statystycznych
-            numbers = runner.generate_numbers(rng, samples_count, seed, parameters)
+            # Konwertuj do floatów dla testów statystycznych (z już wygenerowanych bitów)
+            # Zamiast generować drugi raz, konwertujemy bity -> floaty
+            if data_type == DataType.FLOATS:
+                # Jeśli już mamy floaty, użyj ich
+                numbers = raw_data
+            else:
+                # Konwertuj bity na floaty: 32 bity -> 1 float [0,1]
+                bits_per_float = 32
+                numbers = []
+                max_val = (2 ** bits_per_float) - 1
+
+                for i in range(len(bits) // bits_per_float):
+                    chunk = bits[i * bits_per_float:(i + 1) * bits_per_float]
+                    value = sum(bit << (bits_per_float - 1 - j) for j, bit in enumerate(chunk))
+                    numbers.append(value / max_val)
         except Exception as e:
             return self._create_error_result(rng_id, test_name, str(e))
 
@@ -321,16 +346,25 @@ class RunRNGTestUseCase:
         Sprawdza czy liczba jedynek i zer jest w przybliżeniu równa.
         """
         import math
+        from math import erfc
 
         n = len(bits)
-        # S = suma bitów (jako +1/-1)
-        s = sum(1 if bit == 1 else -1 for bit in bits)
+
+        # OPTYMALIZACJA: Użyj numpy jeśli dostępne
+        if HAS_NUMPY:
+            bits_arr = np.array(bits, dtype=np.int8)
+            ones_count = np.sum(bits_arr)
+            # S = suma bitów (jako +1/-1)
+            s = np.sum(np.where(bits_arr == 1, 1, -1))
+        else:
+            ones_count = sum(bits)
+            # S = suma bitów (jako +1/-1)
+            s = sum(1 if bit == 1 else -1 for bit in bits)
 
         # Test statistic
         s_obs = abs(s) / math.sqrt(n)
 
         # P-value
-        from math import erfc
         p_value = erfc(s_obs / math.sqrt(2))
 
         # Test passes if p-value >= 0.01
@@ -343,8 +377,8 @@ class RunRNGTestUseCase:
             'statistics': {
                 'p_value': round(p_value, 6),
                 'test_statistic': round(s_obs, 6),
-                'ones': sum(bits),
-                'zeros': n - sum(bits),
+                'ones': int(ones_count),
+                'zeros': n - int(ones_count),
                 'threshold': 0.01
             }
         }
@@ -742,7 +776,6 @@ class RunRNGTestUseCase:
         """
         import math
         from math import erfc
-        import cmath
 
         n = len(bits)
 
@@ -754,23 +787,32 @@ class RunRNGTestUseCase:
             }
 
         # Konwertuj bity do +1/-1
-        X = [2 * bit - 1 for bit in bits]
+        if HAS_NUMPY:
+            X = np.array([2 * bit - 1 for bit in bits], dtype=np.float64)
+        else:
+            X = [2 * bit - 1 for bit in bits]
 
-        # Prosta implementacja DFT (dla małych n)
-        # Dla dużych n lepiej użyć numpy.fft
-        def dft(x):
-            N = len(x)
-            result = []
-            for k in range(N // 2):  # Tylko połowa (symetria)
-                sum_val = 0
-                for n in range(N):
-                    angle = -2j * cmath.pi * k * n / N
-                    sum_val += x[n] * cmath.exp(angle)
-                result.append(abs(sum_val))
-            return result
+        # OPTYMALIZACJA: Użyj scipy.fft jeśli dostępne (O(N log N) zamiast O(N²))
+        if HAS_SCIPY_FFT and HAS_NUMPY:
+            # Oblicz FFT używając scipy (znacznie szybsze!)
+            fft_result = fft(X)
+            S = np.abs(fft_result[:n // 2])
+        else:
+            # Fallback: Prosta implementacja DFT (wolna dla dużych n)
+            import cmath
+            def dft(x):
+                N = len(x)
+                result = []
+                for k in range(N // 2):  # Tylko połowa (symetria)
+                    sum_val = 0
+                    for n_idx in range(N):
+                        angle = -2j * cmath.pi * k * n_idx / N
+                        sum_val += x[n_idx] * cmath.exp(angle)
+                    result.append(abs(sum_val))
+                return result
 
-        # Oblicz DFT
-        S = dft(X)
+            # Oblicz DFT
+            S = dft(X)
 
         # Próg wykrywania pików
         T = math.sqrt(math.log(1 / 0.05) * n)
