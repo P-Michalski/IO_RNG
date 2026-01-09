@@ -1,3 +1,4 @@
+#Tests
 """
 Run RNG Test Use Case
 """
@@ -742,7 +743,16 @@ class RunRNGTestUseCase:
         """
         import math
         from math import erfc
-        import cmath
+
+        # Wersja wektorowa oparta na numpy.fft – O(n log n) zamiast O(n^2)
+        try:
+            import numpy as np
+        except ImportError:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {'error': 'numpy is required for nist_dft_test'}
+            }
 
         n = len(bits)
 
@@ -753,47 +763,33 @@ class RunRNGTestUseCase:
                 'statistics': {'error': 'Minimum 100 bits required'}
             }
 
-        # Konwertuj bity do +1/-1
-        X = [2 * bit - 1 for bit in bits]
+        # Konwertuj bity do +1/-1 w tablicy wektorowej
+        X = np.asarray(bits, dtype=np.int8) * 2 - 1
 
-        # Prosta implementacja DFT (dla małych n)
-        # Dla dużych n lepiej użyć numpy.fft
-        def dft(x):
-            N = len(x)
-            result = []
-            for k in range(N // 2):  # Tylko połowa (symetria)
-                sum_val = 0
-                for n in range(N):
-                    angle = -2j * cmath.pi * k * n / N
-                    sum_val += x[n] * cmath.exp(angle)
-                result.append(abs(sum_val))
-            return result
-
-        # Oblicz DFT
-        S = dft(X)
+        # RFFT zwraca tylko nieujemne częstotliwości
+        spectrum = np.fft.rfft(X)
+        magnitudes = np.abs(spectrum)
 
         # Próg wykrywania pików
         T = math.sqrt(math.log(1 / 0.05) * n)
 
-        # Zlicz wartości przekraczające próg
+        # Zlicz wartości poniżej progu (zgodnie z definicją testu)
         N0 = 0.95 * n / 2
-        N1 = sum(1 for s in S if s < T)
+        N1 = int(np.count_nonzero(magnitudes < T))
 
-        # Różnica
+        # Statystyka i p-value
         d = (N1 - N0) / math.sqrt(n * 0.95 * 0.05 / 4)
-
-        # P-value
         p_value = erfc(abs(d) / math.sqrt(2))
 
         passed = p_value >= 0.01
-        score = min(1.0, p_value)
+        score = min(1.0, float(p_value))
 
         return {
             'passed': passed,
             'score': round(score, 4),
             'statistics': {
-                'p_value': round(p_value, 6),
-                'peaks_below_threshold': N1,
+                'p_value': round(float(p_value), 6),
+                'peaks_below_threshold': int(N1),
                 'expected_peaks': round(N0, 2),
                 'threshold': 0.01
             }
