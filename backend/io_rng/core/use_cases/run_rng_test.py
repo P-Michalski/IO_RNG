@@ -214,6 +214,16 @@ class RunRNGTestUseCase:
             return self._diehard_parking_lot_test(bits)
         elif test_name == "diehard_squeeze":
             return self._diehard_squeeze_test(bits)
+        elif test_name == "diehard_runs":
+            return self._diehard_runs_test(bits)
+        elif test_name == "diehard_craps":
+            return self._diehard_craps_test(bits)
+        elif test_name == "diehard_minimum_distance":
+            return self._diehard_minimum_distance_test(bits)
+        elif test_name == "diehard_3dspheres":
+            return self._diehard_3dspheres_test(bits)
+        elif test_name == "diehard_overlapping_sums":
+            return self._diehard_overlapping_sums_test(bits)
         else:
             raise ValueError(f"Unknown test: {test_name}")
 
@@ -2661,6 +2671,568 @@ class RunRNGTestUseCase:
                 'expected_mean': expected_mean,
                 'num_samples': len(squeeze_counts),
                 'z_score': round(z_score, 4),
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_runs_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Runs Test
+
+        Analizuje długości ciągów (runs) zer i jedynek.
+        Dla prawdziwie losowego generatora, rozkład długości
+        runs powinien być zgodny z rozkładem teoretycznym.
+
+        Minimum: 100000 bitów
+        """
+        from math import erfc
+
+        n = len(bits)
+
+        if n < 100000:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 100000 bits, got {n}',
+                    'bits_needed': 100000
+                }
+            }
+
+        # Zlicz runs (ciągi kolejnych zer lub jedynek)
+        if HAS_NUMPY:
+            # Numpy version - wykorzystaj diff do wykrycia zmian
+            bits_arr = np.array(bits, dtype=np.int8)
+
+            # Znajdź miejsca zmiany wartości
+            changes = np.diff(bits_arr)
+            change_indices = np.where(changes != 0)[0] + 1
+
+            # Dodaj początek i koniec
+            run_starts = np.concatenate(([0], change_indices))
+            run_ends = np.concatenate((change_indices, [n]))
+
+            # Oblicz długości runs
+            run_lengths = run_ends - run_starts
+
+            # Policz runs według długości (grupujemy 1-6, 7+)
+            run_counts = np.zeros(7, dtype=np.int32)  # 0: len=1, 1: len=2, ..., 6: len>=7
+            for length in run_lengths:
+                if length <= 6:
+                    run_counts[int(length) - 1] += 1
+                else:
+                    run_counts[6] += 1
+        else:
+            # Fallback
+            runs = []
+            current_run = 1
+
+            for i in range(1, n):
+                if bits[i] == bits[i-1]:
+                    current_run += 1
+                else:
+                    runs.append(current_run)
+                    current_run = 1
+            runs.append(current_run)
+
+            # Policz według długości
+            run_counts = [0] * 7
+            for length in runs:
+                if length <= 6:
+                    run_counts[length - 1] += 1
+                else:
+                    run_counts[6] += 1
+
+        # Teoretyczny rozkład dla losowych bitów
+        # P(run długości k) = 2 * (1/2)^(k+1) dla k < max
+        total_runs = sum(run_counts) if not HAS_NUMPY else int(np.sum(run_counts))
+        expected = []
+        for k in range(1, 7):
+            prob = 2 * (0.5 ** (k + 1))
+            expected.append(prob * total_runs)
+        # Dla runs >= 7
+        prob_7plus = 2 * (0.5 ** 8)
+        expected.append(prob_7plus * total_runs)
+
+        # Chi-square test
+        chi_square = 0
+        for i in range(7):
+            obs = int(run_counts[i]) if HAS_NUMPY else run_counts[i]
+            exp = expected[i]
+            if exp > 0:
+                chi_square += (obs - exp) ** 2 / exp
+
+        # Stopnie swobody = 6 (7 kategorii - 1)
+        df = 6
+        p_value = erfc((chi_square / (2 * df))**0.5)
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'chi_square': round(chi_square, 4),
+                'total_runs': total_runs,
+                'observed': run_counts.tolist() if HAS_NUMPY else run_counts,
+                'expected': [round(e, 2) for e in expected],
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_craps_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Craps Test
+
+        Symuluje grę w kości (craps) używając bitów jako źródła losowości.
+        Zlicza liczbę rzutów potrzebnych do wygrania/przegrania gry.
+
+        Zasady craps:
+        - Suma 7 lub 11 na pierwszym rzucie = wygrana
+        - Suma 2, 3, lub 12 na pierwszym rzucie = przegrana
+        - Inne sumy = "point", rzucaj aż wypadnie point (wygrana) lub 7 (przegrana)
+
+        Minimum: 200000 bitów
+        """
+        from math import erfc
+
+        n = len(bits)
+
+        if n < 200000:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 200000 bits, got {n}',
+                    'bits_needed': 200000
+                }
+            }
+
+        # Konwertuj bity na rzuty kostką (1-6)
+        # Każdy rzut = 3 bity (0-7), odrzucamy 6,7 i próbujemy ponownie
+        def bits_to_dice(bits_arr, start_idx):
+            """Konwertuj 3 bity na rzut kostką (1-6)"""
+            while start_idx + 2 < len(bits_arr):
+                if HAS_NUMPY:
+                    value = int(bits_arr[start_idx] * 4 + bits_arr[start_idx+1] * 2 + bits_arr[start_idx+2])
+                else:
+                    value = bits_arr[start_idx] * 4 + bits_arr[start_idx+1] * 2 + bits_arr[start_idx+2]
+
+                if value < 6:
+                    return value + 1, start_idx + 3
+                start_idx += 3
+            return None, start_idx
+
+        if HAS_NUMPY:
+            bits_arr = np.array(bits, dtype=np.int8)
+        else:
+            bits_arr = bits
+
+        # Symuluj gry w craps
+        games_won = 0
+        games_lost = 0
+        idx = 0
+        max_games = 1000  # Limit gier
+
+        while idx < n - 50 and (games_won + games_lost) < max_games:
+            # Pierwszy rzut (2 kostki)
+            dice1, idx = bits_to_dice(bits_arr, idx)
+            if dice1 is None:
+                break
+            dice2, idx = bits_to_dice(bits_arr, idx)
+            if dice2 is None:
+                break
+
+            first_roll = dice1 + dice2
+
+            if first_roll in [7, 11]:
+                games_won += 1
+            elif first_roll in [2, 3, 12]:
+                games_lost += 1
+            else:
+                # Point - rzucaj aż wypadnie point lub 7
+                point = first_roll
+                while idx < n - 50:
+                    dice1, idx = bits_to_dice(bits_arr, idx)
+                    if dice1 is None:
+                        break
+                    dice2, idx = bits_to_dice(bits_arr, idx)
+                    if dice2 is None:
+                        break
+
+                    roll = dice1 + dice2
+                    if roll == point:
+                        games_won += 1
+                        break
+                    elif roll == 7:
+                        games_lost += 1
+                        break
+
+        total_games = games_won + games_lost
+
+        if total_games < 100:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': 'Not enough complete games',
+                    'total_games': total_games
+                }
+            }
+
+        # Teoretyczna szansa wygranej w craps ≈ 0.493
+        expected_wins = total_games * 0.493
+        expected_losses = total_games * 0.507
+
+        # Chi-square test
+        chi_square = ((games_won - expected_wins) ** 2 / expected_wins +
+                     (games_lost - expected_losses) ** 2 / expected_losses)
+
+        df = 1
+        p_value = erfc((chi_square / (2 * df))**0.5)
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'chi_square': round(chi_square, 4),
+                'games_won': games_won,
+                'games_lost': games_lost,
+                'total_games': total_games,
+                'win_rate': round(games_won / total_games, 4),
+                'expected_win_rate': 0.493,
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_minimum_distance_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Minimum Distance Test
+
+        Losuje punkty w przestrzeni 2D i oblicza minimalną odległość
+        między parami punktów. Rozkład minimalnych odległości powinien
+        być zgodny z rozkładem teoretycznym.
+
+        Minimum: 200000 bitów
+        """
+        from math import erfc, sqrt
+
+        n = len(bits)
+
+        if n < 200000:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 200000 bits, got {n}',
+                    'bits_needed': 200000
+                }
+            }
+
+        # Konwertuj bity na punkty 2D w [0,1]x[0,1]
+        bits_per_coord = 10  # 10 bitów na współrzędną
+        num_points = n // (bits_per_coord * 2)
+
+        if num_points < 100:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need at least 100 points, got {num_points}'
+                }
+            }
+
+        if HAS_NUMPY:
+            # Numpy version
+            bits_arr = np.array(bits[:num_points * bits_per_coord * 2], dtype=np.int8)
+            bits_grouped = bits_arr.reshape(num_points * 2, bits_per_coord)
+            powers = 2 ** np.arange(bits_per_coord - 1, -1, -1, dtype=np.int32)
+            coords = (bits_grouped * powers).sum(axis=1) / (2 ** bits_per_coord)
+
+            points = coords.reshape(num_points, 2)
+
+            # Oblicz minimalną odległość dla każdego punktu do najbliższego sąsiada
+            min_distances = []
+            for i in range(min(num_points, 500)):  # Limit dla wydajności
+                dists = np.sqrt(np.sum((points - points[i]) ** 2, axis=1))
+                dists[i] = float('inf')  # Ignoruj siebie
+                min_dist = float(np.min(dists))
+                min_distances.append(min_dist)
+        else:
+            # Fallback
+            coords = []
+            for i in range(num_points * 2):
+                coord_bits = bits[i*bits_per_coord:(i+1)*bits_per_coord]
+                value = 0
+                for bit in coord_bits:
+                    value = (value << 1) | bit
+                coords.append(value / (2 ** bits_per_coord))
+
+            points = [(coords[i*2], coords[i*2+1]) for i in range(num_points)]
+
+            min_distances = []
+            for i in range(min(num_points, 500)):
+                min_dist = float('inf')
+                for j in range(num_points):
+                    if i != j:
+                        dist = sqrt((points[i][0] - points[j][0])**2 +
+                                   (points[i][1] - points[j][1])**2)
+                        min_dist = min(min_dist, dist)
+                min_distances.append(min_dist)
+
+        # Analiza rozkładu minimalnych odległości
+        if HAS_NUMPY:
+            mean_dist = float(np.mean(min_distances))
+            std_dist = float(np.std(min_distances))
+        else:
+            mean_dist = sum(min_distances) / len(min_distances)
+            variance = sum((x - mean_dist)**2 for x in min_distances) / len(min_distances)
+            std_dist = sqrt(variance)
+
+        # Teoretyczna średnia odległość zależy od gęstości punktów
+        expected_mean = sqrt(1.0 / num_points)  # Przybliżone
+
+        if std_dist > 0:
+            z_score = abs(mean_dist - expected_mean) / std_dist
+            p_value = erfc(z_score / sqrt(2))
+        else:
+            z_score = 0.0
+            p_value = 1.0
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'mean_distance': round(mean_dist, 6),
+                'std_distance': round(std_dist, 6),
+                'expected_mean': round(expected_mean, 6),
+                'num_points': num_points,
+                'num_samples': len(min_distances),
+                'z_score': round(z_score, 4),
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_3dspheres_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard 3D Spheres Test
+
+        Losuje punkty w przestrzeni 3D w sześcianie [0,1]^3.
+        Zlicza punkty wewnątrz sfery o promieniu r z centrum w (0.5, 0.5, 0.5).
+        Liczba punktów wewnątrz powinna być zgodna z rozkładem teoretycznym.
+
+        Minimum: 150000 bitów
+        """
+        from math import erfc, sqrt
+
+        n = len(bits)
+
+        if n < 150000:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 150000 bits, got {n}',
+                    'bits_needed': 150000
+                }
+            }
+
+        # Konwertuj bity na punkty 3D w [0,1]^3
+        bits_per_coord = 10  # 10 bitów na współrzędną
+        num_points = n // (bits_per_coord * 3)  # 3 współrzędne (x, y, z)
+
+        if num_points < 100:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need at least 100 points, got {num_points}'
+                }
+            }
+
+        if HAS_NUMPY:
+            # Numpy version
+            bits_arr = np.array(bits[:num_points * bits_per_coord * 3], dtype=np.int8)
+            bits_grouped = bits_arr.reshape(num_points * 3, bits_per_coord)
+            powers = 2 ** np.arange(bits_per_coord - 1, -1, -1, dtype=np.int32)
+            coords = (bits_grouped * powers).sum(axis=1) / (2 ** bits_per_coord)
+
+            # Rozdziel na x, y, z
+            x = coords[0::3]
+            y = coords[1::3]
+            z = coords[2::3]
+
+            # Sfera z centrum w (0.5, 0.5, 0.5), promień 0.5
+            center = 0.5
+            radius = 0.5
+
+            # Oblicz odległości od centrum
+            distances = np.sqrt((x - center)**2 + (y - center)**2 + (z - center)**2)
+
+            # Zlicz punkty wewnątrz sfery
+            inside_count = int(np.sum(distances <= radius))
+        else:
+            # Fallback
+            coords = []
+            for i in range(num_points * 3):
+                coord_bits = bits[i*bits_per_coord:(i+1)*bits_per_coord]
+                value = 0
+                for bit in coord_bits:
+                    value = (value << 1) | bit
+                coords.append(value / (2 ** bits_per_coord))
+
+            x = coords[0::3]
+            y = coords[1::3]
+            z = coords[2::3]
+
+            center = 0.5
+            radius = 0.5
+
+            inside_count = 0
+            for i in range(num_points):
+                dist = sqrt((x[i] - center)**2 + (y[i] - center)**2 + (z[i] - center)**2)
+                if dist <= radius:
+                    inside_count += 1
+
+        # Teoretyczna objętość sfery / objętość sześcianu
+        # V_sphere = (4/3) * π * r^3
+        # V_cube = 1
+        # Dla r = 0.5: V_sphere/V_cube ≈ 0.5236
+        expected_ratio = 0.5236
+        expected_inside = num_points * expected_ratio
+
+        # Test statystyczny
+        if expected_inside > 0:
+            z_score = abs(inside_count - expected_inside) / sqrt(expected_inside * (1 - expected_ratio))
+            p_value = erfc(z_score / sqrt(2))
+        else:
+            z_score = 0.0
+            p_value = 1.0
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'inside_count': inside_count,
+                'outside_count': num_points - inside_count,
+                'total_points': num_points,
+                'inside_ratio': round(inside_count / num_points, 4),
+                'expected_ratio': expected_ratio,
+                'z_score': round(z_score, 4),
+                'threshold': 0.01
+            }
+        }
+
+    def _diehard_overlapping_sums_test(self, bits: List[int]) -> Dict[str, Any]:
+        """
+        Diehard Overlapping Sums Test
+
+        Konwertuje bity na liczby zmiennoprzecinkowe i oblicza sumy
+        nakładających się okien. Rozkład sum powinien być normalny.
+
+        Minimum: 100000 bitów
+        """
+        from math import erfc, sqrt
+
+        n = len(bits)
+
+        if n < 100000:
+            return {
+                'passed': False,
+                'score': 0.0,
+                'statistics': {
+                    'error': f'Need >= 100000 bits, got {n}',
+                    'bits_needed': 100000
+                }
+            }
+
+        # Konwertuj grupy bitów na liczby [0,1]
+        bits_per_num = 8  # 8 bitów na liczbę
+        window_size = 10  # Rozmiar okna sumowania
+
+        if HAS_NUMPY:
+            # Numpy version
+            num_values = n // bits_per_num
+            bits_arr = np.array(bits[:num_values * bits_per_num], dtype=np.int8)
+            bits_reshaped = bits_arr.reshape(num_values, bits_per_num)
+            powers = 2 ** np.arange(bits_per_num - 1, -1, -1, dtype=np.int32)
+            values = (bits_reshaped * powers).sum(axis=1) / (2 ** bits_per_num)
+
+            # Oblicz sumy nakładających się okien
+            sums = []
+            for i in range(len(values) - window_size + 1):
+                window_sum = float(np.sum(values[i:i+window_size]))
+                sums.append(window_sum)
+
+            mean_sum = float(np.mean(sums))
+            std_sum = float(np.std(sums))
+        else:
+            # Fallback
+            num_values = n // bits_per_num
+            values = []
+
+            for i in range(num_values):
+                value_bits = bits[i*bits_per_num:(i+1)*bits_per_num]
+                value = 0
+                for bit in value_bits:
+                    value = (value << 1) | bit
+                values.append(value / (2 ** bits_per_num))
+
+            # Sumy nakładających się okien
+            sums = []
+            for i in range(len(values) - window_size + 1):
+                window_sum = sum(values[i:i+window_size])
+                sums.append(window_sum)
+
+            mean_sum = sum(sums) / len(sums)
+            variance = sum((x - mean_sum)**2 for x in sums) / len(sums)
+            std_sum = sqrt(variance)
+
+        # Teoretyczna średnia i odchylenie standardowe
+        # Dla uniform [0,1], suma n wartości ma średnią n/2 i wariancję n/12
+        expected_mean = window_size / 2.0
+        expected_std = sqrt(window_size / 12.0)
+
+        # Test normalności (z-score)
+        if std_sum > 0:
+            z_score_mean = abs(mean_sum - expected_mean) / (expected_std / sqrt(len(sums)))
+            z_score_std = abs(std_sum - expected_std) / (expected_std / sqrt(2 * len(sums)))
+
+            # Łączny test
+            chi_square = z_score_mean**2 + z_score_std**2
+            p_value = erfc(sqrt(chi_square / 2))
+        else:
+            chi_square = 0.0
+            p_value = 1.0
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            'passed': passed,
+            'score': round(score, 4),
+            'statistics': {
+                'p_value': round(p_value, 6),
+                'mean_sum': round(mean_sum, 4),
+                'std_sum': round(std_sum, 4),
+                'expected_mean': round(expected_mean, 4),
+                'expected_std': round(expected_std, 4),
+                'num_sums': len(sums),
+                'chi_square': round(chi_square, 4),
                 'threshold': 0.01
             }
         }
