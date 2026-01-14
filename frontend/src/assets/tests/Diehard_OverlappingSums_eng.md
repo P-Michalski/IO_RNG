@@ -1,6 +1,3 @@
-# Diehard Overlapping Sums Test
-
-## Description
 The Overlapping Sums test converts bits into floating-point numbers [0,1] and calculates sums of overlapping windows. The sum distribution should be normal according to the central limit theorem. The test checks mean and standard deviation of sums.
 
 ## How it works

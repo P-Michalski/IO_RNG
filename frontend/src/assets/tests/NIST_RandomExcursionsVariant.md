@@ -1,6 +1,3 @@
-# NIST Random Excursions Variant Test
-
-## Opis
 Wariant testu Random Excursions, który testuje więcej stanów (±1 do ±9) i używa innej statystyki testowej. Każdy stan ma osobną p-value.
 
 ## Jak działa

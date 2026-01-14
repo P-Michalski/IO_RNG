@@ -1,6 +1,3 @@
-# NIST Monobit Test
-
-## Description
 The simplest NIST test. It checks whether the number of ones and zeros in a bit sequence is approximately equal. This is a fundamental test for bit balance.
 
 ## How it works

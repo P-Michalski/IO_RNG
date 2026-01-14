@@ -1,6 +1,3 @@
-# NIST Longest Run of Ones Test
-
-## Opis
 Test sprawdza długość najdłuższego ciągu jedynek w sekwencji. Zbyt krótkie lub zbyt długie maksymalne serie mogą wskazywać na niełosowość.
 
 ## Jak działa

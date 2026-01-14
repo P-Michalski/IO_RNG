@@ -1,6 +1,3 @@
-# NIST Block Frequency Test
-
-## Description
 The test checks whether the proportion of ones in individual blocks (subsequences) is close to 0.5. This is a more localized version of the Monobit test.
 
 ## How it works

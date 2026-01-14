@@ -1,6 +1,3 @@
-# Diehard Overlapping Permutations Test
-
-## Description
 The Overlapping Permutations test analyzes frequencies of permutations of 5 consecutive values in overlapping windows. For 5 values, there are 5! = 120 possible permutations. The test checks if the permutation distribution is uniform.
 
 ## How it works

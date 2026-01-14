@@ -1,6 +1,3 @@
-# NIST Discrete Fourier Transform (Spectral) Test
-
-## Opis
 Test DFT wykrywa okresowe wzorce w sekwencji bitowej używając transformaty Fouriera. Losowa sekwencja nie powinna mieć wyraźnych pików w spektrum częstotliwości.
 
 ## Jak działa

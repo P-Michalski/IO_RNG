@@ -1,6 +1,3 @@
-# NIST Binary Matrix Rank Test
-
-## Opis
 Test analizuje rangę macierzy binarnych utworzonych z sekwencji bitowej. Sprawdza czy ranga macierzy odpowiada oczekiwanej dla losowych danych. Niska ranga wskazuje na zależności liniowe między bitami.
 
 ## Jak działa

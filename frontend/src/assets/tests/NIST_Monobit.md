@@ -1,6 +1,3 @@
-# NIST Monobit Test
-
-## Opis
 Najprostszy test NIST. Sprawdza, czy liczba jedynek i zer w sekwencji bitowej jest w przybliżeniu równa. Jest to fundamentalny test równowagi bitów.
 
 ## Jak działa

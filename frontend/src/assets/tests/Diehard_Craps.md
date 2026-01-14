@@ -1,6 +1,3 @@
-# Diehard Craps Test
-
-## Opis
 Test Craps symuluje grę w kości (craps) używając bitów jako źródła losowości dla rzutów kostką. Gra ma dobrze zdefiniowane prawdopodobieństwa wygranej (~49.3%), które powinny być osiągnięte przez prawdziwie losowy generator.
 
 ## Jak działa

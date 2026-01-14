@@ -1,6 +1,3 @@
-# NIST Maurer's Universal Statistical Test
-
-## Opis
 Test uniwersalny Maurera mierzy kompresowność sekwencji. Losowa sekwencja powinna być trudna do skompresowania. Test mierzy dystans między powtórzeniami L-bitowych wzorców.
 
 ## Jak działa

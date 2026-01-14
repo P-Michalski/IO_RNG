@@ -1,6 +1,3 @@
-# Diehard Squeeze Test
-
-## Description
 The Squeeze test compresses random 32-bit integers by iteratively multiplying by random floats [0,1] until result < 1. It counts the number of iterations (multiplications) needed to "squeeze" the value below 1. The distribution of iteration counts should be characteristic.
 
 ## How it works

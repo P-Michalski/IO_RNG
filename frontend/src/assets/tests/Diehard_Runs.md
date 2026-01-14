@@ -1,6 +1,3 @@
-# Diehard Runs Test
-
-## Opis
 Test Runs analizuje długości ciągów (runs) kolejnych zer lub jedynek w sekwencji bitowej. Dla prawdziwie losowego generatora, rozkład długości runs powinien być zgodny z rozkładem teoretycznym - krótkie runy są częstsze, długie rzadsze.
 
 ## Jak działa

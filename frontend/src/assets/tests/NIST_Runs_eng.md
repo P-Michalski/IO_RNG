@@ -1,6 +1,3 @@
-# NIST Runs Test
-
-## Description
 The test checks whether the number of transitions (runs) between 0 and 1 is correct. A run is an uninterrupted sequence of identical bits. The test detects whether the sequence is too "smooth" or too "variable".
 
 ## How it works

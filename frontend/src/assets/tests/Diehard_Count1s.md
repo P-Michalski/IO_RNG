@@ -1,6 +1,3 @@
-# Diehard Count-the-1s Test
-
-## Opis
 Test Count-the-1s zlicza liczbę jedynek w każdym bajcie i sprawdza, czy rozkład liczby jedynek zgadza się z teoretycznym rozkładem dwumianowym B(8, 0.5). Każdy bajt może mieć od 0 do 8 jedynek.
 
 ## Jak działa

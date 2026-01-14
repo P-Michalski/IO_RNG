@@ -1,6 +1,3 @@
-# Diehard Minimum Distance Test
-
-## Opis
 Test Minimum Distance losuje punkty w przestrzeni 2D ([0,1]×[0,1]) i oblicza minimalną odległość między każdym punktem a jego najbliższym sąsiadem. Rozkład minimalnych odległości powinien być zgodny z rozkładem teoretycznym zależnym od gęstości punktów.
 
 ## Jak działa

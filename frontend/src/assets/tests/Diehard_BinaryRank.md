@@ -1,6 +1,3 @@
-# Diehard Binary Rank Test
-
-## Opis
 Test Binary Rank sprawdza rangę (rank) macierzy binarnych 32x32 utworzonych z bitów. Dla prawdziwie losowych bitów, rozkład rang powinien być charakterystyczny - większość macierzy powinna mieć pełną rangę (32) lub rangę 31.
 
 ## Jak działa

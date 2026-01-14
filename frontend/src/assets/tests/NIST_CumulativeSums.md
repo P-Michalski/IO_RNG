@@ -1,6 +1,3 @@
-# NIST Cumulative Sums Test
-
-## Opis
 Test sum kumulatywnych (CUSUM) wykrywa odchylenia od losowości poprzez śledzenie maksymalnego odchylenia skumulowanej sumy od zera.
 
 ## Jak działa

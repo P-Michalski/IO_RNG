@@ -1,6 +1,3 @@
-# Diehard Runs Test
-
-## Description
 The Runs test analyzes lengths of runs (sequences) of consecutive zeros or ones in bit sequence. For truly random generators, the run length distribution should match theoretical distribution - short runs are more frequent, long runs are rarer.
 
 ## How it works

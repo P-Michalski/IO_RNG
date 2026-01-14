@@ -1,6 +1,3 @@
-# NIST Longest Run of Ones Test
-
-## Description
 The test checks the length of the longest sequence of ones in a bit sequence. Excessively short or long maximum runs may indicate non-randomness.
 
 ## How it works

@@ -1,6 +1,3 @@
-# Diehard Bitstream Test
-
-## Description
 The Bitstream test analyzes frequencies of 20-bit words in overlapping windows. It checks whether the count of the most and least frequent words is within norms for truly random generators.
 
 ## How it works

@@ -1,6 +1,3 @@
-# Diehard 3D Spheres Test
-
-## Description
 The 3D Spheres test randomly places points in 3D space in cube [0,1]³ and counts points inside a sphere with radius r = 0.5 centered at (0.5, 0.5, 0.5). The number of inside points should match the volume ratio of sphere to cube.
 
 ## How it works

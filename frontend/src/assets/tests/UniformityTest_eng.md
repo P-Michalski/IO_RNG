@@ -1,6 +1,3 @@
-# Uniformity Test
-
-## Description
 The uniformity test checks whether the mean and variance of generated numbers correspond to theoretical values for the uniform distribution U(0,1).
 
 ## How it works

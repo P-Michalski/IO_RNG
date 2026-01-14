@@ -1,6 +1,3 @@
-# Diehard Craps Test
-
-## Description
 The Craps test simulates the craps dice game using bits as randomness source for die rolls. The game has well-defined win probabilities (~49.3%) that should be achieved by truly random generators.
 
 ## How it works

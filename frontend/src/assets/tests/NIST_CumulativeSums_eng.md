@@ -1,6 +1,3 @@
-# NIST Cumulative Sums Test
-
-## Description
 The Cumulative Sums (CUSUM) test detects deviations from randomness by tracking the maximum deviation of the cumulative sum from zero.
 
 ## How it works

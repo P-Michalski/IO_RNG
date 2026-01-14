@@ -1,6 +1,3 @@
-# NIST Linear Complexity Test
-
-## Opis
 Test mierzy długość najkrótszego rejestru przesuwnego ze sprzężeniem zwrotnym liniowym (LFSR), który może wygenerować daną sekwencję. Używa algorytmu Berlekamp-Massey.
 
 ## Jak działa

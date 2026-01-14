@@ -1,6 +1,3 @@
-# Diehard DNA Test
-
-## Opis
 Test DNA traktuje bity jako sekwencję DNA z 4-literowym alfabetem (A, C, G, T). Każda litera jest kodowana przez 2 bity: 00=A, 01=C, 10=G, 11=T. Test analizuje nakładające się 10-literowe "słowa" DNA i sprawdza sparse occupancy.
 
 ## Jak działa

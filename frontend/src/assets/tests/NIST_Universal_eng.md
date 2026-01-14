@@ -1,6 +1,3 @@
-# NIST Maurer's Universal Statistical Test
-
-## Description
 Maurer's universal test measures sequence compressibility. A random sequence should be difficult to compress. The test measures distance between repetitions of L-bit patterns.
 
 ## How it works
