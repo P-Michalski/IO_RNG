@@ -1,0 +1,1179 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+
+\usetikzlibrary{shapes.geometric, shapes.multipart, arrows, positioning, fit, backgrounds}
+
+\geometry{margin=2.5cm}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    literate={ą}{{\k{a}}}1 {ć}{{\'c}}1 {ę}{{\k{e}}}1 {ł}{{\l{}}}1 {ń}{{\'n}}1 {ó}{{\'o}}1 {ś}{{\'s}}1 {ź}{{\'z}}1 {ż}{{\.z}}1
+             {Ą}{{\k{A}}}1 {Ć}{{\'C}}1 {Ę}{{\k{E}}}1 {Ł}{{\L{}}}1 {Ń}{{\'N}}1 {Ó}{{\'O}}1 {Ś}{{\'S}}1 {Ź}{{\'Z}}1 {Ż}{{\.Z}}1
+}
+
+\lstset{style=pythonstyle}
+
+\title{\textbf{Dokumentacja Architektury Systemu IO\_RNG}\\
+\large System Testowania i Porównywania Generatorów Liczb Pseudolosowych}
+\author{Projekt IO}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Wprowadzenie}
+
+IO\_RNG to aplikacja webowa służąca do testowania i porównywania różnych generatorów liczb pseudolosowych (PRNG). System umożliwia wykonywanie testów statystycznych na implementacjach algorytmów RNG w różnych językach programowania (Python, C++, Rust, Java) oraz analizę ich jakości i wydajności.
+
+\subsection{Cel dokumentu}
+Dokument przedstawia architekturę systemu, zastosowane wzorce projektowe, zasady programowania obiektowego oraz wykorzystane struktury danych.
+
+\subsection{Technologie}
+\begin{itemize}
+    \item \textbf{Backend:} Django REST Framework, Python 3.x
+    \item \textbf{Frontend:} React, TypeScript, Vite
+    \item \textbf{Baza danych:} SQLite
+    \item \textbf{Generatory:} Python, C++, Rust, C\#
+\end{itemize}
+
+\section{Architektura Systemu}
+
+\subsection{Przegląd architektury}
+
+System IO\_RNG implementuje \textbf{Clean Architecture} (Czystą Architekturę) z wyraźnym podziałem na warstwy:
+
+\begin{enumerate}
+    \item \textbf{Warstwa domeny (Core)} - encje i logika biznesowa
+    \item \textbf{Warstwa infrastruktury (Infrastructure)} - implementacje techniczne
+    \item \textbf{Warstwa API} - interfejs REST
+    \item \textbf{Warstwa prezentacji (Frontend)} - interfejs użytkownika
+\end{enumerate}
+
+\subsection{Schemat struktury systemu}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.8cm and 1.5cm,
+    layer/.style={rectangle, draw=black!80, fill=blue!10, thick, minimum width=3cm, minimum height=1.2cm, align=center, rounded corners},
+    component/.style={rectangle, draw=black!60, fill=green!10, thick, minimum width=2.8cm, minimum height=0.8cm, align=center},
+    interface/.style={rectangle, draw=black!60, fill=yellow!20, thick, minimum width=2.8cm, minimum height=0.8cm, align=center},
+    entity/.style={rectangle, draw=black!60, fill=red!10, thick, minimum width=2.8cm, minimum height=0.8cm, align=center},
+    arrow/.style={thick,->,>=stealth}
+]
+
+% Frontend Layer
+\node[layer] (frontend) at (0,0) {\textbf{Frontend Layer}\\React + TypeScript};
+
+% API Layer
+\node[layer, below=of frontend] (api) {\textbf{API Layer}\\Django REST Framework};
+\node[component, below=0.3cm of api] (viewsets) {ViewSets};
+\node[component, left=0.2cm of viewsets] (serializers) {Serializers};
+
+% Core Layer
+\node[layer, below=2cm of api] (core) {\textbf{Core Layer}\\Domain Logic};
+\node[entity, below=0.3cm of core, xshift=-3cm] (entities) {Entities};
+\node[interface, below=0.3cm of core] (interfaces) {Interfaces};
+\node[component, below=0.3cm of core, xshift=3cm] (usecases) {Use Cases};
+
+% Infrastructure Layer
+\node[layer, below=2.5cm of core] (infra) {\textbf{Infrastructure Layer}\\Implementations};
+\node[component, below=0.3cm of infra, xshift=-3cm] (models) {Django Models};
+\node[component, below=0.3cm of infra] (repos) {Repositories};
+\node[component, below=0.3cm of infra, xshift=3cm] (runners) {RNG Runners};
+
+% Database
+\node[layer, below=1.5cm of infra] (db) {\textbf{Database}\\SQLite};
+
+% External Systems
+\node[layer, right=3cm of infra] (external) {\textbf{Algorytmy RNG}\\Python/C++/Rust};
+
+% Arrows
+\draw[arrow] (frontend) -- (api);
+\draw[arrow] (api) -- (core);
+\draw[arrow] (core) -- (infra);
+\draw[arrow] (infra) -- (db);
+\draw[arrow] (runners) -- (external);
+\draw[arrow, dashed] (interfaces) -- (repos);
+\draw[arrow, dashed] (interfaces) -- (runners);
+
+\end{tikzpicture}
+\caption{Architektura warstwowa systemu IO\_RNG}
+\end{figure}
+
+\newpage
+
+\subsection{Diagram klas - Core Layer}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    class/.style={rectangle split, rectangle split parts=3, draw=black!80, fill=blue!10, thick, minimum width=4cm, align=center},
+    interface/.style={rectangle split, rectangle split parts=3, draw=black!80, fill=yellow!20, thick, minimum width=4cm, align=center},
+    arrow/.style={thick,->,>=stealth},
+    implements/.style={thick,dashed,->,>=stealth}
+]
+
+% Entities
+\node[class] (rng) at (0,0) {
+    \textbf{RNG (Entity)}
+    \nodepart{second}
+    \small
+    - name: str\\
+    - language: Language\\
+    - algorithm: Algorithm\\
+    - code path: str\\
+    - parameters: Dict\\
+    - is active: bool
+    \nodepart{third}
+    + validate for execution()\\
+    + get parameter(key)
+};
+
+\node[class, right=2cm of rng] (testresult) {
+    \textbf{TestResult (Entity)}
+    \nodepart{second}
+    \small
+    - rng id: int\\
+    - test name: str\\
+    - passed: bool\\
+    - score: float\\
+    - execution time ms: float\\
+    - statistics: Dict
+    \nodepart{third}
+    + post init()
+};
+
+% Enums
+\node[class, below=2cm of rng] (language) {
+    \textbf{Language (Enum)}
+    \nodepart{second}
+    \small
+    PYTHON\\
+    CPP\\
+    RUST\\
+    JAVA\\
+    EXECUTABLE
+    \nodepart{third}
+};
+
+\node[class, right=1cm of language] (algorithm) {
+    \textbf{Algorithm (Enum)}
+    \nodepart{second}
+    \small
+    LINEAR CONGRUENTIAL\\
+    MERSENNE TWISTER\\
+    XORSHIFT\\
+    PCG\\
+    SYSTEM\\
+    CUSTOM
+    \nodepart{third}
+};
+
+% Interfaces
+\node[interface, below=5cm of rng, xshift=-2cm] (irngrepo) {
+    \textbf{<<Interface>>}\\
+    IRNGRepository
+    \nodepart{second}
+    \nodepart{third}
+    \small
+    + save(rng)\\
+    + get by id(id)\\
+    + get all()\\
+    + delete(id)\\
+    + update(rng)
+};
+
+\node[interface, right=1cm of irngrepo] (iresultrepo) {
+    \textbf{<<Interface>>}\\
+    ITestResultRepository
+    \nodepart{second}
+    \nodepart{third}
+    \small
+    + save(result)\\
+    + get by id(id)\\
+    + get by rng(rng id)\\
+    + get all()\\
+    + delete(id)
+};
+
+\node[interface, right=1cm of iresultrepo] (irunner) {
+    \textbf{<<Interface>>}\\
+    IRNGRunner
+    \nodepart{second}
+    \nodepart{third}
+    \small
+    + can run(rng)\\
+    + generate numbers()\\
+    + generate raw()\\
+    + validate setup()
+};
+
+% Relationships
+\draw[arrow] (rng) -- (language);
+\draw[arrow] (rng) -- (algorithm);
+
+\end{tikzpicture}
+\caption{Diagram klas warstwy Core}
+\end{figure}
+
+\newpage
+
+\section{Wzorce Projektowe}
+
+System IO\_RNG wykorzystuje szereg wzorców projektowych zgodnych z zasadami SOLID i Clean Architecture.
+
+\subsection{Clean Architecture (Hexagonal Architecture)}
+
+\textbf{Opis:} Architektura heksagonalna (Porty i Adaptery) oddziela logikę biznesową od szczegółów technicznych.
+
+\textbf{Implementacja w projekcie:}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Struktura Clean Architecture]
+\begin{itemize}
+    \item \textbf{Warstwa Core (Domain):}
+    \begin{itemize}
+        \item \texttt{entities/} - encje domenowe (RNG, TestResult)
+        \item \texttt{interfaces/} - porty (IRNGRepository, IRNGRunner)
+        \item \texttt{use\_cases/} - logika biznesowa
+    \end{itemize}
+    
+    \item \textbf{Warstwa Infrastructure (Adapters):}
+    \begin{itemize}
+        \item \texttt{repositories/} - implementacje repozytoriów
+        \item \texttt{runners/} - implementacje runnerów dla różnych języków
+        \item \texttt{models.py} - modele Django ORM
+    \end{itemize}
+    
+    \item \textbf{Warstwa API:}
+    \begin{itemize}
+        \item \texttt{views.py} - ViewSety Django REST Framework
+        \item \texttt{serializers.py} - serializatory danych
+    \end{itemize}
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Zalety:}
+\begin{itemize}
+    \item Niezależność logiki biznesowej od frameworka
+    \item Łatwość testowania (możliwość mockowania interfejsów)
+    \item Możliwość łatwej zamiany implementacji (np. zmiana bazy danych)
+\end{itemize}
+
+\subsection{Repository Pattern}
+
+\textbf{Cel:} Abstrakcja dostępu do danych, oddzielenie logiki biznesowej od mechanizmów persystencji.
+
+\textbf{Implementacja:}
+
+\begin{lstlisting}[language=Python, caption=Interface repozytorium]
+class IRNGRepository(ABC):
+    @abstractmethod
+    def save(self, rng: RNG) -> RNG:
+        pass
+    
+    @abstractmethod
+    def get_by_id(self, rng_id: int) -> Optional[RNG]:
+        pass
+    
+    @abstractmethod
+    def get_all(self) -> List[RNG]:
+        pass
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Implementacja dla Django ORM]
+class DjangoRNGRepository(IRNGRepository):
+    def get_by_id(self, rng_id: int) -> Optional[RNG]:
+        try:
+            model = RNGModel.objects.get(id=rng_id)
+            return self._to_entity(model)
+        except RNGModel.DoesNotExist:
+            return None
+    
+    def _to_entity(self, model: RNGModel) -> RNG:
+        return RNG(
+            id=model.id,
+            name=model.name,
+            language=Language(model.language),
+            algorithm=Algorithm(model.algorithm),
+            # ... inne pola
+        )
+\end{lstlisting}
+
+\textbf{Zalety:}
+\begin{itemize}
+    \item Enkapsulacja logiki dostępu do danych
+    \item Możliwość łatwej zamiany źródła danych (SQLite → PostgreSQL)
+    \item Ułatwienie testowania (mock repositories)
+\end{itemize}
+
+\newpage
+
+\subsection{Adapter Pattern}
+
+\textbf{Cel:} Umożliwienie współpracy niezgodnych interfejsów.
+
+\textbf{Implementacja - Universal RNG Adapter:}
+
+System używa wzorca Adapter do automatycznego wykrywania i adaptacji różnych implementacji generatorów:
+
+\begin{lstlisting}[language=Python, caption=Universal RNG Adapter]
+class UniversalRNGAdapter:
+    def __init__(self, module, parameters: Optional[Dict] = None):
+        self.module = module
+        self.parameters = parameters or {}
+        self.generator_func = self._detect_generator_function()
+        self.generator_type = self._detect_generator_type()
+    
+    def _detect_generator_function(self):
+        # Priorytet 1: generate()
+        if hasattr(self.module, 'generate'):
+            return self.module.generate
+        
+        # Priorytet 2: *_bit_stream()
+        for name in dir(self.module):
+            if name.endswith('_bit_stream'):
+                return getattr(self.module, name)
+        
+        raise RuntimeError("No generator function found")
+    
+    def _detect_generator_type(self) -> DataType:
+        # Wykrywa typ danych: BITS, INTEGERS, FLOATS
+        # ...
+\end{lstlisting}
+
+\textbf{Zalety:}
+\begin{itemize}
+    \item Automatyczne dopasowanie do różnych sygnatur funkcji
+    \item Obsługa różnych typów danych wyjściowych (bity, integery, floaty)
+    \item Brak konieczności modyfikacji istniejących generatorów
+\end{itemize}
+
+\subsection{Strategy Pattern}
+
+\textbf{Cel:} Umożliwienie wyboru algorytmu w czasie wykonania.
+
+\textbf{Implementacja - RNG Runners:}
+
+\begin{lstlisting}[language=Python, caption=Interface strategii]
+class IRNGRunner(ABC):
+    @abstractmethod
+    def can_run(self, rng: RNG) -> bool:
+        pass
+    
+    @abstractmethod
+    def generate_numbers(self, rng: RNG, count: int, 
+                        seed: int = None) -> List[float]:
+        pass
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Konkretne strategie]
+class PythonRNGRunner(IRNGRunner):
+    def can_run(self, rng: RNG) -> bool:
+        return rng.language == Language.PYTHON
+    # ...
+
+class ExeRNGRunner(IRNGRunner):
+    def can_run(self, rng: RNG) -> bool:
+        return rng.language == Language.EXECUTABLE
+    # ...
+\end{lstlisting}
+
+\textbf{Wybór strategii w runtime:}
+\begin{lstlisting}[language=Python]
+def _find_runner(self, rng: RNG) -> IRNGRunner:
+    for runner in self.runners:
+        if runner.can_run(rng):
+            return runner
+    raise RuntimeError(f"No runner for {rng.language}")
+\end{lstlisting}
+
+\newpage
+
+\subsection{Use Case Pattern}
+
+\textbf{Cel:} Enkapsulacja logiki biznesowej w pojedynczych, specyficznych przypadkach użycia.
+
+\textbf{Implementacja:}
+
+\begin{lstlisting}[language=Python, caption=Run RNG Test Use Case]
+class RunRNGTestUseCase:
+    def __init__(self,
+                 rng_repository: IRNGRepository,
+                 result_repository: ITestResultRepository,
+                 runners: List[IRNGRunner]):
+        self.rng_repository = rng_repository
+        self.result_repository = result_repository
+        self.runners = runners
+    
+    def execute(self, rng_id: int, test_name: str, 
+                samples_count: int, seed: int = None) -> TestResult:
+        # 1. Pobierz RNG z repozytorium
+        rng = self.rng_repository.get_by_id(rng_id)
+        
+        # 2. Znajdz odpowiedni runner
+        runner = self._find_runner(rng)
+        
+        # 3. Generuj liczby losowe
+        numbers = runner.generate_numbers(rng, samples_count, seed)
+        
+        # 4. Wykonaj test statystyczny
+        test_result = self._perform_statistical_test(...)
+        
+        # 5. Zapisz wynik
+        return self.result_repository.save(result)
+\end{lstlisting}
+
+\textbf{Inne Use Cases w systemie:}
+\begin{itemize}
+    \item \texttt{CompareRNGsUseCase} - porównywanie generatorów
+    \item \texttt{GetTestResultsUseCase} - pobieranie wyników testów
+    \item \texttt{TestCustomBitsUseCase} - testowanie własnych sekwencji bitów
+\end{itemize}
+
+\subsection{Dependency Injection}
+
+\textbf{Cel:} Odwrócenie kontroli, zwiększenie testowalności.
+
+\textbf{Implementacja w ViewSet:}
+
+\begin{lstlisting}[language=Python, caption=Wstrzykiwanie zależności]
+class RNGViewSet(viewsets.ViewSet):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Tworzenie konkretnych implementacji
+        self.rng_repository = DjangoRNGRepository()
+        self.result_repository = DjangoTestResultRepository()
+        self.runners = [
+            PythonRNGRunner(),
+            ExeRNGRunner()
+        ]
+    
+    @action(detail=True, methods=['post'])
+    def run_test(self, request, pk=None):
+        # Wstrzykiwanie do Use Case
+        use_case = RunRNGTestUseCase(
+            self.rng_repository,
+            self.result_repository,
+            self.runners
+        )
+        result = use_case.execute(...)
+        return Response(...)
+\end{lstlisting}
+
+\newpage
+
+\subsection{Factory Pattern (Implicit)}
+
+System używa niejawnego wzorca Factory w procesie tworzenia encji z modeli Django:
+
+\begin{lstlisting}[language=Python, caption=Konwersja Model do Entity]
+def _to_entity(self, model: RNGModel) -> RNG:
+    """Factory method - creates entity from Django model"""
+    return RNG(
+        id=model.id,
+        name=model.name,
+        language=Language(model.language),
+        algorithm=Algorithm(model.algorithm),
+        description=model.description,
+        code_path=model.code_path,
+        parameters=model.parameters or {},
+        is_active=model.is_active
+    )
+\end{lstlisting}
+
+\section{Zasady Programowania Obiektowego}
+
+\subsection{SOLID Principles}
+
+System IO\_RNG konsekwentnie stosuje zasady SOLID:
+
+\subsubsection{Single Responsibility Principle (SRP)}
+
+Każda klasa ma jedną, dobrze zdefiniowaną odpowiedzialność:
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black]
+\textbf{Przykłady:}
+\begin{itemize}
+    \item \texttt{RNG} - reprezentuje generator (encja domeny)
+    \item \texttt{DjangoRNGRepository} - zarządza persystencją RNG
+    \item \texttt{PythonRNGRunner} - wykonuje generatory Python
+    \item \texttt{RunRNGTestUseCase} - orkiestruje proces testowania
+    \item \texttt{UniversalRNGAdapter} - adaptuje różne formaty generatorów
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Open/Closed Principle (OCP)}
+
+Klasy są otwarte na rozszerzenia, zamknięte na modyfikacje:
+
+\begin{lstlisting}[language=Python, caption=Przyklad OCP - dodanie nowego runnera]
+# Adding support for new language without modifying existing code
+class RustRNGRunner(IRNGRunner):
+    def can_run(self, rng: RNG) -> bool:
+        return rng.language == Language.RUST
+    
+    def generate_numbers(self, rng: RNG, ...) -> List[float]:
+        # Rust implementation
+        pass
+
+# In ViewSet - just add to list
+self.runners = [
+    PythonRNGRunner(),
+    ExeRNGRunner(),
+    RustRNGRunner()  # New runner
+]
+\end{lstlisting}
+
+\subsubsection{Liskov Substitution Principle (LSP)}
+
+Wszystkie implementacje interfejsów są podstawialne:
+
+\begin{lstlisting}[language=Python]
+# Every IRNGRunner implementation is substitutable
+def test_with_any_runner(runner: IRNGRunner, rng: RNG):
+    if runner.can_run(rng):
+        numbers = runner.generate_numbers(rng, 1000)
+        # Works with PythonRNGRunner, ExeRNGRunner, etc.
+\end{lstlisting}
+
+\subsubsection{Interface Segregation Principle (ISP)}
+
+Interfejsy są minimalistyczne i skoncentrowane:
+
+\begin{itemize}
+    \item \texttt{IRNGRepository} - tylko operacje na RNG
+    \item \texttt{ITestResultRepository} - tylko operacje na wynikach
+    \item \texttt{IRNGRunner} - tylko generowanie liczb
+\end{itemize}
+
+\subsubsection{Dependency Inversion Principle (DIP)}
+
+Moduły wysokopoziomowe zależą od abstrakcji, nie od konkretnych implementacji:
+
+\begin{lstlisting}[language=Python]
+class RunRNGTestUseCase:
+    # Depends on abstractions (interfaces)
+    def __init__(self,
+                 rng_repository: IRNGRepository,  # Abstraction
+                 result_repository: ITestResultRepository,  # Abstraction
+                 runners: List[IRNGRunner]):  # Abstraction
+        # ...
+\end{lstlisting}
+
+\newpage
+
+\subsection{Enkapsulacja}
+
+\textbf{Enkapsulacja danych i logiki w encjach:}
+
+\begin{lstlisting}[language=Python, caption=Enkapsulacja w RNG Entity]
+@dataclass
+class RNG:
+    # Public attributes (dataclass)
+    name: str
+    language: Language
+    algorithm: Algorithm
+    # ...
+    
+    def __post_init__(self):
+        """Private validation - called automatically"""
+        if not self.name:
+            raise ValueError("RNG name cannot be empty")
+        if not self.code_path:
+            raise ValueError("Code path cannot be empty")
+    
+    def validate_for_execution(self) -> bool:
+        """Public business method"""
+        return self.is_active and bool(self.code_path)
+    
+    def get_parameter(self, key: str, default: Any = None) -> Any:
+        """Safe access to parameters"""
+        return self.parameters.get(key, default)
+\end{lstlisting}
+
+\subsection{Polimorfizm}
+
+\textbf{Polimorfizm w runnerach:}
+
+\begin{lstlisting}[language=Python, caption=Rozne implementacje tego samego interfejsu]
+# Common interface
+numbers = runner.generate_numbers(rng, count, seed)
+
+# PythonRNGRunner - loads Python module and executes
+# ExeRNGRunner - runs .exe file and parses stdout
+# CppRNGRunner - compiles and runs C++ code
+# All return List[float]
+\end{lstlisting}
+
+\subsection{Abstrakcja}
+
+System używa abstrakcji na wielu poziomach:
+
+\begin{itemize}
+    \item \textbf{Encje} - abstrakcja koncepcji biznesowych (RNG, TestResult)
+    \item \textbf{Interfejsy} - abstrakcja operacji (IRNGRunner, IRNGRepository)
+    \item \textbf{Enumy} - abstrakcja wartości (Language, Algorithm, DataType)
+\end{itemize}
+
+\section{Struktury Danych}
+
+\subsection{Encje Domenowe (Dataclasses)}
+
+System używa Python dataclasses jako immutable value objects:
+
+\begin{lstlisting}[language=Python, caption=Struktura encji RNG]
+@dataclass
+class RNG:
+    name: str
+    language: Language
+    algorithm: Algorithm
+    description: str
+    code_path: str
+    parameters: Optional[Dict[str, Any]] = None
+    id: Optional[int] = None
+    is_active: bool = True
+\end{lstlisting}
+
+\textbf{Zalety dataclasses:}
+\begin{itemize}
+    \item Automatyczna generacja \texttt{\_\_init\_\_}, \texttt{\_\_repr\_\_}, \texttt{\_\_eq\_\_}
+    \item Type hints dla wszystkich pól
+    \item Niezmienność (immutability) z \texttt{frozen=True}
+    \item Walidacja w \texttt{\_\_post\_init\_\_}
+\end{itemize}
+
+\subsection{Enumy (Typy wyliczeniowe)}
+
+System definiuje silnie typowane enumy dla wartości biznesowych:
+
+\begin{lstlisting}[language=Python, caption=Enumy domenowe]
+class Language(Enum):
+    PYTHON = "python"
+    JAVA = "java"
+    CPP = "cpp"
+    RUST = "rust"
+    EXECUTABLE = "executable"
+
+class Algorithm(Enum):
+    LINEAR_CONGRUENTIAL = "linear_congruential"
+    MERSENNE_TWISTER = "mersenne_twister"
+    XORSHIFT = "xorshift"
+    PCG = "pcg"
+    SYSTEM = "system"
+
+class DataType(Enum):
+    BITS = "bits"
+    INTEGERS = "integers"
+    FLOATS = "floats"
+\end{lstlisting}
+
+\textbf{Zalety enumów:}
+\begin{itemize}
+    \item Bezpieczeństwo typów
+    \item Niemożliwość użycia nieprawidłowych wartości
+    \item Autocomplete w IDE
+    \item Czytelność kodu
+\end{itemize}
+
+\subsection{Słowniki (Dict) jako Parametry}
+
+System używa słowników JSON do przechowywania dynamicznych parametrów:
+
+\begin{lstlisting}[language=Python, caption=Parametry generatorow]
+# Example LCG parameters
+parameters = {
+    "a": 1103515245,      # multiplier
+    "c": 12345,           # increment
+    "m": 2**31,           # modulus
+    "bits_per_value": 31  # number of bits
+}
+
+# Safe access via method
+def get_parameter(self, key: str, default: Any = None) -> Any:
+    return self.parameters.get(key, default) if self.parameters else default
+\end{lstlisting}
+
+\subsection{Listy typowane}
+
+System używa list z type hints dla bezpieczeństwa typów:
+
+\begin{lstlisting}[language=Python]
+# List of bits
+bits: List[int] = [0, 1, 0, 1, 1, 0, ...]
+
+# List of floats
+numbers: List[float] = [0.234, 0.891, 0.456, ...]
+
+# List of entities
+rngs: List[RNG] = repository.get_all()
+
+# List of runners
+runners: List[IRNGRunner] = [PythonRNGRunner(), ExeRNGRunner()]
+\end{lstlisting}
+
+\subsection{Tuple dla zwracania wielu wartości}
+
+\begin{lstlisting}[language=Python, caption=Tuple z type hints]
+def generate_raw(self, rng: RNG, count: int, 
+                 seed: int = None) -> Tuple[List[Any], DataType]:
+    """Returns (data, data_type)"""
+    # ...
+    return (data, DataType.BITS)
+\end{lstlisting}
+
+\subsection{Optional dla wartości nullable}
+
+\begin{lstlisting}[language=Python]
+def get_by_id(self, rng_id: int) -> Optional[RNG]:
+    """Can return RNG or None"""
+    try:
+        model = RNGModel.objects.get(id=rng_id)
+        return self._to_entity(model)
+    except RNGModel.DoesNotExist:
+        return None
+\end{lstlisting}
+
+\subsection{Struktury danych w bazie}
+
+\subsubsection{Model RNG (Tabela rngs)}
+
+\begin{lstlisting}[language=Python, caption=Django Model]
+class RNGModel(models.Model):
+    name = models.CharField(max_length=200)
+    language = models.CharField(max_length=50)
+    algorithm = models.CharField(max_length=100)
+    description = models.TextField()
+    code_path = models.CharField(max_length=500)
+    parameters = models.JSONField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'rngs'
+        ordering = ['-created_at']
+\end{lstlisting}
+
+\textbf{Indeksy:}
+\begin{itemize}
+    \item Primary key na \texttt{id}
+    \item Ordering index na \texttt{created\_at}
+\end{itemize}
+
+\subsubsection{Model TestResult (Tabela test\_results)}
+
+\begin{lstlisting}[language=Python]
+class TestResultModel(models.Model):
+    rng = models.ForeignKey(RNGModel, on_delete=models.CASCADE,
+                           related_name='test_results')
+    test_name = models.CharField(max_length=100)
+    passed = models.BooleanField()
+    score = models.FloatField()
+    execution_time_ms = models.FloatField()
+    samples_count = models.IntegerField()
+    statistics = models.JSONField()
+    error_message = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'test_results'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['rng', '-created_at']),
+            models.Index(fields=['test_name', '-created_at']),
+        ]
+\end{lstlisting}
+
+\textbf{Indeksy optymalizacyjne:}
+\begin{itemize}
+    \item Composite index: \texttt{(rng\_id, created\_at)} - szybkie pobieranie wyników dla RNG
+    \item Composite index: \texttt{(test\_name, created\_at)} - filtrowanie po typie testu
+\end{itemize}
+
+\newpage
+
+\section{Diagram Przepływu Danych}
+
+\subsection{Proces uruchomienia testu RNG}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    process/.style={rectangle, rounded corners, draw=black!80, fill=blue!20, thick, minimum width=3cm, minimum height=1cm, align=center},
+    decision/.style={diamond, draw=black!80, fill=yellow!20, thick, minimum width=2.5cm, minimum height=1cm, align=center, aspect=2},
+    data/.style={trapezium, trapezium left angle=70, trapezium right angle=110, draw=black!80, fill=green!20, thick, minimum width=2.5cm, minimum height=0.8cm, align=center},
+    arrow/.style={thick,->,>=stealth}
+]
+
+\node[data] (request) {POST /api/rngs/\{id\}/run\_test};
+\node[process, below=of request] (viewset) {RNGViewSet\\run\_test()};
+\node[process, below=of viewset] (usecase) {RunRNGTestUseCase\\execute()};
+\node[process, below=of usecase] (getrnq) {Repository\\get\_by\_id()};
+\node[decision, below=of getrnq] (exists) {RNG\\exists?};
+\node[process, below=of exists, yshift=-0.5cm] (findrunner) {Find appropriate\\runner};
+\node[decision, below=of findrunner] (canrun) {Runner\\found?};
+\node[process, below=of canrun, yshift=-0.5cm] (generate) {Runner\\generate\_numbers()};
+\node[process, below=of generate] (test) {Perform\\statistical test};
+\node[process, below=of test] (save) {Repository\\save(result)};
+\node[data, below=of save] (response) {HTTP 200\\TestResult JSON};
+
+\node[data, right=3cm of exists] (error1) {HTTP 404\\Not Found};
+\node[data, right=3cm of canrun] (error2) {HTTP 500\\No Runner};
+
+\draw[arrow] (request) -- (viewset);
+\draw[arrow] (viewset) -- (usecase);
+\draw[arrow] (usecase) -- (getrnq);
+\draw[arrow] (getrnq) -- (exists);
+\draw[arrow] (exists) -- node[left] {yes} (findrunner);
+\draw[arrow] (exists) -- node[above] {no} (error1);
+\draw[arrow] (findrunner) -- (canrun);
+\draw[arrow] (canrun) -- node[left] {yes} (generate);
+\draw[arrow] (canrun) -- node[above] {no} (error2);
+\draw[arrow] (generate) -- (test);
+\draw[arrow] (test) -- (save);
+\draw[arrow] (save) -- (response);
+
+\end{tikzpicture}
+\caption{Sekwencja uruchomienia testu RNG}
+\end{figure}
+
+\newpage
+
+\subsection{Proces generowania liczb - Python Runner}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    process/.style={rectangle, rounded corners, draw=black!80, fill=blue!20, thick, minimum width=3.5cm, minimum height=0.9cm, align=center},
+    decision/.style={diamond, draw=black!80, fill=yellow!20, thick, minimum width=2.2cm, minimum height=0.9cm, align=center, aspect=2},
+    arrow/.style={thick,->,>=stealth}
+]
+
+\node[process] (start) {PythonRNGRunner\\generate\_numbers()};
+\node[process, below=of start] (load) {Load Python module\\importlib};
+\node[process, below=of load] (adapter) {UniversalRNGAdapter\\create};
+\node[process, below=of adapter] (detect) {Detect generator\\function};
+\node[decision, below=of detect] (functype) {Function\\type?};
+
+\node[process, below left=1cm and 1cm of functype] (bits) {*\_bit\_stream()\\generate bits};
+\node[process, below right=1cm and 1cm of functype] (floats) {generate()\\generate floats};
+
+\node[process, below=2cm of functype] (convert) {Convert to\\List[float]};
+\node[process, below=of convert] (return) {Return numbers};
+
+\draw[arrow] (start) -- (load);
+\draw[arrow] (load) -- (adapter);
+\draw[arrow] (adapter) -- (detect);
+\draw[arrow] (detect) -- (functype);
+\draw[arrow] (functype) -- node[left, xshift=-0.2cm] {bits} (bits);
+\draw[arrow] (functype) -- node[right, xshift=0.2cm] {floats} (floats);
+\draw[arrow] (bits) -- (convert);
+\draw[arrow] (floats) -- (convert);
+\draw[arrow] (convert) -- (return);
+
+\end{tikzpicture}
+\caption{Proces generowania liczb w Python Runner}
+\end{figure}
+
+\section{Szczegóły Implementacji}
+
+\subsection{Kompresja danych - Base64}
+
+System używa kompresji bitów do Base64 dla oszczędności transferu danych:
+
+\begin{lstlisting}[language=Python, caption=Kompresja bitow]
+def compress_bits_to_base64(bits: List[int]) -> str:
+    """
+    Packs bits list [0,1,0,1,...] to base64.
+    Savings: ~8x (3 bytes/bit to 0.375 bytes/bit)
+    """
+    byte_array = bytearray()
+    
+    for i in range(0, len(bits), 8):
+        byte_val = 0
+        for j in range(8):
+            if i + j < len(bits):
+                # MSB first
+                byte_val |= (bits[i + j] << (7 - j))
+        byte_array.append(byte_val)
+    
+    return base64.b64encode(byte_array).decode('ascii')
+\end{lstlisting}
+
+\textbf{Przykład:}
+\begin{itemize}
+    \item Bez kompresji: \texttt{[1,0,1,0,1,0,1,0]} → 24 bajty JSON
+    \item Z kompresją: \texttt{"qg=="} → 4 bajty
+    \item Oszczędność: 83\%
+\end{itemize}
+
+\subsection{Testy Statystyczne}
+
+System implementuje szereg testów statystycznych:
+
+\begin{enumerate}
+    \item \textbf{Chi-Square Test} - test zgodności rozkładu
+    \item \textbf{Kolmogorov-Smirnov Test} - test równomierności
+    \item \textbf{Runs Test} - test niezależności sekwencji
+    \item \textbf{Spectral Test (FFT)} - test częstotliwościowy
+    \item \textbf{Poker Test} - test sekwencji 5-bitowych
+    \item \textbf{Monobit Test} - test proporcji bitów
+    \item \textbf{Serial Test} - test par bitów
+    \item \textbf{Autocorrelation Test} - test autokorelacji
+\end{enumerate}
+
+\subsection{Obsługa różnych języków programowania}
+
+\subsubsection{Python Runner}
+
+\begin{itemize}
+    \item Dynamiczne ładowanie modułów: \texttt{importlib.util}
+    \item Automatyczna detekcja funkcji generatora
+    \item Wsparcie dla parametryzowanych generatorów (LCG, AWCG)
+\end{itemize}
+
+\subsubsection{Executable Runner}
+
+\begin{itemize}
+    \item Uruchamianie prekompilowanych plików .exe
+    \item Komunikacja przez stdout/stdin
+    \item Parsowanie wyjścia tekstowego
+    \item Wsparcie dla Rust, C++, C\#
+\end{itemize}
+
+\newpage
+
+\section{Architektura Frontendowa}
+
+\subsection{Struktura komponentów React}
+
+Frontend używa architektury komponentowej z podziałem funkcjonalnym:
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Struktura komponentów]
+\begin{itemize}
+    \item \textbf{Layout:}
+    \begin{itemize}
+        \item \texttt{NavigationSidebar} - nawigacja boczna
+        \item \texttt{Footer} - stopka
+        \item \texttt{Header} - nagłówek
+    \end{itemize}
+    
+    \item \textbf{Pages (Routes):}
+    \begin{itemize}
+        \item \texttt{Dashboard} - pulpit główny
+        \item \texttt{Generator} - generator liczb
+        \item \texttt{Tests} - testy statystyczne
+        \item \texttt{Results} - wyniki testów
+        \item \texttt{Wiki} - dokumentacja algorytmów
+        \item \texttt{Settings} - ustawienia
+    \end{itemize}
+    
+    \item \textbf{UI Components (shadcn/ui):}
+    \begin{itemize}
+        \item Button, Card, Dialog, Select
+        \item Table, Tabs, Progress
+        \item Chart (Recharts)
+    \end{itemize}
+    
+    \item \textbf{Context Providers:}
+    \begin{itemize}
+        \item \texttt{ThemeProvider} - motyw (dark/light)
+        \item \texttt{LanguageProvider} - internacjonalizacja
+        \item \texttt{TestResultsProvider} - stan wyników testów
+    \end{itemize}
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Wzorce frontendowe}
+
+\subsubsection{Context API dla globalnego stanu}
+
+\begin{lstlisting}[language=Python, caption=Test Results Context]
+export const TestResultsProvider = ({ children }) => {
+  const [results, setResults] = useState<TestResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  const fetchResults = async () => {
+    setLoading(true);
+    const data = await api.getTestResults();
+    setResults(data);
+    setLoading(false);
+  };
+  
+  return (
+    <TestResultsContext.Provider value={{ 
+      results, loading, fetchResults 
+    }}>
+      {children}
+    </TestResultsContext.Provider>
+  );
+};
+\end{lstlisting}
+
+\subsubsection{Custom Hooks}
+
+System używa custom hooks dla logiki wielokrotnego użytku:
+
+\begin{itemize}
+    \item \texttt{useRNGList()} - pobieranie listy generatorów
+    \item \texttt{useTestExecution()} - uruchamianie testów
+    \item \texttt{useLanguage()} - zarządzanie językiem interfejsu
+    \item \texttt{useTheme()} - zarządzanie motywem
+\end{itemize}
+
+\section{Komunikacja Backend-Frontend}
+
+\subsection{REST API Endpoints}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Metoda} & \textbf{Endpoint} & \textbf{Opis} \\ \hline
+GET & /api/rngs & Lista wszystkich RNG \\ \hline
+POST & /api/rngs & Utworzenie nowego RNG \\ \hline
+GET & /api/rngs/\{id\} & Szczegóły RNG \\ \hline
+PUT & /api/rngs/\{id\} & Aktualizacja RNG \\ \hline
+DELETE & /api/rngs/\{id\} & Usunięcie RNG \\ \hline
+POST & /api/rngs/\{id\}/run\_test & Uruchomienie testu \\ \hline
+POST & /api/rngs/\{id\}/generate & Generowanie liczb bez testu \\ \hline
+GET & /api/rngs/\{id\}/test\_results & Wyniki testów dla RNG \\ \hline
+GET & /api/test-results & Lista wszystkich wyników \\ \hline
+GET & /api/test-results/\{id\} & Szczegóły wyniku \\ \hline
+DELETE & /api/test-results/\{id\} & Usunięcie wyniku \\ \hline
+\end{tabular}
+\caption{REST API Endpoints}
+\end{table}
+
+\subsection{Przykładowe zapytanie i odpowiedź}
+
+\textbf{Request:}
+\begin{lstlisting}[language=bash]
+POST /api/rngs/1/run_test
+Content-Type: application/json
+
+{
+  "test_name": "chi_square",
+  "samples_count": 100000,
+  "seed": 42,
+  "parameters": {
+    "a": 1103515245,
+    "c": 12345,
+    "m": 2147483648
+  }
+}
+\end{lstlisting}
+
+\textbf{Response:}
+\begin{lstlisting}[caption=JSON Response]
+{
+  "id": 123,
+  "rng_id": 1,
+  "test_name": "chi_square",
+  "passed": true,
+  "score": 0.87,
+  "execution_time_ms": 234.56,
+  "samples_count": 100000,
+  "statistics": {
+    "chi_square_statistic": 12.34,
+    "p_value": 0.87,
+    "degrees_of_freedom": 9
+  },
+  "created_at": "2026-01-14T10:30:00Z"
+}
+\end{lstlisting}
+
+\section{Podsumowanie}
+
+\subsection{Zastosowane wzorce architektoniczne}
+
+\begin{enumerate}
+    \item \textbf{Clean Architecture} - podział na warstwy: Core, Infrastructure, API
+    \item \textbf{Repository Pattern} - abstrakcja dostępu do danych
+    \item \textbf{Adapter Pattern} - Universal RNG Adapter
+    \item \textbf{Strategy Pattern} - wymienne runnery dla języków
+    \item \textbf{Use Case Pattern} - enkapsulacja logiki biznesowej
+    \item \textbf{Dependency Injection} - wstrzykiwanie zależności
+    \item \textbf{MVC/MVP} - separacja widoku i logiki (Frontend)
+\end{enumerate}
+
+\subsection{Zasady OOP}
+
+\begin{enumerate}
+    \item \textbf{SOLID:}
+    \begin{itemize}
+        \item Single Responsibility - każda klasa ma jedną odpowiedzialność
+        \item Open/Closed - otwarte na rozszerzenia, zamknięte na modyfikacje
+        \item Liskov Substitution - implementacje podstawialne
+        \item Interface Segregation - minimalistyczne interfejsy
+        \item Dependency Inversion - zależność od abstrakcji
+    \end{itemize}
+    
+    \item \textbf{Enkapsulacja} - dane i logika ukryte w klasach
+    \item \textbf{Polimorfizm} - różne implementacje tego samego interfejsu
+    \item \textbf{Abstrakcja} - ukrycie szczegółów implementacji
+    \item \textbf{Dziedziczenie} - przez interfejsy (ABC)
+\end{enumerate}
+
+\subsection{Struktury danych}
+
+\begin{enumerate}
+    \item \textbf{Dataclasses} - encje domenowe (RNG, TestResult)
+    \item \textbf{Enumy} - typy wyliczeniowe (Language, Algorithm, DataType)
+    \item \textbf{Dict} - parametry dynamiczne, JSON
+    \item \textbf{List[T]} - kolekcje typowane
+    \item \textbf{Tuple} - zwracanie wielu wartości
+    \item \textbf{Optional[T]} - wartości nullable
+    \item \textbf{Django Models} - ORM dla persystencji
+    \item \textbf{JSONField} - elastyczne przechowywanie danych
+\end{enumerate}
+
+\subsection{Zalety architektury}
+
+\begin{itemize}
+    \item \textbf{Testowalność} - łatwe mockowanie interfejsów
+    \item \textbf{Rozszerzalność} - łatwe dodawanie nowych runnerów, testów, algorytmów
+    \item \textbf{Niezależność od frameworka} - logika biznesowa w Core
+    \item \textbf{Separacja warstw} - clear separation of concerns
+    \item \textbf{Type Safety} - type hints w Python, TypeScript w frontend
+    \item \textbf{Maintainability} - czytelna struktura, SOLID
+\end{itemize}
+
+\end{document}
