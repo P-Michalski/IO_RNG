@@ -1,6 +1,7 @@
 Test DNA traktuje bity jako sekwencję DNA z 4-literowym alfabetem (A, C, G, T). Każda litera jest kodowana przez 2 bity: 00=A, 01=C, 10=G, 11=T. Test analizuje nakładające się 10-literowe "słowa" DNA i sprawdza sparse occupancy.
 
 ## Jak działa
+
 1. Konwertuje pary bitów (2 bity) na litery DNA (0-3)
 2. Tworzy nakładające się 10-literowe słowa DNA
 3. Zlicza częstość każdego unikalnego słowa
@@ -8,6 +9,7 @@ Test DNA traktuje bity jako sekwencję DNA z 4-literowym alfabetem (A, C, G, T).
 5. Porównuje z teoretyczną liczbą singletonów z rozkładu Poissona
 
 ## Wzór matematyczny
+
 ```
 Alfabet DNA: 4 litery (A, C, G, T)
 Liczba możliwych 10-literowych słów: 4^10 = 1,048,576
@@ -24,35 +26,41 @@ p-value = erfc((χ² / 2)^0.5)
 ```
 
 ## Wartość krytyczna
+
 - **Próg**: p-value ≥ 0.01
 - Test **zaliczony** gdy p-value ≥ 0.01
 
 ## Minimalne wymagania
+
 - **Minimum**: 2,097,152 bitów (2^21)
 - **Bity na literę**: 2
 - **Długość słowa**: 10 liter DNA (20 bitów)
 
 ## Implementacja
+
 Test wykorzystuje numpy do konwersji par bitów na litery DNA (wartości 0-3). Nakładające się 10-literowe słowa są analizowane pod kątem sparse occupancy podobnie jak w testach OPSO/OQSO.
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "diehard_dna",
     "samples_count": 2097152,
-    "seed": 42
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **score = 1.0**: Idealny rozkład singletonów DNA
 - **score > 0.7**: Bardzo dobry wynik
 - **score < 0.5**: Słaby generator, nieprawidłowa sparse occupancy
 - **passed = false**: Generator nie przeszedł testu
 
 ## Parametry testu
+
 - **Typ danych**: Bity (binary)
 - **Minimalna liczba próbek**: 2,097,152 bitów
 - **Złożoność**: Średnia

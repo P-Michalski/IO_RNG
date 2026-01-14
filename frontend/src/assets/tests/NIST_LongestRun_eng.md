@@ -1,12 +1,14 @@
 The test checks the length of the longest sequence of ones in a bit sequence. Excessively short or long maximum runs may indicate non-randomness.
 
 ## How it works
+
 1. Divides the sequence into blocks
 2. In each block, finds the longest run of ones
 3. Classifies blocks according to the length of the longest run
 4. Compares distribution with expected using Chi-square
 
 ## Length-dependent parameters
+
 ```
 n < 6,272:
   - M = 8 (block size)
@@ -25,6 +27,7 @@ n ≥ 750,000:
 ```
 
 ## Implementation
+
 ```python
 def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -33,7 +36,7 @@ def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
     n = len(bits)
 
     if n < 128:
-        return {'passed': False, 'score': 0.0, 
+        return {'passed': False, 'score': 0.0,
                 'error': 'Need at least 128 bits'}
 
     # Parameters for different lengths
@@ -58,14 +61,14 @@ def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
         block = bits[i * M:(i + 1) * M]
         max_run = 0
         current_run = 0
-        
+
         for bit in block:
             if bit == 1:
                 current_run += 1
                 max_run = max(max_run, current_run)
             else:
                 current_run = 0
-        
+
         # Classify
         for j, v in enumerate(v_values):
             if max_run <= v:
@@ -101,21 +104,25 @@ def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_longest_run",
-    "samples_count": 128000
+    "samples_count": 128000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **p-value > 0.1**: Distribution of run lengths is correct
 - **frequencies**: Shows distribution of longest runs in blocks
 - **chi_square**: The smaller the value, the better the fit to expected distribution
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: 128
 - **Complexity**: Medium

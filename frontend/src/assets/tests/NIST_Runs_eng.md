@@ -1,12 +1,14 @@
 The test checks whether the number of transitions (runs) between 0 and 1 is correct. A run is an uninterrupted sequence of identical bits. The test detects whether the sequence is too "smooth" or too "variable".
 
 ## How it works
+
 1. Performs pre-test: proportion of ones must be close to 0.5
 2. Counts the number of runs (transitions from 0→1 or 1→0)
 3. Compares with expected number of runs
 4. Calculates p-value
 
 ## Mathematical formulas
+
 ```
 π = number of ones / n
 
@@ -25,6 +27,7 @@ p = erfc(T/√2)
 ```
 
 ## Example of runs
+
 ```
 Sequence: 1 1 0 0 0 1 1 1 0 1
 Runs:     [11][000][111][0][1]
@@ -32,6 +35,7 @@ Number of runs: 5
 ```
 
 ## Implementation
+
 ```python
 def _nist_runs_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -83,22 +87,26 @@ def _nist_runs_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_runs",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **runs ≈ expected_runs**: Correct number of transitions
 - **runs << expected_runs**: Sequence too "smooth", long runs of same bits
 - **runs >> expected_runs**: Sequence too "variable", too many switches
 - **Pre-test failed**: Sequence is not balanced (use Monobit test first)
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: 100
 - **Complexity**: Medium

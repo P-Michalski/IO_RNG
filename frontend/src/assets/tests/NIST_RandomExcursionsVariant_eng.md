@@ -1,12 +1,14 @@
 A variant of the Random Excursions test that tests more states (±1 to ±9) and uses a different test statistic. Each state has a separate p-value.
 
 ## How it works
+
 1. Similar to Random Excursions: creates random walk
 2. Tests states: ±1, ±2, ..., ±9 (18 states)
 3. For each state, calculates separate p-value
 4. Test passes when all p-values ≥ 0.01
 
 ## Mathematical formulas
+
 ```
 For state x:
 statistic = |visits - cycles| / √(2×cycles×(4|x|-2))
@@ -17,12 +19,14 @@ Test passed = all p-values ≥ 0.01
 ```
 
 ## Differences from Random Excursions
+
 - More states (18 vs 8)
 - Different test statistic
 - Each state tested separately
 - More rigorous (all p-values must pass)
 
 ## Implementation
+
 ```python
 def _nist_random_excursions_variant_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -48,18 +52,18 @@ def _nist_random_excursions_variant_test(self, bits: List[int]) -> Dict[str, Any
 
     # States to test: ±1, ±2, ..., ±9
     states = list(range(-9, 0)) + list(range(1, 10))
-    
+
     results = {}
     all_passed = True
 
     for state in states:
         # Count visits to this state
         visits = sum(1 for s in S if s == state)
-        
+
         # Calculate test statistic
         numerator = abs(visits - cycles)
         denominator = math.sqrt(2 * cycles * (4 * abs(state) - 2))
-        
+
         if denominator > 0:
             test_stat = numerator / denominator
             p_value = erfc(test_stat / math.sqrt(2))
@@ -72,7 +76,7 @@ def _nist_random_excursions_variant_test(self, bits: List[int]) -> Dict[str, Any
             'expected': cycles,
             'passed': p_value >= 0.01
         }
-        
+
         if p_value < 0.01:
             all_passed = False
 
@@ -91,16 +95,19 @@ def _nist_random_excursions_variant_test(self, bits: List[int]) -> Dict[str, Any
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_random_excursions_variant",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **cycles**: Number of cycles
 - **num_states_tested**: Number of states tested (18)
 - **states_results**: Results for each state
@@ -110,14 +117,16 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 - **All states must pass**: More restrictive than basic test
 
 ## Comparison with Random Excursions
-| Feature | Random Excursions | Random Excursions Variant |
-|---------|-------------------|---------------------------|
-| Number of states | 8 (±1 to ±4) | 18 (±1 to ±9) |
-| Statistic | Chi-square | Difference/√variance |
-| Criterion | Each state separately | Each state separately |
-| Strictness | Medium | High |
+
+| Feature          | Random Excursions     | Random Excursions Variant |
+| ---------------- | --------------------- | ------------------------- |
+| Number of states | 8 (±1 to ±4)          | 18 (±1 to ±9)             |
+| Statistic        | Chi-square            | Difference/√variance      |
+| Criterion        | Each state separately | Each state separately     |
+| Strictness       | Medium                | High                      |
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: ~10000 (for 500 cycles)
 - **Complexity**: Very high

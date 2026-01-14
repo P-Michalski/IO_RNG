@@ -1,6 +1,7 @@
 Test równomierności sprawdza, czy średnia i wariancja wygenerowanych liczb odpowiadają teoretycznym wartościom dla rozkładu jednostajnego U(0,1).
 
 ## Jak działa
+
 1. Oblicza średnią arytmetyczną wszystkich liczb
 2. Oblicza wariancję próbki
 3. Porównuje z wartościami oczekiwanymi:
@@ -8,6 +9,7 @@ Test równomierności sprawdza, czy średnia i wariancja wygenerowanych liczb od
    - Wariancja powinna ≈ 1/12 ≈ 0.0833
 
 ## Wzory matematyczne
+
 ```
 Średnia: μ = (1/n) × Σ xi
 Wariancja: σ² = (1/n) × Σ (xi - μ)²
@@ -18,11 +20,13 @@ Dla U(0,1):
 ```
 
 ## Kryteria zdania
+
 - **|średnia - 0.5| < 0.05**
 - **|wariancja - 0.0833| < 0.02**
 - Obie warunki muszą być spełnione
 
 ## Implementacja
+
 ```python
 def _uniformity_test(self, numbers: List[float]) -> Dict[str, Any]:
     n = len(numbers)
@@ -62,22 +66,26 @@ def _uniformity_test(self, numbers: List[float]) -> Dict[str, Any]:
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "uniformity_test",
-    "samples_count": 50000
+    "samples_count": 50000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **mean ≈ 0.5**: Generator produkuje liczby symetrycznie wokół środka
 - **variance ≈ 0.083**: Rozproszenie danych jest prawidłowe
 - **mean_diff > 0.05**: Generator może mieć bias (skrzywienie)
 - **var_diff > 0.02**: Liczby są zbyt skupione lub zbyt rozproszone
 
 ## Parametry testu
+
 - **Typ danych**: Liczby zmiennoprzecinkowe (floats)
 - **Minimalna liczba próbek**: 100
 - **Złożoność**: Niska

@@ -1,6 +1,7 @@
 The uniformity test checks whether the mean and variance of generated numbers correspond to theoretical values for the uniform distribution U(0,1).
 
 ## How it works
+
 1. Calculates the arithmetic mean of all numbers
 2. Calculates the sample variance
 3. Compares with expected values:
@@ -8,6 +9,7 @@ The uniformity test checks whether the mean and variance of generated numbers co
    - Variance should be ≈ 1/12 ≈ 0.0833
 
 ## Mathematical formulas
+
 ```
 Mean: μ = (1/n) × Σ xi
 Variance: σ² = (1/n) × Σ (xi - μ)²
@@ -18,11 +20,13 @@ For U(0,1):
 ```
 
 ## Pass criteria
+
 - **|mean - 0.5| < 0.05**
 - **|variance - 0.0833| < 0.02**
 - Both conditions must be satisfied
 
 ## Implementation
+
 ```python
 def _uniformity_test(self, numbers: List[float]) -> Dict[str, Any]:
     n = len(numbers)
@@ -62,22 +66,26 @@ def _uniformity_test(self, numbers: List[float]) -> Dict[str, Any]:
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "uniformity_test",
-    "samples_count": 50000
+    "samples_count": 50000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **mean ≈ 0.5**: Generator produces numbers symmetrically around the center
 - **variance ≈ 0.083**: Data spread is correct
 - **mean_diff > 0.05**: Generator may have bias
 - **var_diff > 0.02**: Numbers are too clustered or too dispersed
 
 ## Test parameters
+
 - **Data type**: Floating-point numbers
 - **Minimum samples**: 100
 - **Complexity**: Low

@@ -1,12 +1,14 @@
 Test sprawdza, czy liczba przejść (runs) między 0 a 1 jest prawidłowa. Run to nieprzerwany ciąg identycznych bitów. Test wykrywa czy sekwencja nie jest zbyt "gładka" lub zbyt "zmienna".
 
 ## Jak działa
+
 1. Sprawdza pre-test: proporcja jedynek musi być bliska 0.5
 2. Zlicza liczbę runs (przejść z 0→1 lub 1→0)
 3. Porównuje z oczekiwaną liczbą runs
 4. Oblicza p-value
 
 ## Wzory matematyczne
+
 ```
 π = liczba jedynek / n
 
@@ -25,6 +27,7 @@ p = erfc(T/√2)
 ```
 
 ## Przykład runs
+
 ```
 Sekwencja: 1 1 0 0 0 1 1 1 0 1
 Runs:      [11][000][111][0][1]
@@ -32,6 +35,7 @@ Liczba runs: 5
 ```
 
 ## Implementacja
+
 ```python
 def _nist_runs_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -83,22 +87,26 @@ def _nist_runs_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_runs",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **runs ≈ expected_runs**: Prawidłowa liczba przejść
 - **runs << expected_runs**: Sekwencja zbyt "gładka", długie serie tych samych bitów
 - **runs >> expected_runs**: Sekwencja zbyt "zmienna", za dużo przełączeń
 - **Pre-test failed**: Sekwencja nie jest zbalansowana (użyj najpierw Monobit)
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 100
 - **Złożoność**: Średnia

@@ -1,12 +1,14 @@
 The DFT test detects periodic patterns in a bit sequence using Fourier transform. A random sequence should not have distinct peaks in the frequency spectrum.
 
 ## How it works
+
 1. Converts bits to values +1/-1
 2. Calculates discrete Fourier transform (DFT)
 3. Counts peaks exceeding threshold
 4. Compares with expected number of peaks
 
 ## Mathematical formulas
+
 ```
 DFT: S(k) = Σ X(n)×e^(-2πikn/N)
 
@@ -21,6 +23,7 @@ P-value: p = erfc(|d|/√2)
 ```
 
 ## Implementation
+
 ```python
 def _nist_dft_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -72,22 +75,26 @@ def _nist_dft_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_dft",
-    "samples_count": 10000
+    "samples_count": 10000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **Detects**: Periodic patterns, cyclicity
 - **p-value > 0.5**: No detectable periodicities
 - **peaks_below_threshold ≈ expected**: Correct spectrum
 - **d**: The smaller the absolute value, the better
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: 100
 - **Complexity**: High

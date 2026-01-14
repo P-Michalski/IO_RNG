@@ -1,12 +1,14 @@
 Test uniwersalny Maurera mierzy kompresowność sekwencji. Losowa sekwencja powinna być trudna do skompresowania. Test mierzy dystans między powtórzeniami L-bitowych wzorców.
 
 ## Jak działa
+
 1. Dzieli sekwencję na L-bitowe bloki
 2. Faza inicjalizacji: Q pierwszych bloków buduje tabelę
 3. Faza testowa: K kolejnych bloków testuje dystanse
 4. Oblicza średni logarytm dystansu
 
 ## Wzory matematyczne
+
 ```
 fn = (1/K) × Σ log2(i - T[blocki])
 
@@ -19,6 +21,7 @@ L=8, Q=2560  dla n ≥ 904960
 ```
 
 ## Implementacja
+
 ```python
 def _nist_universal_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -88,21 +91,25 @@ def _nist_universal_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_universal",
-    "samples_count": 500000
+    "samples_count": 500000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **fn ≈ expected**: Dobra kompresowność (wysoka entropia)
 - **fn znacznie różne**: Sekwencja zbyt regularna lub zbyt chaotyczna
 - **L**: Długość bloku użyta w teście
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 387840
 - **Złożoność**: Wysoka

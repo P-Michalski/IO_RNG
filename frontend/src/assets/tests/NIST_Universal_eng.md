@@ -1,12 +1,14 @@
 Maurer's universal test measures sequence compressibility. A random sequence should be difficult to compress. The test measures distance between repetitions of L-bit patterns.
 
 ## How it works
+
 1. Divides sequence into L-bit blocks
 2. Initialization phase: first Q blocks build the table
 3. Test phase: next K blocks test distances
 4. Calculates average logarithm of distance
 
 ## Mathematical formulas
+
 ```
 fn = (1/K) × Σ log2(i - T[blocki])
 
@@ -19,6 +21,7 @@ L=8, Q=2560  for n ≥ 904960
 ```
 
 ## Implementation
+
 ```python
 def _nist_universal_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -88,21 +91,25 @@ def _nist_universal_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_universal",
-    "samples_count": 500000
+    "samples_count": 500000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **fn ≈ expected**: Good compressibility (high entropy)
 - **fn significantly different**: Sequence too regular or too chaotic
 - **L**: Block length used in test
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: 387840
 - **Complexity**: High

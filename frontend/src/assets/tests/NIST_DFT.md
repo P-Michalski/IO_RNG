@@ -1,12 +1,14 @@
 Test DFT wykrywa okresowe wzorce w sekwencji bitowej używając transformaty Fouriera. Losowa sekwencja nie powinna mieć wyraźnych pików w spektrum częstotliwości.
 
 ## Jak działa
+
 1. Konwertuje bity do wartości +1/-1
 2. Oblicza dyskretną transformatę Fouriera (DFT)
 3. Liczy piki przekraczające próg
 4. Porównuje z oczekiwaną liczbą pików
 
 ## Wzory matematyczne
+
 ```
 DFT: S(k) = Σ X(n)×e^(-2πikn/N)
 
@@ -21,6 +23,7 @@ P-value: p = erfc(|d|/√2)
 ```
 
 ## Implementacja
+
 ```python
 def _nist_dft_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -72,22 +75,26 @@ def _nist_dft_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_dft",
-    "samples_count": 10000
+    "samples_count": 10000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **Wykrywa**: Okresowe wzorce, cykliczność
 - **p-value > 0.5**: Brak wykrywalnych okresowości
 - **peaks_below_threshold ≈ expected**: Prawidłowe spektrum
 - **d**: Im mniejsza wartość bezwzględna, tym lepiej
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 100
 - **Złożoność**: Wysoka

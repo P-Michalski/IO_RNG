@@ -1,12 +1,14 @@
 The test analyzes the rank of binary matrices created from a bit sequence. It checks whether the matrix rank corresponds to what's expected for random data. Low rank indicates linear dependencies between bits.
 
 ## How it works
+
 1. Divides sequence into 32×32 bit matrices
 2. Calculates rank of each matrix using Gaussian elimination
 3. Classifies matrices by rank (32, 31, or less)
 4. Compares distribution with expected using Chi-square
 
 ## Mathematical formulas
+
 ```
 For M×M binary matrix:
 Rank = number of linearly independent rows/columns
@@ -20,11 +22,13 @@ Chi-square: χ² = Σ (Oi - Ei)² / Ei
 ```
 
 ## Parameters
+
 - **Matrix size**: 32×32
 - **Minimum bits**: 1024
 - **Criterion**: p-value ≥ 0.01
 
 ## Implementation
+
 ```python
 def _nist_matrix_rank_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -43,7 +47,7 @@ def _nist_matrix_rank_test(self, bits: List[int]) -> Dict[str, Any]:
         rows = len(matrix)
         cols = len(matrix[0])
         rank = 0
-        
+
         for col in range(cols):
             # Find pivot
             pivot_row = None
@@ -51,21 +55,21 @@ def _nist_matrix_rank_test(self, bits: List[int]) -> Dict[str, Any]:
                 if matrix[row][col] == 1:
                     pivot_row = row
                     break
-            
+
             if pivot_row is None:
                 continue
-            
+
             # Swap rows
             matrix[rank], matrix[pivot_row] = matrix[pivot_row], matrix[rank]
-            
+
             # Elimination
             for row in range(rows):
                 if row != rank and matrix[row][col] == 1:
                     for c in range(cols):
                         matrix[row][c] ^= matrix[rank][c]
-            
+
             rank += 1
-        
+
         return rank
 
     rank_counts = {M: 0, M-1: 0, 'other': 0}
@@ -76,9 +80,9 @@ def _nist_matrix_rank_test(self, bits: List[int]) -> Dict[str, Any]:
         for row in range(M):
             start = i * M * Q + row * M
             matrix.append(bits[start:start+M])
-        
+
         rank = compute_rank([row[:] for row in matrix])
-        
+
         if rank == M:
             rank_counts[M] += 1
         elif rank == M - 1:
@@ -119,16 +123,19 @@ def _nist_matrix_rank_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_matrix_rank",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **rank_full**: Number of matrices with full rank (32)
 - **rank_minus_1**: Number of matrices with rank 31
 - **rank_other**: Number of matrices with rank ≤30
@@ -136,6 +143,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 - **Low rank**: Linear dependencies between bits
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: 1024
 - **Complexity**: High

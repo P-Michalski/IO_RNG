@@ -1,6 +1,7 @@
 # Dokumentacja Testów Statystycznych RNG
 
 ## Spis treści
+
 1. [Testy Podstawowe](#testy-podstawowe)
    - [Frequency Test (Chi-square)](#1-frequency-test-chi-square)
    - [Uniformity Test](#2-uniformity-test)
@@ -19,15 +20,18 @@
 ### 1. Frequency Test (Chi-square)
 
 #### Opis
+
 Test częstości Chi-kwadrat sprawdza, czy wygenerowane liczby są równomiernie rozłożone w zadanych przedziałach (binach). Jest to podstawowy test równomierności rozkładu.
 
 #### Jak działa
+
 1. Dzieli zakres [0, 1] na 10 równych przedziałów (binów)
 2. Zlicza ile liczb wpadło do każdego przedziału
 3. Porównuje obserwowane częstości z oczekiwanymi za pomocą statystyki Chi-kwadrat
 4. Oblicza wynik testu na podstawie odchylenia od idealnego rozkładu
 
 #### Wzór matematyczny
+
 ```
 χ² = Σ ((Oi - Ei)² / Ei)
 
@@ -38,10 +42,12 @@ gdzie:
 ```
 
 #### Wartość krytyczna
+
 - **Próg**: χ² < 16.919 (dla α=0.05, df=9)
 - Test **zaliczony** gdy χ² < wartość krytyczna
 
 #### Implementacja
+
 ```python
 def _frequency_test(self, numbers: List[float]) -> Dict[str, Any]:
     num_bins = 10
@@ -76,6 +82,7 @@ def _frequency_test(self, numbers: List[float]) -> Dict[str, Any]:
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -87,6 +94,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 #### Interpretacja wyników
+
 - **score = 1.0**: Idealny rozkład równomierny
 - **score > 0.7**: Bardzo dobry wynik
 - **score < 0.5**: Słaby generator, może nie być losowy
@@ -97,9 +105,11 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ### 2. Uniformity Test
 
 #### Opis
+
 Test równomierności sprawdza, czy średnia i wariancja wygenerowanych liczb odpowiadają teoretycznym wartościom dla rozkładu jednostajnego U(0,1).
 
 #### Jak działa
+
 1. Oblicza średnią arytmetyczną wszystkich liczb
 2. Oblicza wariancję próbki
 3. Porównuje z wartościami oczekiwanymi:
@@ -107,6 +117,7 @@ Test równomierności sprawdza, czy średnia i wariancja wygenerowanych liczb od
    - Wariancja powinna ≈ 1/12 ≈ 0.0833
 
 #### Wzory matematyczne
+
 ```
 Średnia: μ = (1/n) × Σ xi
 Wariancja: σ² = (1/n) × Σ (xi - μ)²
@@ -117,11 +128,13 @@ Dla U(0,1):
 ```
 
 #### Kryteria zdania
+
 - **|średnia - 0.5| < 0.05**
 - **|wariancja - 0.0833| < 0.02**
 - Obie warunki muszą być spełnione
 
 #### Implementacja
+
 ```python
 def _uniformity_test(self, numbers: List[float]) -> Dict[str, Any]:
     n = len(numbers)
@@ -161,6 +174,7 @@ def _uniformity_test(self, numbers: List[float]) -> Dict[str, Any]:
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -171,6 +185,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 #### Interpretacja wyników
+
 - **mean ≈ 0.5**: Generator produkuje liczby symetrycznie wokół środka
 - **variance ≈ 0.083**: Rozproszenie danych jest prawidłowe
 - **mean_diff > 0.05**: Generator może mieć bias (skrzywienie)
@@ -185,15 +200,18 @@ NIST (National Institute of Standards and Technology) opracował zestaw 15 test�
 ### 3. NIST Monobit Test
 
 #### Opis
+
 Najprostszy test NIST. Sprawdza, czy liczba jedynek i zer w sekwencji bitowej jest w przybliżeniu równa. Jest to fundamentalny test równowagi bitów.
 
 #### Jak działa
+
 1. Konwertuje bity na wartości +1 (dla 1) i -1 (dla 0)
 2. Sumuje wszystkie wartości
 3. Im mniejsza suma bezwzględna, tym lepiej zbalansowana sekwencja
 4. Oblicza p-value za pomocą funkcji komplementarnej błędu (erfc)
 
 #### Wzory matematyczne
+
 ```
 S = Σ (2×biti - 1)  gdzie bit ∈ {0,1}
 
@@ -205,10 +223,12 @@ p = erfc(s_obs / √2)
 ```
 
 #### Kryterium zdania
+
 - **p-value ≥ 0.01**
 - Test zaliczony gdy p-value jest wystarczająco duże
 
 #### Implementacja
+
 ```python
 def _nist_monobit_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -242,6 +262,7 @@ def _nist_monobit_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -252,12 +273,14 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 #### Interpretacja wyników
+
 - **p-value ≈ 1.0**: Idealna równowaga między 0 i 1
 - **p-value > 0.5**: Bardzo dobra równowaga
 - **p-value < 0.01**: Test niezaliczony, sekwencja nielosowa
 - **ones ≈ zeros**: Dobry znak równowagi
 
 #### Przykład wyniku
+
 ```json
 {
   "passed": true,
@@ -278,15 +301,18 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ### 4. NIST Block Frequency Test
 
 #### Opis
+
 Test sprawdza, czy proporcja jedynek w poszczególnych blokach (podciągach) jest bliska 0.5. Jest to bardziej lokalna wersja testu Monobit.
 
 #### Jak działa
+
 1. Dzieli sekwencję bitów na bloki o wielkości M (domyślnie 128 bitów)
 2. Dla każdego bloku oblicza proporcję jedynek
 3. Sprawdza, czy proporcje są bliskie 0.5 za pomocą statystyki Chi-kwadrat
 4. Oblicza p-value
 
 #### Wzory matematyczne
+
 ```
 Dla każdego bloku i:
 πi = (liczba jedynek w bloku i) / M
@@ -299,11 +325,13 @@ p = erfc(√(χ²/2))
 ```
 
 #### Parametry
+
 - **Domyślny rozmiar bloku**: M = 128 bitów
 - **Minimalny rozmiar sekwencji**: 128 bitów
 - **Kryterium**: p-value ≥ 0.01
 
 #### Implementacja
+
 ```python
 def _nist_block_frequency_test(self, bits: List[int], block_size: int = 128):
     import math
@@ -351,6 +379,7 @@ def _nist_block_frequency_test(self, bits: List[int], block_size: int = 128):
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -361,6 +390,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 #### Interpretacja wyników
+
 - **p-value > 0.5**: Wszystkie bloki mają dobrą równowagę
 - **p-value ≈ 0.01**: Graniczny wynik, niektóre bloki mogą być niezbalansowane
 - **num_blocks**: Im więcej bloków, tym bardziej wiarygodny test
@@ -371,15 +401,18 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ### 5. NIST Runs Test
 
 #### Opis
+
 Test sprawdza, czy liczba przejść (runs) między 0 a 1 jest prawidłowa. Run to nieprzerwany ciąg identycznych bitów. Test wykrywa czy sekwencja nie jest zbyt "gładka" lub zbyt "zmienna".
 
 #### Jak działa
+
 1. Sprawdza pre-test: proporcja jedynek musi być bliska 0.5
 2. Zlicza liczbę runs (przejść z 0→1 lub 1→0)
 3. Porównuje z oczekiwaną liczbą runs
 4. Oblicza p-value
 
 #### Wzory matematyczne
+
 ```
 π = liczba jedynek / n
 
@@ -398,6 +431,7 @@ p = erfc(T/√2)
 ```
 
 #### Przykład runs
+
 ```
 Sekwencja: 1 1 0 0 0 1 1 1 0 1
 Runs:      [11][000][111][0][1]
@@ -405,6 +439,7 @@ Liczba runs: 5
 ```
 
 #### Implementacja
+
 ```python
 def _nist_runs_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -458,6 +493,7 @@ def _nist_runs_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -468,6 +504,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 #### Interpretacja wyników
+
 - **runs ≈ expected_runs**: Prawidłowa liczba przejść
 - **runs << expected_runs**: Sekwencja zbyt "gładka", długie serie tych samych bitów
 - **runs >> expected_runs**: Sekwencja zbyt "zmienna", za dużo przełączeń
@@ -478,15 +515,18 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ### 6. NIST Longest Run of Ones Test
 
 #### Opis
+
 Test sprawdza długość najdłuższego ciągu jedynek w sekwencji. Zbyt krótkie lub zbyt długie maksymalne serie mogą wskazywać na niełosowość.
 
 #### Jak działa
+
 1. Dzieli sekwencję na bloki
 2. W każdym bloku znajduje najdłuższy ciąg jedynek
 3. Klasyfikuje bloki według długości najdłuższego run
 4. Porównuje rozkład z oczekiwanym za pomocą Chi-kwadrat
 
 #### Parametry zależne od długości
+
 ```
 n < 6,272:
   - M = 8 (rozmiar bloku)
@@ -505,6 +545,7 @@ n ≥ 750,000:
 ```
 
 #### Implementacja
+
 ```python
 def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -584,6 +625,7 @@ def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -594,6 +636,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 #### Interpretacja wyników
+
 - **p-value > 0.1**: Rozkład długości runs jest prawidłowy
 - **frequencies**: Pokazuje rozkład najdłuższych runs w blokach
 - **chi_square**: Im mniejsza wartość, tym lepsze dopasowanie do oczekiwanego rozkładu
@@ -603,15 +646,18 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ### 7. NIST Cumulative Sums Test
 
 #### Opis
+
 Test sum kumulatywnych (CUSUM) wykrywa odchylenia od losowości poprzez śledzenie maksymalnego odchylenia skumulowanej sumy od zera.
 
 #### Jak działa
+
 1. Konwertuje bity na +1/-1
 2. Oblicza sumę kumulatywną w każdym punkcie
 3. Znajduje maksymalne odchylenie (forward mode)
 4. Oblicza p-value na podstawie tego odchylenia
 
 #### Wzory matematyczne
+
 ```
 Dla każdego biti ∈ {0,1}:
 Xi = 2×biti - 1  (konwersja do ±1)
@@ -626,9 +672,11 @@ P-value: złożony wzór z funkcją erfc
 ```
 
 #### Interpretacja geometryczna
+
 Test obserwuje "random walk" - jeśli sekwencja jest losowa, suma kumulatywna powinna oscylować wokół zera bez zbyt dużych odchyleń.
 
 #### Implementacja
+
 ```python
 def _nist_cumulative_sums_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -668,6 +716,7 @@ def _nist_cumulative_sums_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -678,6 +727,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 #### Interpretacja wyników
+
 - **max_excursion**: Maksymalne odchylenie od zera
   - Im mniejsze, tym lepiej zbalansowana sekwencja
   - Duże wartości wskazują na bias
@@ -685,6 +735,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 - **p-value < 0.01**: Wykryto systematyczny bias
 
 #### Wizualizacja
+
 ```
 Dobra sekwencja (losowa):
   Suma  |     /\    /\
@@ -704,15 +755,18 @@ Zła sekwencja (bias):
 ### 8. NIST Approximate Entropy Test
 
 #### Opis
+
 Test entropii aproksymacyjnej mierzy częstotliwość wszystkich możliwych nakładających się wzorców (patternów) długości m w sekwencji. Wykrywa, czy sekwencja jest zbyt regularna lub przewidywalna.
 
 #### Jak działa
+
 1. Wybiera długość wzorca m (domyślnie 10, dostosowywane do długości sekwencji)
 2. Liczy wszystkie możliwe wzorce długości m
 3. Oblicza entropię dla wzorców długości m i m+1
 4. Porównuje te entropie - dla losowej sekwencji powinny być podobne
 
 #### Wzory matematyczne
+
 ```
 Dla wzorca długości m:
 Φ(m) = Σ (pi × log(pi))
@@ -730,6 +784,7 @@ p = erfc(√(χ²/2))
 ```
 
 #### Parametry adaptacyjne
+
 ```python
 # Dopasowanie m do rozmiaru sekwencji
 m = min(m_requested, int(log2(n)) - 5)
@@ -738,6 +793,7 @@ if m < 2:
 ```
 
 #### Implementacja
+
 ```python
 def _nist_approximate_entropy_test(self, bits: List[int], m: int = 10):
     import math
@@ -792,6 +848,7 @@ def _nist_approximate_entropy_test(self, bits: List[int], m: int = 10):
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -802,6 +859,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 #### Interpretacja wyników
+
 - **approximate_entropy**: Wartość ApEn
   - Im bliżej 0, tym bardziej losowa sekwencja
   - Duże wartości sugerują regularność
@@ -811,6 +869,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 - **p-value < 0.01**: Wykryto regularność we wzorcach
 
 #### Co wykrywa
+
 - Powtarzające się sekwencje
 - Cykliczne wzorce
 - Zbyt przewidywalną strukturę
@@ -821,15 +880,18 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ### 9. NIST Binary Matrix Rank Test
 
 #### Opis
+
 Test analizuje rangę macierzy binarnych utworzonych z sekwencji bitowej. Sprawdza czy ranga macierzy odpowiada oczekiwanej dla losowych danych. Niska ranga wskazuje na zależności liniowe między bitami.
 
 #### Jak działa
+
 1. Dzieli sekwencję na macierze 32×32 bity
 2. Oblicza rangę każdej macierzy metodą eliminacji Gaussa
 3. Klasyfikuje macierze według rangi (32, 31, lub mniej)
 4. Porównuje rozkład z oczekiwanym za pomocą Chi-kwadrat
 
 #### Wzory matematyczne
+
 ```
 Dla macierzy M×M binarnej:
 Ranga = liczba liniowo niezależnych wierszy/kolumn
@@ -843,11 +905,13 @@ Chi-square: χ² = Σ (Oi - Ei)² / Ei
 ```
 
 #### Parametry
+
 - **Rozmiar macierzy**: 32×32
 - **Minimum bitów**: 1024
 - **Kryterium**: p-value ≥ 0.01
 
 #### Implementacja
+
 ```python
 def _nist_matrix_rank_test(self, bits: List[int]):
     M = Q = 32
@@ -864,6 +928,7 @@ def _nist_matrix_rank_test(self, bits: List[int]):
 ```
 
 #### Przykład użycia API
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -H "Content-Type: application/json" \
@@ -878,15 +943,18 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ### 10. NIST Discrete Fourier Transform (Spectral) Test
 
 #### Opis
+
 Test DFT wykrywa okresowe wzorce w sekwencji bitowej używając transformaty Fouriera. Losowa sekwencja nie powinna mieć wyraźnych pików w spektrum częstotliwości.
 
 #### Jak działa
+
 1. Konwertuje bity do wartości +1/-1
 2. Oblicza dyskretną transformatę Fouriera (DFT)
 3. Liczy piki przekraczające próg
 4. Porównuje z oczekiwaną liczbą pików
 
 #### Wzory matematyczne
+
 ```
 DFT: S(k) = Σ X(n)×e^(-2πikn/N)
 
@@ -899,6 +967,7 @@ Statystyka: d = (N1 - N0) / √(n×0.95×0.05/4)
 ```
 
 #### Implementacja
+
 ```python
 def _nist_dft_test(self, bits: List[int]):
     X = [2*bit - 1 for bit in bits]  # Konwersja do ±1
@@ -913,12 +982,14 @@ def _nist_dft_test(self, bits: List[int]):
 ```
 
 #### Przykład użycia
+
 ```bash
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
   -d '{"test_name": "nist_dft", "samples_count": 10000}'
 ```
 
 #### Interpretacja
+
 - **Wykrywa**: Okresowe wzorce, cykliczność
 - **p-value > 0.5**: Brak wykrywalnych okresowości
 - **peaks_below_threshold ≈ expected**: Prawidłowe spektrum
@@ -928,15 +999,18 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ### 11. NIST Non-Overlapping Template Matching Test
 
 #### Opis
+
 Test szuka określonego wzorca (template) w sekwencji, gdzie wystąpienia nie nakładają się na siebie. Sprawdza czy liczba wystąpień jest zgodna z oczekiwaniami dla losowej sekwencji.
 
 #### Jak działa
+
 1. Wybiera m-bitowy wzorzec (domyślnie 000000001)
 2. Dzieli sekwencję na bloki wielkości M
 3. W każdym bloku zlicza wystąpienia wzorca (non-overlapping)
 4. Porównuje rozkład z oczekiwanym
 
 #### Wzory
+
 ```
 Oczekiwana liczba wystąpień w bloku:
 μ = (M - m + 1) / 2^m
@@ -948,11 +1022,13 @@ Chi-square: χ² = Σ(Wi - μ)² / σ²
 ```
 
 #### Parametry
+
 - **Domyślny template**: [0,0,0,0,0,0,0,0,1]
 - **Rozmiar bloku**: M = 1000
 - **Minimum bitów**: 1000
 
 #### Implementacja
+
 ```python
 def _nist_non_overlapping_template_test(self, bits, template=None):
     if template is None:
@@ -976,15 +1052,18 @@ def _nist_non_overlapping_template_test(self, bits, template=None):
 ### 12. NIST Overlapping Template Matching Test
 
 #### Opis
+
 Podobny do poprzedniego, ale wystąpienia wzorca mogą się nakładać. Używa specyficznego wzorca 111111111 (9 jedynek).
 
 #### Jak działa
+
 1. Używa stałego wzorca: 9 jedynek
 2. W każdym bloku zlicza nakładające się wystąpienia
 3. Kategoryzuje bloki według liczby wystąpień (0,1,2,3,4,5+)
 4. Test Chi-kwadrat na rozkładzie
 
 #### Wzory
+
 ```
 λ = (M - m + 1) / 2^m
 η = λ / 2
@@ -995,6 +1074,7 @@ Prawdopodobieństwa teoretyczne:
 ```
 
 #### Parametry
+
 - **Wzorzec**: [1,1,1,1,1,1,1,1,1]
 - **Rozmiar bloku**: M = 1032
 - **Kategorie**: 0, 1, 2, 3, 4, ≥5
@@ -1004,15 +1084,18 @@ Prawdopodobieństwa teoretyczne:
 ### 13. NIST Maurer's Universal Statistical Test
 
 #### Opis
+
 Test uniwersalny Maurera mierzy kompresowność sekwencji. Losowa sekwencja powinna być trudna do skompresowania. Test mierzy dystans między powtórzeniami L-bitowych wzorców.
 
 #### Jak działa
+
 1. Dzieli sekwencję na L-bitowe bloki
 2. Faza inicjalizacji: Q pierwszych bloków buduje tabelę
 3. Faza testowa: K kolejnych bloków testuje dystanse
 4. Oblicza średni logarytm dystansu
 
 #### Wzory matematyczne
+
 ```
 fn = (1/K) × Σ log2(i - T[blocki])
 
@@ -1025,6 +1108,7 @@ L=8, Q=2560  dla n ≥ 904960
 ```
 
 #### Implementacja
+
 ```python
 def _nist_universal_test(self, bits):
     # Wybierz parametry L, Q
@@ -1048,6 +1132,7 @@ def _nist_universal_test(self, bits):
 ```
 
 #### Interpretacja
+
 - **fn ≈ expected**: Dobra kompresowność (wysoka entropia)
 - **fn znacznie różne**: Sekwencja zbyt regularna lub zbyt chaotyczna
 
@@ -1056,15 +1141,18 @@ def _nist_universal_test(self, bits):
 ### 14. NIST Linear Complexity Test
 
 #### Opis
+
 Test mierzy długość najkrótszego rejestru przesuwnego ze sprzężeniem zwrotnym liniowym (LFSR), który może wygenerować daną sekwencję. Używa algorytmu Berlekamp-Massey.
 
 #### Jak działa
+
 1. Dzieli sekwencję na bloki długości M
 2. Dla każdego bloku oblicza złożoność liniową (algorytm Berlekamp-Massey)
 3. Kategoryzuje odstępstwa od oczekiwanej złożoności
 4. Test Chi-kwadrat na rozkładzie
 
 #### Wzory matematyczne
+
 ```
 Oczekiwana złożoność:
 μ = M/2 + (9+(-1)^(M+1))/36 - (M/3+2/9)/2^M
@@ -1078,6 +1166,7 @@ Prawdopodobieństwa:
 ```
 
 #### Algorytm Berlekamp-Massey
+
 ```python
 def berlekamp_massey(bits):
     c = [0] * n  # Wielomian połączenia
@@ -1095,6 +1184,7 @@ def berlekamp_massey(bits):
 ```
 
 #### Parametry
+
 - **M**: 500 (domyślnie)
 - **Minimum bloków**: 200 (minimum 100000 bitów)
 
@@ -1103,15 +1193,18 @@ def berlekamp_massey(bits):
 ### 15. NIST Serial Test
 
 #### Opis
+
 Test sprawdza częstość wszystkich możliwych nakładających się m-bitowych wzorców. Jest rozszerzeniem testu Approximate Entropy, oblicza dwie statystyki testowe.
 
 #### Jak działa
+
 1. Oblicza funkcję ψ² dla m, m-1 i m-2
 2. Oblicza delta1 i delta2
 3. Dla każdej delty oblicza p-value
 4. Test przechodzi gdy obie p-values ≥ 0.01
 
 #### Wzory matematyczne
+
 ```
 ψ²(m) = (2^m/n)×Σvi² - n
 
@@ -1125,6 +1218,7 @@ p-value2 = erfc(√(|Δ2|/2))
 ```
 
 #### Implementacja
+
 ```python
 def _nist_serial_test(self, bits, m=16):
     m = min(m, int(log2(n)) - 2)  # Dostosuj m
@@ -1147,9 +1241,11 @@ def _nist_serial_test(self, bits, m=16):
 ### 16. NIST Random Excursions Test
 
 #### Opis
+
 Test analizuje liczbę cykli w "random walk" - spacerze losowym utworzonym z sekwencji. Sprawdza czy liczba wizyt w każdym stanie random walk jest prawidłowa.
 
 #### Jak działa
+
 1. Konwertuje bity do +1/-1
 2. Oblicza sumy cząstkowe (random walk)
 3. Zlicza cykle (powroty do zera)
@@ -1157,6 +1253,7 @@ Test analizuje liczbę cykli w "random walk" - spacerze losowym utworzonym z sek
 5. Porównuje z oczekiwanymi wartościami
 
 #### Wzory matematyczne
+
 ```
 Xi = 2×biti - 1  (konwersja do ±1)
 
@@ -1172,10 +1269,12 @@ Dla każdego stanu x:
 ```
 
 #### Wymagania
+
 - **Minimum cykli**: 500
 - Jeśli < 500 cykli, test nie może być wykonany
 
 #### Interpretacja geometryczna
+
 ```
 Random walk:
   +4 |      *
@@ -1190,15 +1289,18 @@ Random walk:
 ### 17. NIST Random Excursions Variant Test
 
 #### Opis
+
 Wariant testu Random Excursions, który testuje więcej stanów (±1 do ±9) i używa innej statystyki testowej. Każdy stan ma osobną p-value.
 
 #### Jak działa
+
 1. Podobnie jak Random Excursions: tworzy random walk
 2. Testuje stany: ±1, ±2, ..., ±9 (18 stanów)
 3. Dla każdego stanu oblicza osobną p-value
 4. Test przechodzi gdy wszystkie p-values ≥ 0.01
 
 #### Wzory matematyczne
+
 ```
 Dla stanu x:
 statystyka = |wizyt - cykle| / √(2×cykle×(4|x|-2))
@@ -1209,12 +1311,14 @@ Test passed = wszystkie p-values ≥ 0.01
 ```
 
 #### Różnice od Random Excursions
+
 - Więcej stanów (18 vs 8)
 - Inna statystyka testowa
 - Każdy stan testowany oddzielnie
 - Bardziej rygorystyczny (wszystkie p-values muszą przejść)
 
 #### Implementacja
+
 ```python
 def _nist_random_excursions_variant_test(self, bits):
     # Oblicz random walk i cykle
@@ -1236,45 +1340,49 @@ def _nist_random_excursions_variant_test(self, bits):
 
 ## Porównanie testów
 
-| Test | Typ danych | Min. próbek | Co wykrywa | Złożoność |
-|------|-----------|-------------|------------|-----------|
-| Frequency | Floats | 100 | Nierównomierny rozkład | Niska |
-| Uniformity | Floats | 100 | Nieprawidłowa średnia/wariancja | Niska |
+| Test                       | Typ danych | Min. próbek | Co wykrywa                      | Złożoność     |
+| -------------------------- | ---------- | ----------- | ------------------------------- | ------------- |
+| Frequency                  | Floats     | 100         | Nierównomierny rozkład          | Niska         |
+| Uniformity                 | Floats     | 100         | Nieprawidłowa średnia/wariancja | Niska         |
 | **NIST Suite (15 testów)** |
-| 1. Monobit | Bits | 100 | Niezbalansowanie 0/1 | Niska |
-| 2. Block Frequency | Bits | 128 | Lokalne niezbalansowanie | Średnia |
-| 3. Runs | Bits | 100 | Nieprawidłowe przejścia | Średnia |
-| 4. Longest Run | Bits | 128 | Zbyt długie/krótkie serie | Średnia |
-| 5. Matrix Rank | Bits | 1024 | Zależności liniowe | Wysoka |
-| 6. DFT (Spectral) | Bits | 100 | Okresowe wzorce | Wysoka |
-| 7. Non-Overlap Template | Bits | 1000 | Specyficzne wzorce | Średnia |
-| 8. Overlap Template | Bits | 1032 | Seryjne wzorce (111...1) | Średnia |
-| 9. Universal | Bits | 387840 | Kompresowność | Wysoka |
-| 10. Linear Complexity | Bits | 100000 | Złożoność LFSR | Bardzo wysoka |
-| 11. Serial | Bits | 100 | Częstość m-bitowych wzorców | Wysoka |
-| 12. Approximate Entropy | Bits | 100 | Regularność wzorców | Wysoka |
-| 13. Cumulative Sums | Bits | 100 | Systematyczny bias | Wysoka |
-| 14. Random Excursions | Bits | ~10000* | Właściwości random walk | Bardzo wysoka |
-| 15. Random Excursions Var | Bits | ~10000* | Random walk (więcej stanów) | Bardzo wysoka |
+| 1. Monobit                 | Bits       | 100         | Niezbalansowanie 0/1            | Niska         |
+| 2. Block Frequency         | Bits       | 128         | Lokalne niezbalansowanie        | Średnia       |
+| 3. Runs                    | Bits       | 100         | Nieprawidłowe przejścia         | Średnia       |
+| 4. Longest Run             | Bits       | 128         | Zbyt długie/krótkie serie       | Średnia       |
+| 5. Matrix Rank             | Bits       | 1024        | Zależności liniowe              | Wysoka        |
+| 6. DFT (Spectral)          | Bits       | 100         | Okresowe wzorce                 | Wysoka        |
+| 7. Non-Overlap Template    | Bits       | 1000        | Specyficzne wzorce              | Średnia       |
+| 8. Overlap Template        | Bits       | 1032        | Seryjne wzorce (111...1)        | Średnia       |
+| 9. Universal               | Bits       | 387840      | Kompresowność                   | Wysoka        |
+| 10. Linear Complexity      | Bits       | 100000      | Złożoność LFSR                  | Bardzo wysoka |
+| 11. Serial                 | Bits       | 100         | Częstość m-bitowych wzorców     | Wysoka        |
+| 12. Approximate Entropy    | Bits       | 100         | Regularność wzorców             | Wysoka        |
+| 13. Cumulative Sums        | Bits       | 100         | Systematyczny bias              | Wysoka        |
+| 14. Random Excursions      | Bits       | ~10000\*    | Właściwości random walk         | Bardzo wysoka |
+| 15. Random Excursions Var  | Bits       | ~10000\*    | Random walk (więcej stanów)     | Bardzo wysoka |
 
 \* Wymaga min. 500 cykli (powrotów do zera), co zazwyczaj wymaga ~10000+ bitów
 
 ## Rekomendacje użycia
 
 ### Dla szybkiego testowania (< 10,000 próbek)
+
 1. NIST Monobit
 2. NIST Block Frequency
 3. NIST Runs
 4. Frequency Test
 
 ### Dla dokładnego testowania (100,000 - 1,000,000 próbek)
+
 1. **Podstawowe (zawsze)**:
+
    - NIST Monobit
    - NIST Block Frequency
    - NIST Runs
    - NIST Longest Run
 
 2. **Zaawansowane**:
+
    - NIST Matrix Rank
    - NIST DFT
    - NIST Serial
@@ -1287,22 +1395,21 @@ def _nist_random_excursions_variant_test(self, bits):
    - NIST Random Excursions Variant
 
 ### Dla generatorów kryptograficznych (> 1,000,000 próbek)
+
 **Priorytet 1 (krytyczne)**:
+
 1. NIST Linear Complexity - wykrywa prostotę algorytmu
 2. NIST Approximate Entropy - mierzy nieprzewidywalność
 3. NIST Serial - sprawdza zależności między wzorcami
 4. NIST Universal - testuje kompresowność
 
-**Priorytet 2 (ważne)**:
-5. NIST DFT - wykrywa ukryte periodiczhości
-6. NIST Matrix Rank - sprawdza niezależność liniową
-7. NIST Random Excursions - analizuje random walk
-8. NIST Cumulative Sums - wykrywa bias
+**Priorytet 2 (ważne)**: 5. NIST DFT - wykrywa ukryte periodiczhości 6. NIST Matrix Rank - sprawdza niezależność liniową 7. NIST Random Excursions - analizuje random walk 8. NIST Cumulative Sums - wykrywa bias
 
 **Priorytet 3 (uzupełniające)**:
 9-15. Pozostałe testy NIST
 
 ### Dla szybkich generatorów pseudolosowych (gaming, symulacje)
+
 - NIST Monobit
 - NIST Runs
 - Frequency Test
@@ -1310,20 +1417,22 @@ def _nist_random_excursions_variant_test(self, bits):
 - NIST DFT
 
 ### Dla generatorów sprzętowych (TRNG)
+
 Wszystkie 15 testów NIST + Frequency + Uniformity
 
 ## Interpretacja p-value
 
-| p-value | Interpretacja |
-|---------|---------------|
-| > 0.5 | Bardzo dobry wynik |
-| 0.1 - 0.5 | Dobry wynik |
-| 0.01 - 0.1 | Akceptowalny |
-| < 0.01 | **Test niezaliczony** |
+| p-value    | Interpretacja         |
+| ---------- | --------------------- |
+| > 0.5      | Bardzo dobry wynik    |
+| 0.1 - 0.5  | Dobry wynik           |
+| 0.01 - 0.1 | Akceptowalny          |
+| < 0.01     | **Test niezaliczony** |
 
 ## Przykład pełnego testu generatora
 
 ### Test podstawowy (szybki - ~5 minut)
+
 ```bash
 # 1. Test równowagi
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
@@ -1343,6 +1452,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 ### Test rozszerzony (pełny NIST - ~30 minut)
+
 ```bash
 # Uruchom wszystkie 15 testów NIST
 for test in nist_monobit nist_block_frequency nist_runs nist_longest_run \
@@ -1361,6 +1471,7 @@ curl http://localhost:8000/api/rngs/1/test_results
 ```
 
 ### Test kryptograficzny (maksymalna dokładność)
+
 ```bash
 # Kluczowe testy dla generatorów kryptograficznych
 curl -X POST http://localhost:8000/api/rngs/1/run_test \
@@ -1383,4 +1494,4 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 
 ---
 
-*Dokumentacja wygenerowana dla projektu IO_RNG Backend*
+_Dokumentacja wygenerowana dla projektu IO_RNG Backend_

@@ -1,12 +1,14 @@
 Test sprawdza długość najdłuższego ciągu jedynek w sekwencji. Zbyt krótkie lub zbyt długie maksymalne serie mogą wskazywać na niełosowość.
 
 ## Jak działa
+
 1. Dzieli sekwencję na bloki
 2. W każdym bloku znajduje najdłuższy ciąg jedynek
 3. Klasyfikuje bloki według długości najdłuższego run
 4. Porównuje rozkład z oczekiwanym za pomocą Chi-kwadrat
 
 ## Parametry zależne od długości
+
 ```
 n < 6,272:
   - M = 8 (rozmiar bloku)
@@ -25,6 +27,7 @@ n ≥ 750,000:
 ```
 
 ## Implementacja
+
 ```python
 def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -33,7 +36,7 @@ def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
     n = len(bits)
 
     if n < 128:
-        return {'passed': False, 'score': 0.0, 
+        return {'passed': False, 'score': 0.0,
                 'error': 'Need at least 128 bits'}
 
     # Parametry dla różnych długości
@@ -58,14 +61,14 @@ def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
         block = bits[i * M:(i + 1) * M]
         max_run = 0
         current_run = 0
-        
+
         for bit in block:
             if bit == 1:
                 current_run += 1
                 max_run = max(max_run, current_run)
             else:
                 current_run = 0
-        
+
         # Klasyfikuj
         for j, v in enumerate(v_values):
             if max_run <= v:
@@ -101,21 +104,25 @@ def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_longest_run",
-    "samples_count": 128000
+    "samples_count": 128000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **p-value > 0.1**: Rozkład długości runs jest prawidłowy
 - **frequencies**: Pokazuje rozkład najdłuższych runs w blokach
 - **chi_square**: Im mniejsza wartość, tym lepsze dopasowanie do oczekiwanego rozkładu
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 128
 - **Złożoność**: Średnia

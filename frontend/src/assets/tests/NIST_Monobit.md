@@ -1,12 +1,14 @@
 Najprostszy test NIST. Sprawdza, czy liczba jedynek i zer w sekwencji bitowej jest w przybliżeniu równa. Jest to fundamentalny test równowagi bitów.
 
 ## Jak działa
+
 1. Konwertuje bity na wartości +1 (dla 1) i -1 (dla 0)
 2. Sumuje wszystkie wartości
 3. Im mniejsza suma bezwzględna, tym lepiej zbalansowana sekwencja
 4. Oblicza p-value za pomocą funkcji komplementarnej błędu (erfc)
 
 ## Wzory matematyczne
+
 ```
 S = Σ (2×biti - 1)  gdzie bit ∈ {0,1}
 
@@ -18,10 +20,12 @@ p = erfc(s_obs / √2)
 ```
 
 ## Kryterium zdania
+
 - **p-value ≥ 0.01**
 - Test zaliczony gdy p-value jest wystarczająco duże
 
 ## Implementacja
+
 ```python
 def _nist_monobit_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -55,22 +59,26 @@ def _nist_monobit_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_monobit",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **p-value ≈ 1.0**: Idealna równowaga między 0 i 1
 - **p-value > 0.5**: Bardzo dobra równowaga
 - **p-value < 0.01**: Test niezaliczony, sekwencja nielosowa
 - **ones ≈ zeros**: Dobry znak równowagi
 
 ## Przykład wyniku
+
 ```json
 {
   "passed": true,
@@ -87,6 +95,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 ```
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 100
 - **Złożoność**: Niska

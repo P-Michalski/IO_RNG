@@ -1,12 +1,14 @@
 Test sprawdza, czy proporcja jedynek w poszczególnych blokach (podciągach) jest bliska 0.5. Jest to bardziej lokalna wersja testu Monobit.
 
 ## Jak działa
+
 1. Dzieli sekwencję bitów na bloki o wielkości M (domyślnie 128 bitów)
 2. Dla każdego bloku oblicza proporcję jedynek
 3. Sprawdza, czy proporcje są bliskie 0.5 za pomocą statystyki Chi-kwadrat
 4. Oblicza p-value
 
 ## Wzory matematyczne
+
 ```
 Dla każdego bloku i:
 πi = (liczba jedynek w bloku i) / M
@@ -19,11 +21,13 @@ p = erfc(√(χ²/2))
 ```
 
 ## Parametry
+
 - **Domyślny rozmiar bloku**: M = 128 bitów
 - **Minimalny rozmiar sekwencji**: 128 bitów
 - **Kryterium**: p-value ≥ 0.01
 
 ## Implementacja
+
 ```python
 def _nist_block_frequency_test(self, bits: List[int], block_size: int = 128):
     import math
@@ -71,22 +75,26 @@ def _nist_block_frequency_test(self, bits: List[int], block_size: int = 128):
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_block_frequency",
-    "samples_count": 128000
+    "samples_count": 128000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **p-value > 0.5**: Wszystkie bloki mają dobrą równowagę
 - **p-value ≈ 0.01**: Graniczny wynik, niektóre bloki mogą być niezbalansowane
 - **num_blocks**: Im więcej bloków, tym bardziej wiarygodny test
 - **chi_square**: Im mniejsza wartość, tym lepiej
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 128
 - **Złożoność**: Średnia

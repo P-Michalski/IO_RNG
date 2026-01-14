@@ -1,12 +1,14 @@
 Test mierzy długość najkrótszego rejestru przesuwnego ze sprzężeniem zwrotnym liniowym (LFSR), który może wygenerować daną sekwencję. Używa algorytmu Berlekamp-Massey.
 
 ## Jak działa
+
 1. Dzieli sekwencję na bloki długości M
 2. Dla każdego bloku oblicza złożoność liniową (algorytm Berlekamp-Massey)
 3. Kategoryzuje odstępstwa od oczekiwanej złożoności
 4. Test Chi-kwadrat na rozkładzie
 
 ## Wzory matematyczne
+
 ```
 Oczekiwana złożoność:
 μ = M/2 + (9+(-1)^(M+1))/36 - (M/3+2/9)/2^M
@@ -20,6 +22,7 @@ Prawdopodobieństwa:
 ```
 
 ## Algorytm Berlekamp-Massey
+
 ```python
 def berlekamp_massey(bits):
     n = len(bits)
@@ -28,12 +31,12 @@ def berlekamp_massey(bits):
     c[0] = b[0] = 1
     L = 0
     m = -1
-    
+
     for i in range(n):
         d = bits[i]
         for j in range(1, L + 1):
             d ^= c[j] & bits[i - j]
-        
+
         if d == 1:
             t = c[:]
             for j in range(len(b)):
@@ -43,15 +46,17 @@ def berlekamp_massey(bits):
                 L = i + 1 - L
                 m = i
                 b = t
-    
+
     return L
 ```
 
 ## Parametry
+
 - **M**: 500 (domyślnie)
 - **Minimum bloków**: 200 (minimum 100000 bitów)
 
 ## Implementacja
+
 ```python
 def _nist_linear_complexity_test(self, bits: List[int], M: int = 500):
     import math
@@ -70,16 +75,16 @@ def _nist_linear_complexity_test(self, bits: List[int], M: int = 500):
 
     # Prawdopodobieństwa
     pi = [0.010417, 0.03125, 0.125, 0.5, 0.25, 0.0625, 0.020833]
-    
+
     frequencies = [0] * 7
 
     for i in range(N):
         block = bits[i * M:(i + 1) * M]
         L = berlekamp_massey(block)
-        
+
         # Oblicz T
         T = (-1) ** M * (L - mu) + 2.0 / 9.0
-        
+
         # Kategoryzuj
         if T <= -2.5:
             frequencies[0] += 1
@@ -122,21 +127,25 @@ def _nist_linear_complexity_test(self, bits: List[int], M: int = 500):
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_linear_complexity",
-    "samples_count": 1000000
+    "samples_count": 1000000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **expected_complexity**: Oczekiwana złożoność liniowa dla bloku
 - **p-value > 0.1**: Prawidłowa złożoność liniowa
 - **Niska złożoność**: Sekwencja może być generowana przez prosty LFSR
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 100000
 - **Złożoność**: Bardzo wysoka

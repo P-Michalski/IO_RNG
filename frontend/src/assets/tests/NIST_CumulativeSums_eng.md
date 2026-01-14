@@ -1,12 +1,14 @@
 The Cumulative Sums (CUSUM) test detects deviations from randomness by tracking the maximum deviation of the cumulative sum from zero.
 
 ## How it works
+
 1. Converts bits to +1/-1
 2. Calculates cumulative sum at each point
 3. Finds maximum deviation (forward mode)
 4. Calculates p-value based on this deviation
 
 ## Mathematical formulas
+
 ```
 For each biti ∈ {0,1}:
 Xi = 2×biti - 1  (conversion to ±1)
@@ -21,9 +23,11 @@ P-value: complex formula with erfc function
 ```
 
 ## Geometric interpretation
+
 The test observes a "random walk" - if the sequence is random, the cumulative sum should oscillate around zero without excessive deviations.
 
 ## Implementation
+
 ```python
 def _nist_cumulative_sums_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -63,16 +67,19 @@ def _nist_cumulative_sums_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_cumulative_sums",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **max_excursion**: Maximum deviation from zero
   - The smaller, the better balanced the sequence
   - Large values indicate bias
@@ -80,6 +87,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 - **p-value < 0.01**: Systematic bias detected
 
 ## Visualization
+
 ```
 Good sequence (random):
   Sum   |     /\    /\
@@ -91,6 +99,7 @@ Bad sequence (bias):
 ```
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: 100
 - **Complexity**: High

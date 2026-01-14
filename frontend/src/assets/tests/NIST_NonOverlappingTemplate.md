@@ -1,12 +1,14 @@
 Test szuka określonego wzorca (template) w sekwencji, gdzie wystąpienia nie nakładają się na siebie. Sprawdza czy liczba wystąpień jest zgodna z oczekiwaniami dla losowej sekwencji.
 
 ## Jak działa
+
 1. Wybiera m-bitowy wzorzec (domyślnie 000000001)
 2. Dzieli sekwencję na bloki wielkości M
 3. W każdym bloku zlicza wystąpienia wzorca (non-overlapping)
 4. Porównuje rozkład z oczekiwanym
 
 ## Wzory matematyczne
+
 ```
 Oczekiwana liczba wystąpień w bloku:
 μ = (M - m + 1) / 2^m
@@ -20,13 +22,15 @@ P-value: p = erfc(√(χ²/2))
 ```
 
 ## Parametry
+
 - **Domyślny template**: [0,0,0,0,0,0,0,0,1]
 - **Rozmiar bloku**: M = 1000
 - **Minimum bitów**: 1000
 
 ## Implementacja
+
 ```python
-def _nist_non_overlapping_template_test(self, bits: List[int], 
+def _nist_non_overlapping_template_test(self, bits: List[int],
                                         template: List[int] = None) -> Dict[str, Any]:
     import math
     from math import erfc
@@ -84,21 +88,25 @@ def _nist_non_overlapping_template_test(self, bits: List[int],
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_non_overlapping_template",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **expected_matches**: Oczekiwana liczba wystąpień wzorca w bloku
 - **p-value > 0.1**: Prawidłowa częstość występowania wzorca
 - **chi_square**: Im mniejsza wartość, tym lepiej
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 1000
 - **Złożoność**: Średnia

@@ -1,12 +1,14 @@
 The test searches for a specific pattern (template) in the sequence, where occurrences do not overlap. It checks whether the number of occurrences matches expectations for a random sequence.
 
 ## How it works
+
 1. Selects an m-bit pattern (default 000000001)
 2. Divides sequence into blocks of size M
 3. In each block, counts pattern occurrences (non-overlapping)
 4. Compares distribution with expected
 
 ## Mathematical formulas
+
 ```
 Expected number of occurrences in block:
 μ = (M - m + 1) / 2^m
@@ -20,13 +22,15 @@ P-value: p = erfc(√(χ²/2))
 ```
 
 ## Parameters
+
 - **Default template**: [0,0,0,0,0,0,0,0,1]
 - **Block size**: M = 1000
 - **Minimum bits**: 1000
 
 ## Implementation
+
 ```python
-def _nist_non_overlapping_template_test(self, bits: List[int], 
+def _nist_non_overlapping_template_test(self, bits: List[int],
                                         template: List[int] = None) -> Dict[str, Any]:
     import math
     from math import erfc
@@ -84,21 +88,25 @@ def _nist_non_overlapping_template_test(self, bits: List[int],
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_non_overlapping_template",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **expected_matches**: Expected number of pattern occurrences in block
 - **p-value > 0.1**: Correct pattern occurrence frequency
 - **chi_square**: The smaller the value, the better
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: 1000
 - **Complexity**: Medium

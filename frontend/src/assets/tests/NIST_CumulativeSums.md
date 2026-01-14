@@ -1,12 +1,14 @@
 Test sum kumulatywnych (CUSUM) wykrywa odchylenia od losowości poprzez śledzenie maksymalnego odchylenia skumulowanej sumy od zera.
 
 ## Jak działa
+
 1. Konwertuje bity na +1/-1
 2. Oblicza sumę kumulatywną w każdym punkcie
 3. Znajduje maksymalne odchylenie (forward mode)
 4. Oblicza p-value na podstawie tego odchylenia
 
 ## Wzory matematyczne
+
 ```
 Dla każdego biti ∈ {0,1}:
 Xi = 2×biti - 1  (konwersja do ±1)
@@ -21,9 +23,11 @@ P-value: złożony wzór z funkcją erfc
 ```
 
 ## Interpretacja geometryczna
+
 Test obserwuje "random walk" - jeśli sekwencja jest losowa, suma kumulatywna powinna oscylować wokół zera bez zbyt dużych odchyleń.
 
 ## Implementacja
+
 ```python
 def _nist_cumulative_sums_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -63,16 +67,19 @@ def _nist_cumulative_sums_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_cumulative_sums",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **max_excursion**: Maksymalne odchylenie od zera
   - Im mniejsze, tym lepiej zbalansowana sekwencja
   - Duże wartości wskazują na bias
@@ -80,6 +87,7 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 - **p-value < 0.01**: Wykryto systematyczny bias
 
 ## Wizualizacja
+
 ```
 Dobra sekwencja (losowa):
   Suma  |     /\    /\
@@ -91,6 +99,7 @@ Zła sekwencja (bias):
 ```
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 100
 - **Złożoność**: Wysoka

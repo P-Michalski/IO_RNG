@@ -1,6 +1,7 @@
 Test Overlapping Sums konwertuje bity na liczby zmiennoprzecinkowe [0,1] i oblicza sumy nakładających się okien. Rozkład sum powinien być normalny zgodnie z centralnym twierdzeniem granicznym. Test sprawdza średnią i odchylenie standardowe sum.
 
 ## Jak działa
+
 1. Konwertuje grupy bitów (8 bitów) na liczby [0,1]
 2. Tworzy nakładające się okna o rozmiarze 10 wartości
 3. Oblicza sumę dla każdego okna
@@ -8,6 +9,7 @@ Test Overlapping Sums konwertuje bity na liczby zmiennoprzecinkowe [0,1] i oblic
 5. Porównuje z teoretycznymi wartościami używając z-score
 
 ## Wzór matematyczny
+
 ```
 Dla uniform [0,1], suma n wartości:
 - Teoretyczna średnia: n/2
@@ -27,35 +29,41 @@ p-value = erfc(√(χ² / 2))
 ```
 
 ## Wartość krytyczna
+
 - **Próg**: p-value ≥ 0.01
 - Test **zaliczony** gdy p-value ≥ 0.01
 
 ## Minimalne wymagania
+
 - **Minimum**: 100,000 bitów
 - **Bity na wartość**: 8
 - **Rozmiar okna**: 10 wartości
 
 ## Implementacja
+
 Test wykorzystuje numpy do konwersji bitów na wartości [0,1] i obliczania sum nakładających się okien. Centralne twierdzenie graniczne gwarantuje normalność rozkładu sum dla prawdziwie losowych danych.
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "diehard_overlapping_sums",
     "samples_count": 100000,
-    "seed": 42
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **score = 1.0**: Idealny rozkład normalny sum
 - **score > 0.7**: Bardzo dobry wynik
 - **score < 0.5**: Słaby generator, nieprawidłowy rozkład sum
 - **passed = false**: Generator nie przeszedł testu
 
 ## Parametry testu
+
 - **Typ danych**: Bity (binary)
 - **Minimalna liczba próbek**: 100,000 bitów
 - **Złożoność**: Niska-średnia

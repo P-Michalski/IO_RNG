@@ -1,12 +1,14 @@
 The test checks whether the proportion of ones in individual blocks (subsequences) is close to 0.5. This is a more localized version of the Monobit test.
 
 ## How it works
+
 1. Divides the bit sequence into blocks of size M (default 128 bits)
 2. For each block, calculates the proportion of ones
 3. Checks if proportions are close to 0.5 using Chi-square statistic
 4. Calculates p-value
 
 ## Mathematical formulas
+
 ```
 For each block i:
 πi = (number of ones in block i) / M
@@ -19,11 +21,13 @@ p = erfc(√(χ²/2))
 ```
 
 ## Parameters
+
 - **Default block size**: M = 128 bits
 - **Minimum sequence size**: 128 bits
 - **Criterion**: p-value ≥ 0.01
 
 ## Implementation
+
 ```python
 def _nist_block_frequency_test(self, bits: List[int], block_size: int = 128):
     import math
@@ -71,22 +75,26 @@ def _nist_block_frequency_test(self, bits: List[int], block_size: int = 128):
 ```
 
 ## API usage example
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_block_frequency",
-    "samples_count": 128000
+    "samples_count": 128000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Result interpretation
+
 - **p-value > 0.5**: All blocks have good balance
 - **p-value ≈ 0.01**: Borderline result, some blocks may be unbalanced
 - **num_blocks**: More blocks make the test more reliable
 - **chi_square**: The smaller the value, the better
 
 ## Test parameters
+
 - **Data type**: Bits
 - **Minimum samples**: 128
 - **Complexity**: Medium

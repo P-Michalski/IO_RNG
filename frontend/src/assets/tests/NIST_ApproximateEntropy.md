@@ -1,12 +1,14 @@
 Test entropii aproksymacyjnej mierzy częstotliwość wszystkich możliwych nakładających się wzorców (patternów) długości m w sekwencji. Wykrywa, czy sekwencja jest zbyt regularna lub przewidywalna.
 
 ## Jak działa
+
 1. Wybiera długość wzorca m (domyślnie 10, dostosowywane do długości sekwencji)
 2. Liczy wszystkie możliwe wzorce długości m
 3. Oblicza entropię dla wzorców długości m i m+1
 4. Porównuje te entropie - dla losowej sekwencji powinny być podobne
 
 ## Wzory matematyczne
+
 ```
 Dla wzorca długości m:
 Φ(m) = Σ (pi × log(pi))
@@ -24,6 +26,7 @@ p = erfc(√(χ²/2))
 ```
 
 ## Parametry adaptacyjne
+
 ```python
 # Dopasowanie m do rozmiaru sekwencji
 m = min(m_requested, int(log2(n)) - 5)
@@ -32,6 +35,7 @@ if m < 2:
 ```
 
 ## Implementacja
+
 ```python
 def _nist_approximate_entropy_test(self, bits: List[int], m: int = 10):
     import math
@@ -53,7 +57,7 @@ def _nist_approximate_entropy_test(self, bits: List[int], m: int = 10):
         for i in range(n):
             pattern = tuple(bits[i:i+m_local] + bits[:max(0, i+m_local-n)])
             patterns[pattern] = patterns.get(pattern, 0) + 1
-        
+
         phi = 0.0
         for count in patterns.values():
             pi = count / n
@@ -87,16 +91,19 @@ def _nist_approximate_entropy_test(self, bits: List[int], m: int = 10):
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_approximate_entropy",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **approximate_entropy**: Wartość ApEn
   - Im bliżej 0, tym bardziej losowa sekwencja
   - Duże wartości sugerują regularność
@@ -106,12 +113,14 @@ curl -X POST http://localhost:8000/api/rngs/1/run_test \
 - **p-value < 0.01**: Wykryto regularność we wzorcach
 
 ## Co wykrywa
+
 - Powtarzające się sekwencje
 - Cykliczne wzorce
 - Zbyt przewidywalną strukturę
 - Brak entropii w danych
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: 100
 - **Złożoność**: Wysoka

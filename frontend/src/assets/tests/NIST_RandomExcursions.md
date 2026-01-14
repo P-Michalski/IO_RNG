@@ -1,6 +1,7 @@
 Test analizuje liczbę cykli w "random walk" - spacerze losowym utworzonym z sekwencji. Sprawdza czy liczba wizyt w każdym stanie random walk jest prawidłowa.
 
 ## Jak działa
+
 1. Konwertuje bity do +1/-1
 2. Oblicza sumy cząstkowe (random walk)
 3. Zlicza cykle (powroty do zera)
@@ -8,6 +9,7 @@ Test analizuje liczbę cykli w "random walk" - spacerze losowym utworzonym z sek
 5. Porównuje z oczekiwanymi wartościami
 
 ## Wzory matematyczne
+
 ```
 Xi = 2×biti - 1  (konwersja do ±1)
 
@@ -23,10 +25,12 @@ Dla każdego stanu x:
 ```
 
 ## Wymagania
+
 - **Minimum cykli**: 500
 - Jeśli < 500 cykli, test nie może być wykonany
 
 ## Interpretacja geometryczna
+
 ```
 Random walk:
   +4 |      *
@@ -38,6 +42,7 @@ Random walk:
 ```
 
 ## Implementacja
+
 ```python
 def _nist_random_excursions_test(self, bits: List[int]) -> Dict[str, Any]:
     import math
@@ -63,7 +68,7 @@ def _nist_random_excursions_test(self, bits: List[int]) -> Dict[str, Any]:
 
     # Stany do testowania
     states = [-4, -3, -2, -1, 1, 2, 3, 4]
-    
+
     # Prawdopodobieństwa teoretyczne dla każdego stanu
     pi = {
         1: [0.5000, 0.2500, 0.1250, 0.0625, 0.0312, 0.0312],
@@ -77,11 +82,11 @@ def _nist_random_excursions_test(self, bits: List[int]) -> Dict[str, Any]:
 
     for state in states:
         abs_state = abs(state)
-        
+
         # Zlicz wizyty w tym stanie w każdym cyklu
         visits = []
         cycle_start = 0
-        
+
         for i in range(1, len(S)):
             if S[i] == 0:
                 # Koniec cyklu
@@ -106,12 +111,12 @@ def _nist_random_excursions_test(self, bits: List[int]) -> Dict[str, Any]:
 
         # P-value
         p_value = erfc(math.sqrt(chi_square / 2))
-        
+
         results[f'state_{state}'] = {
             'p_value': p_value,
             'passed': p_value >= 0.01
         }
-        
+
         if p_value < 0.01:
             all_passed = False
 
@@ -129,22 +134,26 @@ def _nist_random_excursions_test(self, bits: List[int]) -> Dict[str, Any]:
 ```
 
 ## Przykład użycia API
+
 ```bash
-curl -X POST http://localhost:8000/api/rngs/1/run_test \
+curl -X POST http://localhost:8000/api/rngs/24/run_test \
   -H "Content-Type: application/json" \
   -d '{
     "test_name": "nist_random_excursions",
-    "samples_count": 100000
+    "samples_count": 100000,
+    "parameters": {bits_per_value: 32, msb_first: 1}
   }'
 ```
 
 ## Interpretacja wyników
+
 - **cycles**: Liczba cykli (powrotów do zera)
 - **states_results**: Wyniki dla każdego stanu
 - **p_value dla każdego stanu**: Musi być ≥ 0.01
 - **Wszystkie stany**: Muszą przejść test
 
 ## Parametry testu
+
 - **Typ danych**: Bity
 - **Minimalna liczba próbek**: ~10000 (dla 500 cykli)
 - **Złożoność**: Bardzo wysoka
