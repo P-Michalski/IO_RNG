@@ -1,6 +1,3 @@
-# Diehard Birthday Spacings Test
-
-## Opis
 Test Birthday Spacings bada odległości między "urodzinami" (powtórzeniami wartości) w 24-bitowych słowach. Bazuje na problemie urodzin - dla prawdziwie losowego źródła, rozkład odległości między duplikatami powinien być zgodny z rozkładem Poissona.
 
 ## Jak działa

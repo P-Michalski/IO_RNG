@@ -1,6 +1,3 @@
-# Diehard Parking Lot Test
-
-## Description
 The Parking Lot test simulates "parking" circles on a unit square [0,1]×[0,1]. Each "circle" (point with radius) is randomly placed, and the test counts how many circles can be parked without collisions (overlapping). The number of parked circles should match theoretical distribution.
 
 ## How it works

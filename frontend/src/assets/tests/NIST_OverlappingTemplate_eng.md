@@ -1,6 +1,3 @@
-# NIST Overlapping Template Matching Test
-
-## Description
 Similar to the previous test, but pattern occurrences may overlap. Uses a specific pattern 111111111 (9 ones).
 
 ## How it works

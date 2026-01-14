@@ -1,6 +1,3 @@
-# Diehard Count-the-1s Test
-
-## Description
 The Count-the-1s test counts the number of ones in each byte and checks if the distribution of one-counts matches the theoretical binomial distribution B(8, 0.5). Each byte can have from 0 to 8 ones.
 
 ## How it works

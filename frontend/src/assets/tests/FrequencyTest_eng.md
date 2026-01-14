@@ -1,6 +1,3 @@
-# Frequency Test (Chi-square)
-
-## Description
 The Chi-square frequency test checks whether the generated numbers are uniformly distributed across specified intervals (bins). This is a fundamental test for distribution uniformity.
 
 ## How it works

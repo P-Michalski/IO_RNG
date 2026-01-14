@@ -1,6 +1,3 @@
-# Diehard Birthday Spacings Test
-
-## Description
 The Birthday Spacings test examines distances between "birthdays" (repeated values) in 24-bit words. Based on the birthday problem - for truly random sources, the distribution of distances between duplicates should follow a Poisson distribution.
 
 ## How it works

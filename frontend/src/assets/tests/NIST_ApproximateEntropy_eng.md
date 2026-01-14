@@ -1,6 +1,3 @@
-# NIST Approximate Entropy Test
-
-## Description
 The Approximate Entropy test measures the frequency of all possible overlapping patterns of length m in a sequence. It detects whether the sequence is too regular or predictable.
 
 ## How it works

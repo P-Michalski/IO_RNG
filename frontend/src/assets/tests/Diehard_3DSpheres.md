@@ -1,6 +1,3 @@
-# Diehard 3D Spheres Test
-
-## Opis
 Test 3D Spheres losuje punkty w przestrzeni 3D w sześcianie [0,1]³ i zlicza punkty wewnątrz sfery o promieniu r = 0.5 z centrum w (0.5, 0.5, 0.5). Liczba punktów wewnątrz powinna odpowiadać stosunkowi objętości sfery do objętości sześcianu.
 
 ## Jak działa

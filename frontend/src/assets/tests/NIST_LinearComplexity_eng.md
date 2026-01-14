@@ -1,6 +1,3 @@
-# NIST Linear Complexity Test
-
-## Description
 The test measures the length of the shortest Linear Feedback Shift Register (LFSR) that can generate the given sequence. Uses the Berlekamp-Massey algorithm.
 
 ## How it works

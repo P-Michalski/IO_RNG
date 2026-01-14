@@ -1,6 +1,3 @@
-# NIST Discrete Fourier Transform (Spectral) Test
-
-## Description
 The DFT test detects periodic patterns in a bit sequence using Fourier transform. A random sequence should not have distinct peaks in the frequency spectrum.
 
 ## How it works

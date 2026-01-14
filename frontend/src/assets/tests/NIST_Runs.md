@@ -1,6 +1,3 @@
-# NIST Runs Test
-
-## Opis
 Test sprawdza, czy liczba przejść (runs) między 0 a 1 jest prawidłowa. Run to nieprzerwany ciąg identycznych bitów. Test wykrywa czy sekwencja nie jest zbyt "gładka" lub zbyt "zmienna".
 
 ## Jak działa

@@ -1,6 +1,3 @@
-# Diehard OQSO Test
-
-## Description
 The OQSO (Overlapping-Quadruples-Sparse-Occupancy) test is similar to OPSO but analyzes 4-letter words instead of pairs. It divides 32-bit words into 5-bit "letters" (32 possible values), creating overlapping quadruples of letters and counting singletons.
 
 ## How it works

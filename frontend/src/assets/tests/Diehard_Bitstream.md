@@ -1,6 +1,3 @@
-# Diehard Bitstream Test
-
-## Opis
 Test Bitstream analizuje częstości 20-bitowych słów w nakładających się oknach. Sprawdza, czy liczba wystąpień najbardziej i najmniej częstego słowa jest w normie dla prawdziwie losowego generatora.
 
 ## Jak działa

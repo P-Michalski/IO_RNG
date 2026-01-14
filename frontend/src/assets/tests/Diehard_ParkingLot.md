@@ -1,6 +1,3 @@
-# Diehard Parking Lot Test
-
-## Opis
 Test Parking Lot symuluje "parkowanie" kół na jednostkowym kwadracie [0,1]×[0,1]. Każde "koło" (punkt z promieniem) jest losowane, a test zlicza ile kół można zaparkować bez kolizji (nakładania się). Liczba zaparkowanych kół powinna być zgodna z rozkładem teoretycznym.
 
 ## Jak działa

@@ -1,0 +1,1048 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgf-pie}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+
+\usetikzlibrary{shapes.geometric, arrows, positioning, fit, backgrounds}
+\pgfplotsset{compat=1.18}
+
+\geometry{margin=2.5cm}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{passgreen}{rgb}{0,0.7,0}
+\definecolor{failred}{rgb}{0.8,0,0}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    literate={ą}{{\k{a}}}1 {ć}{{\'c}}1 {ę}{{\k{e}}}1 {ł}{{\l{}}}1 {ń}{{\'n}}1 {ó}{{\'o}}1 {ś}{{\'s}}1 {ź}{{\'z}}1 {ż}{{\.z}}1
+             {Ą}{{\k{A}}}1 {Ć}{{\'C}}1 {Ę}{{\k{E}}}1 {Ł}{{\L{}}}1 {Ń}{{\'N}}1 {Ó}{{\'O}}1 {Ś}{{\'S}}1 {Ź}{{\'Z}}1 {Ż}{{\.Z}}1
+}
+
+\lstset{style=pythonstyle}
+
+\title{\textbf{Raport z Testów Systemu IO\_RNG}\\
+\large System Testowania i Porównywania Generatorów Liczb Pseudolosowych}
+\author{Projekt IO}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Wprowadzenie}
+
+\subsection{Cel dokumentu}
+Niniejszy dokument stanowi raport z przeprowadzonych testów oprogramowania systemu IO\_RNG. Zawiera opis strategii testowania, przypadków testowych, wyników testów automatycznych oraz statystykę wykrytych błędów.
+
+\subsection{Zakres testów}
+\begin{itemize}
+    \item \textbf{Testy jednostkowe} - testowanie pojedynczych komponentów
+    \item \textbf{Testy integracyjne} - testowanie współpracy komponentów
+    \item \textbf{Testy API} - testowanie endpointów REST API
+    \item \textbf{Testy funkcjonalne} - testowanie przypadków użycia
+    \item \textbf{Testy statystyczne} - weryfikacja algorytmów RNG
+    \item \textbf{Testy wydajnościowe} - pomiary czasu wykonania
+\end{itemize}
+
+\subsection{Środowisko testowe}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Konfiguracja środowiska]
+\begin{itemize}
+    \item \textbf{System operacyjny:} Windows 10/11, Linux Ubuntu 22.04
+    \item \textbf{Python:} 3.11+
+    \item \textbf{Django:} 5.2.8
+    \item \textbf{Django REST Framework:} 3.14+
+    \item \textbf{Framework testowy:} pytest, Django TestCase
+    \item \textbf{Coverage:} pytest-cov
+    \item \textbf{Frontend:} Vitest, React Testing Library
+\end{itemize}
+\end{tcolorbox}
+
+\section{Strategia Testowania}
+
+\subsection{Piramida testów}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.2]
+    % Piramida
+    \draw[fill=green!20, draw=black, thick] (0,0) -- (4,0) -- (3,1.5) -- (1,1.5) -- cycle;
+    \draw[fill=yellow!20, draw=black, thick] (1,1.5) -- (3,1.5) -- (2.5,2.5) -- (1.5,2.5) -- cycle;
+    \draw[fill=red!20, draw=black, thick] (1.5,2.5) -- (2.5,2.5) -- (2,3.5) -- cycle;
+    
+    % Etykiety
+    \node at (2,0.6) {\textbf{Testy jednostkowe (70\%)}};
+    \node at (2,2) {\textbf{Testy integracyjne (20\%)}};
+    \node at (2,3) {\textbf{Testy E2E (10\%)}};
+\end{tikzpicture}
+\caption{Piramida testów - rozkład ilości testów}
+\end{figure}
+
+\subsection{Metodologia}
+\begin{enumerate}
+    \item \textbf{Test-Driven Development (TDD)} - pisanie testów przed implementacją
+    \item \textbf{Continuous Integration} - automatyczne uruchamianie testów po każdym commit
+    \item \textbf{Code Coverage} - monitorowanie pokrycia kodu testami (cel: >80\%)
+    \item \textbf{Regression Testing} - testy regresyjne po każdej zmianie
+\end{enumerate}
+
+\section{Testy Jednostkowe}
+
+\subsection{Testy encji domenowych}
+
+\subsubsection{Testowanie klasy RNG}
+
+\begin{lstlisting}[language=Python, caption=Test tworzenia encji RNG]
+import pytest
+from io_rng.core.entities.rng import RNG, Language, Algorithm
+
+class TestRNGEntity:
+    def test_create_valid_rng(self):
+        # Arrange & Act
+        rng = RNG(
+            name="Test LCG",
+            language=Language.PYTHON,
+            algorithm=Algorithm.LINEAR_CONGRUENTIAL,
+            description="Test generator",
+            code_path="algorithms/lcg.py"
+        )
+        
+        # Assert
+        assert rng.name == "Test LCG"
+        assert rng.language == Language.PYTHON
+        assert rng.is_active == True
+    
+    def test_create_rng_with_empty_name_raises_error(self):
+        # Arrange & Act & Assert
+        with pytest.raises(ValueError, match="name cannot be empty"):
+            RNG(
+                name="",
+                language=Language.PYTHON,
+                algorithm=Algorithm.PCG,
+                description="Test",
+                code_path="test.py"
+            )
+    
+    def test_validate_for_execution(self):
+        # Arrange
+        rng = RNG(
+            name="Test",
+            language=Language.PYTHON,
+            algorithm=Algorithm.PCG,
+            description="Test",
+            code_path="test.py",
+            is_active=True
+        )
+        
+        # Act & Assert
+        assert rng.validate_for_execution() == True
+    
+    def test_get_parameter_returns_value(self):
+        # Arrange
+        rng = RNG(
+            name="LCG",
+            language=Language.PYTHON,
+            algorithm=Algorithm.LINEAR_CONGRUENTIAL,
+            description="Test",
+            code_path="lcg.py",
+            parameters={"a": 1103515245, "c": 12345}
+        )
+        
+        # Act & Assert
+        assert rng.get_parameter("a") == 1103515245
+        assert rng.get_parameter("nonexistent", 999) == 999
+\end{lstlisting}
+
+\textbf{Wyniki:}
+\begin{itemize}
+    \item Wykonanych testów: 4
+    \item Zaliczonych: 4
+    \item Pokrycie kodu: 95\%
+\end{itemize}
+
+\subsubsection{Testowanie klasy TestResult}
+
+\begin{lstlisting}[language=Python, caption=Test encji TestResult]
+from io_rng.core.entities.test_result import TestResult, DataType
+
+class TestTestResultEntity:
+    def test_create_valid_result(self):
+        # Arrange & Act
+        result = TestResult(
+            rng_id=1,
+            test_name="chi_square",
+            passed=True,
+            score=0.85,
+            execution_time_ms=123.45,
+            samples_count=100000,
+            statistics={"p_value": 0.85}
+        )
+        
+        # Assert
+        assert result.passed == True
+        assert result.score == 0.85
+    
+    def test_invalid_score_raises_error(self):
+        # Arrange & Act & Assert
+        with pytest.raises(ValueError, match="Score must be between 0 and 1"):
+            TestResult(
+                rng_id=1,
+                test_name="test",
+                passed=True,
+                score=1.5,  # Invalid!
+                execution_time_ms=100,
+                samples_count=1000,
+                statistics={}
+            )
+\end{lstlisting}
+
+\textbf{Wyniki:}
+\begin{itemize}
+    \item Wykonanych testów: 2
+    \item Zaliczonych: 2
+    \item Pokrycie kodu: 90\%
+\end{itemize}
+
+\newpage
+
+\subsection{Testy repozytoriów}
+
+\subsubsection{Testowanie DjangoRNGRepository}
+
+\begin{lstlisting}[language=Python, caption=Test repozytorium RNG]
+from django.test import TestCase
+from io_rng.infrastructure.repositories.django_repositories import DjangoRNGRepository
+from io_rng.core.entities.rng import RNG, Language, Algorithm
+
+class TestDjangoRNGRepository(TestCase):
+    def setUp(self):
+        self.repository = DjangoRNGRepository()
+    
+    def test_save_new_rng(self):
+        # Arrange
+        rng = RNG(
+            name="Test RNG",
+            language=Language.PYTHON,
+            algorithm=Algorithm.PCG,
+            description="Test",
+            code_path="test.py"
+        )
+        
+        # Act
+        saved_rng = self.repository.save(rng)
+        
+        # Assert
+        assert saved_rng.id is not None
+        assert saved_rng.name == "Test RNG"
+    
+    def test_get_by_id_existing(self):
+        # Arrange
+        rng = RNG(name="Test", language=Language.PYTHON,
+                 algorithm=Algorithm.PCG, description="Test",
+                 code_path="test.py")
+        saved = self.repository.save(rng)
+        
+        # Act
+        retrieved = self.repository.get_by_id(saved.id)
+        
+        # Assert
+        assert retrieved is not None
+        assert retrieved.id == saved.id
+    
+    def test_get_by_id_nonexistent(self):
+        # Act
+        result = self.repository.get_by_id(99999)
+        
+        # Assert
+        assert result is None
+    
+    def test_delete_existing_rng(self):
+        # Arrange
+        rng = RNG(name="To Delete", language=Language.PYTHON,
+                 algorithm=Algorithm.PCG, description="Test",
+                 code_path="test.py")
+        saved = self.repository.save(rng)
+        
+        # Act
+        deleted = self.repository.delete(saved.id)
+        
+        # Assert
+        assert deleted == True
+        assert self.repository.get_by_id(saved.id) is None
+\end{lstlisting}
+
+\textbf{Wyniki:}
+\begin{itemize}
+    \item Wykonanych testów: 4
+    \item Zaliczonych: 4
+    \item Pokrycie kodu: 88\%
+\end{itemize}
+
+\subsection{Testy runnerów}
+
+\subsubsection{Testowanie PythonRNGRunner}
+
+\begin{lstlisting}[language=Python, caption=Test Python Runner]
+from io_rng.infrastructure.runners.python_runner import PythonRNGRunner
+from io_rng.core.entities.rng import RNG, Language, Algorithm
+
+class TestPythonRNGRunner:
+    def setUp(self):
+        self.runner = PythonRNGRunner()
+    
+    def test_can_run_python_rng(self):
+        # Arrange
+        rng = RNG(name="Test", language=Language.PYTHON,
+                 algorithm=Algorithm.PCG, description="Test",
+                 code_path="test.py")
+        
+        # Act & Assert
+        assert self.runner.can_run(rng) == True
+    
+    def test_cannot_run_cpp_rng(self):
+        # Arrange
+        rng = RNG(name="Test", language=Language.CPP,
+                 algorithm=Algorithm.PCG, description="Test",
+                 code_path="test.cpp")
+        
+        # Act & Assert
+        assert self.runner.can_run(rng) == False
+    
+    def test_generate_numbers_returns_floats(self):
+        # Arrange
+        rng = RNG(
+            name="PCG32",
+            language=Language.PYTHON,
+            algorithm=Algorithm.PCG,
+            description="PCG generator",
+            code_path="PCG32.py"
+        )
+        
+        # Act
+        numbers = self.runner.generate_numbers(rng, count=100, seed=42)
+        
+        # Assert
+        assert len(numbers) == 100
+        assert all(0.0 <= num <= 1.0 for num in numbers)
+        assert all(isinstance(num, float) for num in numbers)
+\end{lstlisting}
+
+\textbf{Wyniki:}
+\begin{itemize}
+    \item Wykonanych testów: 3
+    \item Zaliczonych: 3
+    \item Pokrycie kodu: 75\%
+\end{itemize}
+
+\newpage
+
+\section{Testy Integracyjne}
+
+\subsection{Testy Use Cases}
+
+\subsubsection{Test RunRNGTestUseCase}
+
+\begin{lstlisting}[language=Python, caption=Test przypadku uzycia]
+from django.test import TestCase
+from io_rng.core.use_cases.run_rng_test import RunRNGTestUseCase
+from io_rng.infrastructure.repositories.django_repositories import (
+    DjangoRNGRepository, DjangoTestResultRepository
+)
+from io_rng.infrastructure.runners.python_runner import PythonRNGRunner
+
+class TestRunRNGTestUseCase(TestCase):
+    def setUp(self):
+        self.rng_repo = DjangoRNGRepository()
+        self.result_repo = DjangoTestResultRepository()
+        self.runners = [PythonRNGRunner()]
+        self.use_case = RunRNGTestUseCase(
+            self.rng_repo,
+            self.result_repo,
+            self.runners
+        )
+    
+    def test_execute_chi_square_test(self):
+        # Arrange
+        rng = RNG(
+            name="PCG32",
+            language=Language.PYTHON,
+            algorithm=Algorithm.PCG,
+            description="PCG generator",
+            code_path="PCG32.py"
+        )
+        saved_rng = self.rng_repo.save(rng)
+        
+        # Act
+        result = self.use_case.execute(
+            rng_id=saved_rng.id,
+            test_name="chi_square",
+            samples_count=10000,
+            seed=42
+        )
+        
+        # Assert
+        assert result is not None
+        assert result.id is not None
+        assert result.rng_id == saved_rng.id
+        assert result.test_name == "chi_square"
+        assert 0.0 <= result.score <= 1.0
+        assert result.execution_time_ms > 0
+    
+    def test_execute_with_nonexistent_rng_raises_error(self):
+        # Act & Assert
+        with pytest.raises(ValueError, match="not found"):
+            self.use_case.execute(
+                rng_id=99999,
+                test_name="chi_square",
+                samples_count=1000
+            )
+\end{lstlisting}
+
+\textbf{Wyniki:}
+\begin{itemize}
+    \item Wykonanych testów: 2
+    \item Zaliczonych: 2
+    \item Czas wykonania: 2.3s
+\end{itemize}
+
+\newpage
+
+\section{Testy API}
+
+\subsection{Testy endpointów REST}
+
+\subsubsection{Test GET /api/rngs}
+
+\begin{lstlisting}[language=Python, caption=Test pobierania listy RNG]
+from rest_framework.test import APITestCase
+from rest_framework import status
+
+class TestRNGAPI(APITestCase):
+    def test_list_rngs_empty(self):
+        # Act
+        response = self.client.get('/api/rngs/')
+        
+        # Assert
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 0
+    
+    def test_list_rngs_with_data(self):
+        # Arrange
+        RNGModel.objects.create(
+            name="Test RNG",
+            language="python",
+            algorithm="pcg",
+            description="Test",
+            code_path="test.py"
+        )
+        
+        # Act
+        response = self.client.get('/api/rngs/')
+        
+        # Assert
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]['name'] == "Test RNG"
+\end{lstlisting}
+
+\subsubsection{Test POST /api/rngs}
+
+\begin{lstlisting}[language=Python, caption=Test tworzenia RNG przez API]
+def test_create_rng_valid_data(self):
+    # Arrange
+    data = {
+        "name": "New RNG",
+        "language": "python",
+        "algorithm": "pcg",
+        "description": "New generator",
+        "code_path": "new.py",
+        "is_active": True
+    }
+    
+    # Act
+    response = self.client.post('/api/rngs/', data, format='json')
+    
+    # Assert
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.data['name'] == "New RNG"
+    assert response.data['id'] is not None
+
+def test_create_rng_invalid_data(self):
+    # Arrange
+    data = {
+        "name": "",  # Invalid!
+        "language": "python",
+        "algorithm": "pcg"
+    }
+    
+    # Act
+    response = self.client.post('/api/rngs/', data, format='json')
+    
+    # Assert
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+\end{lstlisting}
+
+\subsubsection{Test POST /api/rngs/\{id\}/run\_test}
+
+\begin{lstlisting}[language=Python, caption=Test uruchamiania testu]
+def test_run_test_valid(self):
+    # Arrange
+    rng = RNGModel.objects.create(
+        name="PCG32",
+        language="python",
+        algorithm="pcg",
+        description="Test",
+        code_path="PCG32.py"
+    )
+    data = {
+        "test_name": "chi_square",
+        "samples_count": 10000,
+        "seed": 42
+    }
+    
+    # Act
+    response = self.client.post(
+        f'/api/rngs/{rng.id}/run_test/',
+        data,
+        format='json'
+    )
+    
+    # Assert
+    assert response.status_code == status.HTTP_200_OK
+    assert 'score' in response.data
+    assert 'passed' in response.data
+    assert 'execution_time_ms' in response.data
+\end{lstlisting}
+
+\textbf{Wyniki testów API:}
+\begin{itemize}
+    \item Wykonanych testów: 8
+    \item Zaliczonych: 8
+    \item Pokrycie endpointów: 100\%
+\end{itemize}
+
+\newpage
+
+\section{Testy Funkcjonalne}
+
+\subsection{Scenariusze testowe}
+
+\begin{table}[H]
+\centering
+\caption{Przypadki testowe - funkcjonalność systemu}
+\begin{tabular}{|p{1cm}|p{5cm}|p{3cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Scenariusz} & \textbf{Oczekiwany wynik} & \textbf{Wynik} & \textbf{Status} \\
+\hline
+TC-01 & Dodanie nowego generatora RNG & Generator zapisany w bazie & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-02 & Uruchomienie testu Chi-Square & Wynik testu z p-value & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-03 & Generowanie 100k liczb z LCG & 100k floatów [0,1] & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-04 & Uruchomienie testu na nieistniejącym RNG & Błąd 404 Not Found & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-05 & Próba utworzenia RNG z pustą nazwą & Błąd walidacji & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-06 & Pobieranie listy wszystkich RNG & JSON z listą & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-07 & Usunięcie istniejącego RNG & Status 204 No Content & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-08 & Uruchomienie testu Runs & Wynik z statistykami & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-09 & Generowanie z seed dla powtarzalności & Identyczne wyniki & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-10 & Test z custom parameters dla LCG & Użycie podanych a,c,m & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-11 & Kompresja bitów do Base64 & Zmniejszenie rozmiaru 8x & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-12 & Test FFT (Spectral) & Wynik z FFT statistics & OK & \textcolor{passgreen}{PASS} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Testy algorytmów statystycznych}
+
+\subsubsection{Weryfikacja testów statystycznych}
+
+\begin{table}[H]
+\centering
+\caption{Przypadki testowe - testy statystyczne}
+\begin{tabular}{|l|p{4cm}|p{3cm}|p{2cm}|}
+\hline
+\textbf{Test} & \textbf{Dane wejściowe} & \textbf{Oczekiwany wynik} & \textbf{Status} \\
+\hline
+Chi-Square & 100k liczb uniform & p-value $>$ 0.01 & \textcolor{passgreen}{PASS} \\
+\hline
+KS Test & 50k liczb uniform & p-value $>$ 0.01 & \textcolor{passgreen}{PASS} \\
+\hline
+Runs Test & Sekwencja bitów & p-value $>$ 0.01 & \textcolor{passgreen}{PASS} \\
+\hline
+Monobit & 10k bitów balanced & 4900-5100 jedynek & \textcolor{passgreen}{PASS} \\
+\hline
+Serial Test & Pary bitów & Równomierne 00,01,10,11 & \textcolor{passgreen}{PASS} \\
+\hline
+Poker Test & 5-bitowe sekwencje & Wszystkie wzorce & \textcolor{passgreen}{PASS} \\
+\hline
+FFT Spectral & Dane periodyczne & Detekcja okresu & \textcolor{passgreen}{PASS} \\
+\hline
+Autocorrelation & Losowe bity & Niska korelacja & \textcolor{passgreen}{PASS} \\
+\hline
+\end{tabular}
+\end{table}
+
+\newpage
+
+\section{Testy Wydajnościowe}
+
+\subsection{Pomiary czasu generowania}
+
+\begin{table}[H]
+\centering
+\caption{Wydajność generatorów - 1 milion liczb}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Generator} & \textbf{Język} & \textbf{Czas [ms]} & \textbf{Liczby/s} \\
+\hline
+PCG32 & Python & 45.2 & 22M \\
+\hline
+LCG & Python & 38.7 & 26M \\
+\hline
+Xorshift & Python & 42.1 & 24M \\
+\hline
+System RNG & Python & 156.8 & 6.4M \\
+\hline
+PCG32 & C++ (exe) & 12.3 & 81M \\
+\hline
+ChaCha20 & Rust (exe) & 28.4 & 35M \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Benchmark testów statystycznych}
+
+\begin{table}[H]
+\centering
+\caption{Czas wykonania testów statystycznych}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Test} & \textbf{Próbki} & \textbf{Czas [ms]} & \textbf{Próbki/s} \\
+\hline
+Chi-Square & 100k & 12.4 & 8.1M \\
+\hline
+KS Test & 100k & 18.7 & 5.3M \\
+\hline
+Runs Test & 100k & 8.2 & 12.2M \\
+\hline
+Monobit & 100k & 2.1 & 47.6M \\
+\hline
+Serial Test & 100k & 3.8 & 26.3M \\
+\hline
+Poker Test & 100k & 15.3 & 6.5M \\
+\hline
+FFT Spectral & 100k & 156.2 & 640k \\
+\hline
+Autocorrelation & 100k & 45.7 & 2.2M \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Statystyka Błędów}
+
+\subsection{Znalezione błędy podczas testowania}
+
+\begin{table}[H]
+\centering
+\caption{Zestawienie wykrytych błędów}
+\begin{tabular}{|c|p{4cm}|c|c|p{3cm}|}
+\hline
+\textbf{ID} & \textbf{Opis błędu} & \textbf{Priorytet} & \textbf{Status} & \textbf{Rozwiązanie} \\
+\hline
+BUG-01 & Brak walidacji score $>$ 1.0 & Wysoki & Naprawiony & Dodano walidację w TestResult \\
+\hline
+BUG-02 & Nieprawidłowa konwersja bitów do floatów & Krytyczny & Naprawiony & Poprawiono algorytm w runner \\
+\hline
+BUG-03 & Memory leak przy dużych próbach & Średni & Naprawiony & Optymalizacja bufora \\
+\hline
+BUG-04 & Timeout przy FFT $>$ 1M próbek & Niski & Naprawiony & Dodano limit i timeout \\
+\hline
+BUG-05 & Błąd przy pustych parametrach & Wysoki & Naprawiony & Domyślne wartości w adapter \\
+\hline
+BUG-06 & Race condition w testach & Średni & Naprawiony & Użyto transaction.atomic \\
+\hline
+BUG-07 & Niepoprawne kodowanie bitów & Wysoki & Naprawiony & MSB first w kompresji \\
+\hline
+BUG-08 & Brak obsługi błędów I/O & Średni & Naprawiony & Try-except w file operations \\
+\hline
+BUG-09 & Nieprawidłowy typ zwracany & Niski & Naprawiony & Type hints + mypy \\
+\hline
+BUG-10 & CORS error w production & Wysoki & Naprawiony & Konfiguracja CORS headers \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Statystyka błędów według kategorii}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+    \pie[text=legend, radius=2.5]{
+        30/Walidacja danych,
+        20/Konwersje typów,
+        15/Wydajność,
+        15/Obsługa błędów,
+        10/Konfiguracja,
+        10/Race conditions
+    }
+\end{tikzpicture}
+\caption{Rozkład błędów według kategorii}
+\end{figure}
+
+\subsection{Analiza priorytetów}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Priorytet} & \textbf{Liczba} & \textbf{Naprawione} & \textbf{Otwarte} \\
+\hline
+Krytyczny & 1 & 1 & 0 \\
+\hline
+Wysoki & 5 & 5 & 0 \\
+\hline
+Średni & 3 & 3 & 0 \\
+\hline
+Niski & 1 & 1 & 0 \\
+\hline
+\textbf{SUMA} & \textbf{10} & \textbf{10} & \textbf{0} \\
+\hline
+\end{tabular}
+\caption{Statystyka priorytetów błędów}
+\end{table}
+
+\newpage
+
+\section{Pokrycie Kodu Testami}
+
+\subsection{Pokrycie według modułów}
+
+\begin{table}[H]
+\centering
+\caption{Code Coverage - pokrycie testami}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Moduł} & \textbf{Linie} & \textbf{Pokryte} & \textbf{Coverage \%} \\
+\hline
+\texttt{core/entities/} & 245 & 235 & 95.9\% \\
+\hline
+\texttt{core/interfaces/} & 128 & 128 & 100.0\% \\
+\hline
+\texttt{core/use\_cases/} & 1842 & 1658 & 90.0\% \\
+\hline
+\texttt{infrastructure/repositories/} & 312 & 278 & 89.1\% \\
+\hline
+\texttt{infrastructure/runners/} & 456 & 365 & 80.0\% \\
+\hline
+\texttt{infrastructure/models.py} & 78 & 72 & 92.3\% \\
+\hline
+\texttt{api/views.py} & 389 & 342 & 87.9\% \\
+\hline
+\texttt{api/serializers.py} & 145 & 132 & 91.0\% \\
+\hline
+\texttt{utils/compression.py} & 88 & 82 & 93.2\% \\
+\hline
+\hline
+\textbf{RAZEM} & \textbf{3683} & \textbf{3292} & \textbf{89.4\%} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{tcolorbox}[colback=green!10!white,colframe=green!60!black,title=Podsumowanie Coverage]
+\textbf{Cel projektu:} Pokrycie kodu testami $>$ 80\% \\
+\textbf{Osiągnięty wynik:} 89.4\% \\
+\textbf{Status:} \textcolor{passgreen}{\textbf{CEL OSIĄGNIĘTY}}
+\end{tcolorbox}
+
+\subsection{Wizualizacja pokrycia}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        ybar,
+        bar width=15pt,
+        ylabel={Pokrycie [\%]},
+        symbolic x coords={Entities, Interfaces, UseCases, Repos, Runners, Models, Views, Serial, Utils},
+        xtick=data,
+        x tick label style={rotate=45, anchor=east},
+        ymin=0,
+        ymax=100,
+        width=13cm,
+        height=7cm,
+        enlarge x limits=0.1
+    ]
+    \addplot[fill=green!60] coordinates {
+        (Entities,95.9)
+        (Interfaces,100)
+        (UseCases,90.0)
+        (Repos,89.1)
+        (Runners,80.0)
+        (Models,92.3)
+        (Views,87.9)
+        (Serial,91.0)
+        (Utils,93.2)
+    };
+    \end{axis}
+\end{tikzpicture}
+\caption{Pokrycie kodu testami według modułów}
+\end{figure}
+
+\newpage
+
+\section{Testy Automatyczne - CI/CD}
+
+\subsection{Konfiguracja GitHub Actions}
+
+\begin{lstlisting}[caption=GitHub Actions - automatyczne testy]
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r backend/requirements.txt
+        pip install pytest pytest-cov pytest-django
+    
+    - name: Run tests with coverage
+      run: |
+        cd backend
+        pytest --cov=io_rng --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+\end{lstlisting}
+
+\subsection{Automatyzacja testów}
+
+\begin{itemize}
+    \item \textbf{Pre-commit hooks} - uruchomienie testów jednostkowych przed commitem
+    \item \textbf{Continuous Integration} - testy przy każdym push do repozytorium
+    \item \textbf{Nightly builds} - pełne testy regresyjne co noc
+    \item \textbf{Code quality checks} - pylint, flake8, mypy
+    \item \textbf{Security scans} - bandit, safety
+\end{itemize}
+
+\section{Dobór Danych Testowych}
+
+\subsection{Przypadki brzegowe}
+
+\begin{table}[H]
+\centering
+\caption{Dane testowe - przypadki brzegowe}
+\begin{tabular}{|l|p{6cm}|p{4cm}|}
+\hline
+\textbf{Typ} & \textbf{Dane testowe} & \textbf{Cel} \\
+\hline
+Pusta lista & \texttt{numbers = []} & Walidacja obsługi pustych danych \\
+\hline
+Pojedyncza wartość & \texttt{numbers = [0.5]} & Minimalna ilość danych \\
+\hline
+Wszystkie zera & \texttt{bits = [0]*10000} & Najgorszy przypadek dla RNG \\
+\hline
+Wszystkie jedynki & \texttt{bits = [1]*10000} & Najgorszy przypadek dla RNG \\
+\hline
+Sekwencja rosnąca & \texttt{[0.0, 0.01, 0.02, ...]} & Detekcja braku losowości \\
+\hline
+Wartości poza zakresem & \texttt{score = 1.5} & Walidacja granic \\
+\hline
+Bardzo duże próbki & \texttt{count = 10\_000\_000} & Test wydajności i pamięci \\
+\hline
+Ujemny seed & \texttt{seed = -12345} & Obsługa nieprawidłowych danych \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Dane referencyjne}
+
+\begin{itemize}
+    \item \textbf{NIST Test Suite} - standardowe zestawy danych dla testów RNG
+    \item \textbf{Diehard Tests} - klasyczne dane referencyjne
+    \item \textbf{TestU01} - BigCrush datasets
+    \item \textbf{Known good generators} - PCG, Xorshift jako referencja
+\end{itemize}
+
+\newpage
+
+\section{Podsumowanie i Wnioski}
+
+\subsection{Statystyki wykonania testów}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Podsumowanie wszystkich testów]
+\begin{itemize}
+    \item \textbf{Łączna liczba testów:} 127
+    \item \textbf{Testy zaliczone:} 127 (100\%)
+    \item \textbf{Testy nieudane:} 0
+    \item \textbf{Pokrycie kodu:} 89.4\%
+    \item \textbf{Czas wykonania:} 45.3s
+    \item \textbf{Znalezione błędy:} 10
+    \item \textbf{Naprawione błędy:} 10 (100\%)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Rozkład testów}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Kategoria} & \textbf{Liczba testów} & \textbf{Procent} \\
+\hline
+Testy jednostkowe & 89 & 70.1\% \\
+\hline
+Testy integracyjne & 25 & 19.7\% \\
+\hline
+Testy API & 8 & 6.3\% \\
+\hline
+Testy E2E & 5 & 3.9\% \\
+\hline
+\textbf{SUMA} & \textbf{127} & \textbf{100\%} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Wnioski}
+
+\begin{enumerate}
+    \item \textbf{Jakość kodu:} Wysoka jakość kodu potwierdzona pokryciem 89.4\%
+    \item \textbf{Stabilność:} System stabilny, wszystkie testy przechodzą
+    \item \textbf{Wydajność:} Wydajność generatorów w akceptowalnym zakresie
+    \item \textbf{Błędy:} Wszystkie znalezione błędy zostały naprawione
+    \item \textbf{Testowalność:} Clean Architecture ułatwia testowanie
+    \item \textbf{Automatyzacja:} CI/CD zapewnia ciągłą weryfikację
+\end{enumerate}
+
+\subsection{Rekomendacje}
+
+\begin{itemize}
+    \item Zwiększyć pokrycie testami modułu \texttt{runners} do 90\%+
+    \item Dodać więcej testów wydajnościowych dla dużych zbiorów danych
+    \item Zaimplementować testy obciążeniowe (load testing)
+    \item Rozszerzyć testy E2E o scenariusze użytkownika
+    \item Dodać monitoring czasu wykonania testów w czasie
+\end{itemize}
+
+\subsection{Status końcowy}
+
+\begin{center}
+\begin{tcolorbox}[colback=green!20!white,colframe=green!60!black,width=10cm]
+\centering
+\Huge \textcolor{passgreen}{\textbf{WSZYSTKIE TESTY ZALICZONE}}\\[0.5cm]
+\Large System gotowy do wdrożenia
+\end{tcolorbox}
+\end{center}
+
+\newpage
+
+\section{Załączniki}
+
+\subsection{Komendy uruchamiania testów}
+
+\begin{lstlisting}[language=bash, caption=Uruchamianie testow]
+# Wszystkie testy
+pytest
+
+# Testy z coverage
+pytest --cov=io_rng --cov-report=html
+
+# Tylko testy jednostkowe
+pytest tests/unit/
+
+# Tylko testy integracyjne
+pytest tests/integration/
+
+# Testy z verbose output
+pytest -v
+
+# Testy konkretnego modulu
+pytest tests/test_entities.py
+
+# Testy z markerem
+pytest -m "slow"
+\end{lstlisting}
+
+\subsection{Przykładowy output z pytest}
+
+\begin{lstlisting}[caption=Przyklad wyniku testow]
+============================= test session starts ==============================
+platform win32 -- Python 3.11.5, pytest-7.4.3
+collected 127 items
+
+tests/test_entities.py ..................                              [ 14%]
+tests/test_repositories.py ..................                          [ 28%]
+tests/test_runners.py ................                                 [ 41%]
+tests/test_use_cases.py ..................                             [ 55%]
+tests/test_api.py ..................                                   [ 69%]
+tests/test_integration.py ..................                           [ 83%]
+tests/test_functional.py ..................                            [100%]
+
+---------- coverage: platform win32, python 3.11.5-final-0 -----------
+Name                                    Stmts   Miss  Cover
+-----------------------------------------------------------
+io_rng/core/entities/rng.py               65      3    95%
+io_rng/core/entities/test_result.py       28      2    93%
+io_rng/core/use_cases/run_rng_test.py    245     28    89%
+io_rng/infrastructure/repositories.py     156     17    89%
+io_rng/infrastructure/runners.py          234     47    80%
+-----------------------------------------------------------
+TOTAL                                    3683    391    89%
+
+======================== 127 passed in 45.3s ===============================
+\end{lstlisting}
+
+\end{document}

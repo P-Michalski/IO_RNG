@@ -1,6 +1,3 @@
-# Diehard DNA Test
-
-## Description
 The DNA test treats bits as a DNA sequence with a 4-letter alphabet (A, C, G, T). Each letter is encoded by 2 bits: 00=A, 01=C, 10=G, 11=T. The test analyzes overlapping 10-letter DNA "words" and checks sparse occupancy.
 
 ## How it works

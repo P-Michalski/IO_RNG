@@ -1,6 +1,3 @@
-# Diehard Overlapping Permutations Test
-
-## Opis
 Test Overlapping Permutations analizuje częstości permutacji 5 kolejnych wartości w nakładających się oknach. Dla 5 wartości istnieje 5! = 120 możliwych permutacji. Test sprawdza, czy rozkład permutacji jest równomierny.
 
 ## Jak działa

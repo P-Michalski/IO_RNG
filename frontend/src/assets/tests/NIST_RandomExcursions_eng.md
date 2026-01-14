@@ -1,6 +1,3 @@
-# NIST Random Excursions Test
-
-## Description
 The test analyzes the number of cycles in a "random walk" created from the sequence. It checks whether the number of visits to each state of the random walk is correct.
 
 ## How it works

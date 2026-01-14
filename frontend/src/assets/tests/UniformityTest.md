@@ -1,6 +1,3 @@
-# Uniformity Test
-
-## Opis
 Test równomierności sprawdza, czy średnia i wariancja wygenerowanych liczb odpowiadają teoretycznym wartościom dla rozkładu jednostajnego U(0,1).
 
 ## Jak działa

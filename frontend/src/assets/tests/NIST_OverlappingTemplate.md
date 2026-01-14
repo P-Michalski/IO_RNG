@@ -1,6 +1,3 @@
-# NIST Overlapping Template Matching Test
-
-## Opis
 Podobny do poprzedniego testu, ale wystąpienia wzorca mogą się nakładać. Używa specyficznego wzorca 111111111 (9 jedynek).
 
 ## Jak działa

@@ -1,6 +1,3 @@
-# Diehard Minimum Distance Test
-
-## Description
 The Minimum Distance test randomly places points in 2D space ([0,1]×[0,1]) and calculates the minimum distance between each point and its nearest neighbor. The minimum distance distribution should match theoretical distribution dependent on point density.
 
 ## How it works

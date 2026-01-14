@@ -1,6 +1,3 @@
-# NIST Block Frequency Test
-
-## Opis
 Test sprawdza, czy proporcja jedynek w poszczególnych blokach (podciągach) jest bliska 0.5. Jest to bardziej lokalna wersja testu Monobit.
 
 ## Jak działa

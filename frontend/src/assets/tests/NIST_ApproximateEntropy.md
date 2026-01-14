@@ -1,6 +1,3 @@
-# NIST Approximate Entropy Test
-
-## Opis
 Test entropii aproksymacyjnej mierzy częstotliwość wszystkich możliwych nakładających się wzorców (patternów) długości m w sekwencji. Wykrywa, czy sekwencja jest zbyt regularna lub przewidywalna.
 
 ## Jak działa

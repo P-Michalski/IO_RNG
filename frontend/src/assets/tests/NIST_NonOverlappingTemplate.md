@@ -1,6 +1,3 @@
-# NIST Non-Overlapping Template Matching Test
-
-## Opis
 Test szuka określonego wzorca (template) w sekwencji, gdzie wystąpienia nie nakładają się na siebie. Sprawdza czy liczba wystąpień jest zgodna z oczekiwaniami dla losowej sekwencji.
 
 ## Jak działa

@@ -1,6 +1,3 @@
-# NIST Serial Test
-
-## Opis
 Test sprawdza częstość wszystkich możliwych nakładających się m-bitowych wzorców. Jest rozszerzeniem testu Approximate Entropy, oblicza dwie statystyki testowe.
 
 ## Jak działa

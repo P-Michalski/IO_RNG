@@ -1,6 +1,3 @@
-# NIST Serial Test
-
-## Description
 The test checks the frequency of all possible overlapping m-bit patterns. It is an extension of the Approximate Entropy test, calculating two test statistics.
 
 ## How it works

@@ -1,6 +1,3 @@
-# Frequency Test (Chi-square)
-
-## Opis
 Test częstości Chi-kwadrat sprawdza, czy wygenerowane liczby są równomiernie rozłożone w zadanych przedziałach (binach). Jest to podstawowy test równomierności rozkładu.
 
 ## Jak działa

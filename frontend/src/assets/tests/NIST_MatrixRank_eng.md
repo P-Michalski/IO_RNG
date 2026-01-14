@@ -1,6 +1,3 @@
-# NIST Binary Matrix Rank Test
-
-## Description
 The test analyzes the rank of binary matrices created from a bit sequence. It checks whether the matrix rank corresponds to what's expected for random data. Low rank indicates linear dependencies between bits.
 
 ## How it works

@@ -1,6 +1,3 @@
-# Diehard Overlapping Sums Test
-
-## Opis
 Test Overlapping Sums konwertuje bity na liczby zmiennoprzecinkowe [0,1] i oblicza sumy nakładających się okien. Rozkład sum powinien być normalny zgodnie z centralnym twierdzeniem granicznym. Test sprawdza średnią i odchylenie standardowe sum.
 
 ## Jak działa

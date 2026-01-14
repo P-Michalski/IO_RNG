@@ -1,6 +1,3 @@
-# Diehard Binary Rank Test
-
-## Description
 The Binary Rank test checks the rank of 32x32 binary matrices created from bits. For truly random bits, the rank distribution should be characteristic - most matrices should have full rank (32) or rank 31.
 
 ## How it works

@@ -1,6 +1,3 @@
-# Diehard Squeeze Test
-
-## Opis
 Test Squeeze kompresuje losowe 32-bitowe integery poprzez iteracyjne mnożenie przez losowe liczby zmiennoprzecinkowe [0,1] aż wynik będzie < 1. Zlicza liczbę iteracji (mnożeń) potrzebnych do "ściśnięcia" wartości poniżej 1. Rozkład liczby iteracji powinien być charakterystyczny.
 
 ## Jak działa

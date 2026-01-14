@@ -1,6 +1,3 @@
-# Diehard OPSO Test
-
-## Opis
 Test OPSO (Overlapping-Pairs-Sparse-Occupancy) sprawdza jak często 10-bitowe "słowa" pojawiają się dokładnie 1 raz w strumieniu. Zlicza "sparse occupancy" - słowa występujące pojedynczo, co jest charakterystyczne dla prawdziwie losowego źródła.
 
 ## Jak działa
