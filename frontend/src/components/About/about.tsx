@@ -156,11 +156,10 @@ export const About = () => {
           <p className="text-muted-foreground leading-relaxed">
             IO_RNG is a comprehensive platform for testing and analyzing
             pseudorandom number generators (PRNGs). The project implements{" "}
-            <strong>11 different algorithms</strong> including classical
+            <strong>10 different algorithms</strong> including classical
             generators (LCG, Park-Miller, AWCG), modern fast PRNGs (PCG32,
-            SplitMix64, Xorshift, Xoshiro256**), cryptographically secure
-            generators (Blum Blum Shub, ChaCha20), and system RNGs (Python's
-            built-in, OS RNG).
+            SplitMix64, Xoshiro256**), cryptographically secure generators (Blum
+            Blum Shub, ChaCha20), and system RNGs (Python's built-in, OS RNG).
           </p>
 
           <div
@@ -182,9 +181,9 @@ export const About = () => {
                     Monobit, Runs, Matrix Rank, FFT, Overlapping/Non-Overlapping
                     Templates, Universal Statistical, Linear Complexity, Serial,
                     Approximate Entropy, Cumulative Sums, and Random
-                    Excursions), <strong>5 Diehard Battery tests</strong>{" "}
-                    (Birthday Spacings, Overlapping Permutations, Binary Rank,
-                    Bitstream, OPSO), and{" "}
+                    Excursions), <strong>15 Diehard Battery tests</strong>{" "}
+                    (including Birthday Spacings, Overlapping Permutations,
+                    Binary Rank, Bitstream, OPSO), and{" "}
                     <strong>2 basic statistical tests</strong> (Chi-square
                     Frequency Test, Uniformity Test).
                   </p>
@@ -227,7 +226,7 @@ export const About = () => {
                     </li>
                     <li>
                       <strong>Comprehensive Wiki</strong> - Detailed
-                      documentation for all 11 implemented algorithms and 22
+                      documentation for all 10 implemented algorithms and 32
                       statistical tests, available in both Polish and English
                     </li>
                   </ul>

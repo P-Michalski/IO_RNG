@@ -37,6 +37,7 @@ class TestResultModel(models.Model):
     samples_count = models.IntegerField()
     statistics = models.JSONField()
     error_message = models.TextField(null=True, blank=True)
+    test_parameters = models.JSONField(null=True, blank=True) 
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

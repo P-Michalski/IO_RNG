@@ -28,8 +28,13 @@ import {
 import { extractBitsFromResponse } from "@/utils/compression";
 import { GeneratorForm } from "../generator-form";
 import { useGenerator } from "@/hooks/use-generator";
+import { type RNG } from "@/types/test-results";
 
-export const BitGenerator = () => {
+interface BitGeneratorProps {
+  rngs: RNG[];
+}
+
+export const BitGenerator = ({ rngs }: BitGeneratorProps) => {
   const [n, setN] = useState(1000);
   const [result, setResult] = useState<{
     bits: number[];
@@ -105,6 +110,7 @@ export const BitGenerator = () => {
         loading={generator.loading}
         onGenerate={handleGenerate}
         buttonText="Generate Bits"
+        rngs={rngs}
         customInputs={
           <div className="space-y-2">
             <Label htmlFor="n">Number of bits (N)</Label>

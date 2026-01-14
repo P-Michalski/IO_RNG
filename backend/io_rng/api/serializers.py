@@ -27,12 +27,22 @@ TEST_CHOICES = [
     'nist_serial',
     'nist_random_excursions',
     'nist_random_excursions_variant',
-    # Diehard Suite (5 podstawowych testów)
+    # Diehard Suite
     'diehard_birthday_spacings',
     'diehard_overlapping_permutations',
     'diehard_binary_rank',
     'diehard_bitstream',
-    'diehard_opso'
+    'diehard_opso',
+    'diehard_oqso',
+    'diehard_dna',
+    'diehard_count_1s',
+    'diehard_parking_lot',
+    'diehard_squeeze',
+    'diehard_runs',
+    'diehard_craps',
+    'diehard_minimum_distance',
+    'diehard_3dspheres',
+    'diehard_overlapping_sums'
 ]
 
 
@@ -73,6 +83,7 @@ class TestResultSerializer(serializers.Serializer):
     samples_count = serializers.IntegerField()
     statistics = serializers.JSONField()
     error_message = serializers.CharField(required=False, allow_null=True)
+    test_parameters = serializers.JSONField(required=False, allow_null=True) 
     # Pola kompresji base64 (opcjonalne, użyj z ?compressed=true)
     bits_compressed = serializers.CharField(
         required=False,

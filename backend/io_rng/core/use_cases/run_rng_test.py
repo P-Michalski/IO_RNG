@@ -128,7 +128,8 @@ class RunRNGTestUseCase:
             score=test_result['score'],
             execution_time_ms=execution_time,
             samples_count=samples_count,
-            statistics=test_result['statistics']
+            statistics=test_result['statistics'],
+            test_parameters=parameters
         )
 
         # 6. Zapisz wynik
@@ -2016,7 +2017,7 @@ class RunRNGTestUseCase:
 
             # Policz unikalne słowa
             unique_words, counts = np.unique(words, return_counts=True)
-            word_counts = dict(zip(unique_words, counts))
+            word_counts = dict(zip(unique_words.tolist(), counts.tolist()))
         else:
             # Fallback: oryginalna implementacja
             word_counts = {}
@@ -2036,8 +2037,8 @@ class RunRNGTestUseCase:
                 'statistics': {'error': 'No words found'}
             }
 
-        max_count = max(word_counts.values())
-        min_count = min(word_counts.values())
+        max_count = int(max(word_counts.values()))
+        min_count = int(min(word_counts.values()))
 
         # Oczekiwana częstość dla każdego słowa (równomierne)
         num_possible_words = 2 ** word_length

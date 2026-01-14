@@ -28,6 +28,7 @@ class TestResult:
     statistics: Dict[str, Any]
     id: Optional[int] = None
     error_message: Optional[str] = None
+    test_parameters: Optional[Dict[str, Any]] = None
     created_at: Optional[datetime] = None
 
     def __post_init__(self):

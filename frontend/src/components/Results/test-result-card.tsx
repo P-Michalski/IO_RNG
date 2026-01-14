@@ -335,7 +335,7 @@ export const TestResultCard = ({
               Object.keys(result.test_parameters).length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold mb-3">
-                    Test Parameters
+                    Algorithm Parameters
                   </h3>
                   <div className="rounded-lg border p-4 space-y-2">
                     {Object.entries(result.test_parameters).map(

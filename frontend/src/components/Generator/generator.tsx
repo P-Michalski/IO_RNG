@@ -5,14 +5,18 @@ import { Loading } from "../Loading/loading";
 import { Error as ErrorComponent } from "../Error/error";
 import { BitGenerator } from "./BitGenerator/bit-generator";
 import { NumberGenerator } from "./NumberGenerator/number-generator";
+import { type RNG } from "@/types/test-results";
+import { toast } from "sonner";
 
 export const Generator = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rngs, setRngs] = useState<RNG[]>([]);
 
   useEffect(() => {
-    const checkBackendConnection = async () => {
+    const fetchData = async () => {
       try {
+        // Check backend connection
         const response = await fetch("http://localhost:8000/api/rngs", {
           method: "GET",
         });
@@ -20,16 +24,22 @@ export const Generator = () => {
         if (!response.ok) {
           throw new Error("Backend API is not responding");
         }
+
+        const data = await response.json();
+        setRngs(data.filter((rng: RNG) => rng.is_active));
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to connect to backend"
-        );
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to connect to backend";
+        setError(errorMessage);
+        toast.error("Backend Connection Error", {
+          description: errorMessage,
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    checkBackendConnection();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -75,11 +85,11 @@ export const Generator = () => {
         </TabsList>
 
         <TabsContent value="bits" className="mt-6">
-          <BitGenerator />
+          <BitGenerator rngs={rngs} />
         </TabsContent>
 
         <TabsContent value="numbers" className="mt-6">
-          <NumberGenerator />
+          <NumberGenerator rngs={rngs} />
         </TabsContent>
       </Tabs>
     </div>

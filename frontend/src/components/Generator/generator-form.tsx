@@ -18,21 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { type RNG } from "@/types/test-results";
 
 const ALGORITHM_PARAMS = {
-  1: {
-    name: "AWCG",
-    params: {
-      seed: 123456789,
-      r: 24,
-      s: 10,
-      base: 4294967296,
-    },
-    defaults: {
-      bits_per_value: 32,
-      msb_first: 1,
-    },
-  },
   2: {
     name: "SplitMix64",
     params: { seed: 123456789 },
@@ -86,19 +74,6 @@ const ALGORITHM_PARAMS = {
       msb_first: 1,
     },
   },
-  10: {
-    name: "LCG with GLIBC parameters",
-    params: {
-      seed: 123456789,
-      a: 1103515245,
-      c: 12345,
-      m: 2147483648,
-    },
-    defaults: {
-      bits_per_value: 31,
-      msb_first: 1,
-    },
-  },
   11: {
     name: "AWCG (r=24, s=10)",
     params: {
@@ -117,6 +92,22 @@ const ALGORITHM_PARAMS = {
     params: { seed: 12345, p: 383, q: 503 },
     defaults: {
       bits_per_value: 1,
+      msb_first: 1,
+    },
+  },
+  23: {
+    name: "ChaCha20 (Rust)",
+    params: {},
+    defaults: {
+      bits_per_value: 32,
+      msb_first: 1,
+    },
+  },
+  24: {
+    name: "Xoshiro256** (C#/.NET)",
+    params: {},
+    defaults: {
+      bits_per_value: 32,
       msb_first: 1,
     },
   },
@@ -140,6 +131,7 @@ interface GeneratorFormProps {
   onGenerate: () => void;
   customInputs?: ReactNode;
   buttonText?: string;
+  rngs: RNG[];
 }
 
 export const GeneratorForm = ({
@@ -157,6 +149,7 @@ export const GeneratorForm = ({
   onGenerate,
   customInputs,
   buttonText = "Generate",
+  rngs,
 }: GeneratorFormProps) => {
   return (
     <Card>
@@ -172,12 +165,19 @@ export const GeneratorForm = ({
             onValueChange={onAlgorithmChange}
           >
             <SelectTrigger id="algorithm">
-              <SelectValue />
+              <SelectValue>
+                {rngs.find((rng) => rng.id === selectedAlgo)?.name}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(ALGORITHM_PARAMS).map(([id, { name }]) => (
-                <SelectItem key={id} value={id}>
-                  {name}
+              {rngs.map((rng) => (
+                <SelectItem key={rng.id} value={rng.id.toString()}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{rng.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {rng.description}
+                    </span>
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>

@@ -17,6 +17,7 @@ interface Test {
 }
 
 const tests: Test[] = [
+  // Basic Tests
   {
     id: "frequency-test",
     name: "Frequency Test",
@@ -27,6 +28,7 @@ const tests: Test[] = [
     name: "Uniformity Test",
     file: "UniformityTest",
   },
+  // NIST Tests
   {
     id: "nist-monobit",
     name: "NIST Monobit Test",
@@ -116,6 +118,97 @@ const tests: Test[] = [
     name: "NIST Linear Complexity Test",
     shortName: "Linear Complexity",
     file: "NIST_LinearComplexity",
+  },
+  // Diehard Tests
+  {
+    id: "diehard-birthday-spacings",
+    name: "Diehard Birthday Spacings Test",
+    shortName: "Birthday Spacings",
+    file: "Diehard_BirthdaySpacings",
+  },
+  {
+    id: "diehard-overlapping-permutations",
+    name: "Diehard Overlapping Permutations Test",
+    shortName: "Overlapping Permutations",
+    file: "Diehard_OverlappingPermutations",
+  },
+  {
+    id: "diehard-binary-rank",
+    name: "Diehard Binary Rank Test",
+    shortName: "Binary Rank",
+    file: "Diehard_BinaryRank",
+  },
+  {
+    id: "diehard-bitstream",
+    name: "Diehard Bitstream Test",
+    shortName: "Bitstream",
+    file: "Diehard_Bitstream",
+  },
+  {
+    id: "diehard-opso",
+    name: "Diehard OPSO Test",
+    shortName: "OPSO",
+    file: "Diehard_OPSO",
+  },
+  {
+    id: "diehard-oqso",
+    name: "Diehard OQSO Test",
+    shortName: "OQSO",
+    file: "Diehard_OQSO",
+  },
+  {
+    id: "diehard-dna",
+    name: "Diehard DNA Test",
+    shortName: "DNA",
+    file: "Diehard_DNA",
+  },
+  {
+    id: "diehard-count-1s",
+    name: "Diehard Count the 1s Test",
+    shortName: "Count the 1s",
+    file: "Diehard_Count1s",
+  },
+  {
+    id: "diehard-parking-lot",
+    name: "Diehard Parking Lot Test",
+    shortName: "Parking Lot",
+    file: "Diehard_ParkingLot",
+  },
+  {
+    id: "diehard-minimum-distance",
+    name: "Diehard Minimum Distance Test",
+    shortName: "Minimum Distance",
+    file: "Diehard_MinimumDistance",
+  },
+  {
+    id: "diehard-3d-spheres",
+    name: "Diehard 3D Spheres Test",
+    shortName: "3D Spheres",
+    file: "Diehard_3DSpheres",
+  },
+  {
+    id: "diehard-squeeze",
+    name: "Diehard Squeeze Test",
+    shortName: "Squeeze",
+    file: "Diehard_Squeeze",
+  },
+  {
+    id: "diehard-overlapping-sums",
+    name: "Diehard Overlapping Sums Test",
+    shortName: "Overlapping Sums",
+    file: "Diehard_OverlappingSums",
+  },
+  {
+    id: "diehard-runs",
+    name: "Diehard Runs Test",
+    shortName: "Runs",
+    file: "Diehard_Runs",
+  },
+  {
+    id: "diehard-craps",
+    name: "Diehard Craps Test",
+    shortName: "Craps",
+    file: "Diehard_Craps",
   },
 ];
 

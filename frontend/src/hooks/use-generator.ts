@@ -4,7 +4,7 @@ import {
   type AlgorithmId,
 } from "@/components/Generator/generator-form";
 
-export const useGenerator = (initialAlgoId: AlgorithmId = 1) => {
+export const useGenerator = (initialAlgoId: AlgorithmId = 24) => {
   const [selectedAlgo, setSelectedAlgo] = useState<AlgorithmId>(initialAlgoId);
   const [params, setParams] = useState<Record<string, any>>(
     ALGORITHM_PARAMS[initialAlgoId].params

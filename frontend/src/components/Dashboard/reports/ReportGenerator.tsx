@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,9 +36,6 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
     "idle" | "preparing" | "charts" | "generating" | "success" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
-
-  // Refs for chart elements - will be populated from parent component
-  const chartRefs = useRef<Record<string, HTMLElement>>({});
 
   const handleGenerateReport = async () => {
     try {

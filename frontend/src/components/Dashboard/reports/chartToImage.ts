@@ -3,6 +3,7 @@
  * This is used to embed charts in PDF reports
  */
 
+// @ts-expect-error
 import domtoimage from "dom-to-image-more";
 
 export interface ChartExportOptions {

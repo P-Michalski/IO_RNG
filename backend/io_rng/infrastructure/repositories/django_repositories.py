@@ -111,7 +111,8 @@ class DjangoTestResultRepository(ITestResultRepository):
             execution_time_ms=result.execution_time_ms,
             samples_count=result.samples_count,
             statistics=result.statistics,
-            error_message=result.error_message
+            error_message=result.error_message,
+            test_parameters=result.test_parameters,
         )
         model.save()
 
@@ -163,5 +164,6 @@ class DjangoTestResultRepository(ITestResultRepository):
             samples_count=model.samples_count,
             statistics=model.statistics,
             error_message=model.error_message,
+            test_parameters=model.test_parameters,
             created_at=model.created_at
         )

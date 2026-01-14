@@ -39,6 +39,7 @@ import { GeneratorForm } from "../generator-form";
 import { useGenerator } from "@/hooks/use-generator";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { type RNG } from "@/types/test-results";
 
 interface NumberBlock {
   value: number;
@@ -46,7 +47,11 @@ interface NumberBlock {
   color: string;
 }
 
-export const NumberGenerator = () => {
+interface NumberGeneratorProps {
+  rngs: RNG[];
+}
+
+export const NumberGenerator = ({ rngs }: NumberGeneratorProps) => {
   const [count, setCount] = useState(100);
   const [minValue, setMinValue] = useState(0);
   const [maxValue, setMaxValue] = useState(100);
@@ -428,6 +433,7 @@ export const NumberGenerator = () => {
         loading={generator.loading}
         onGenerate={handleGenerate}
         buttonText="Generate Numbers"
+        rngs={rngs}
         customInputs={
           <>
             <div className="grid grid-cols-3 gap-4">

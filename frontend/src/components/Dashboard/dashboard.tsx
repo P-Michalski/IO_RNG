@@ -3,17 +3,8 @@ import { useTestResults } from "@/contexts/test-results-context";
 import { Loading } from "../Loading/loading";
 import { Error as ErrorComponent } from "../Error/error";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import {
-  Target,
-  AlertCircle,
-  Layers,
-  FileText,
-  Sparkles,
-  Loader2,
-} from "lucide-react";
+import { Target, AlertCircle, Layers, FileText } from "lucide-react";
 import { DailyTestActivity } from "./DailyActivityChart";
 import { PerformanceVsSampleSize } from "./PerformanceVsSampleSize";
 import { AlgorithmPerformanceDialog } from "./AlgorithmPerformanceDialog";

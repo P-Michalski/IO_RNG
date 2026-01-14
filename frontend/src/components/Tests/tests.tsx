@@ -184,6 +184,66 @@ const DIEHARD_TESTS = [
     description: "Tests sparse occupancy of word pairs",
     minSamples: 2_097_152,
   },
+  {
+    id: "diehard_oqso",
+    name: "OQSO (Overlapping-Quadruples-Sparse-Occupancy)",
+    description: "Tests sparse occupancy of word quadruples",
+    minSamples: 2_097_152,
+  },
+  {
+    id: "diehard_dna",
+    name: "DNA Test",
+    description: "Tests DNA sequence patterns",
+    minSamples: 2_097_152,
+  },
+  {
+    id: "diehard_count_1s",
+    name: "Count the 1s",
+    description: "Counts 1s in successive bytes",
+    minSamples: 256_000,
+  },
+  {
+    id: "diehard_parking_lot",
+    name: "Parking Lot Test",
+    description: "Tests random placement in parking lot",
+    minSamples: 384_000,
+  },
+  {
+    id: "diehard_minimum_distance",
+    name: "Minimum Distance Test",
+    description: "Tests minimum distance between random points",
+    minSamples: 200_000,
+  },
+  {
+    id: "diehard_3dspheres",
+    name: "3D Spheres Test",
+    description: "Tests random points on 3D spheres",
+    minSamples: 150_000,
+  },
+  {
+    id: "diehard_squeeze",
+    name: "Squeeze Test",
+    description: "Tests squeezing random numbers",
+    minSamples: 100_000,
+  },
+  {
+    id: "diehard_overlapping_sums",
+    name: "Overlapping Sums Test",
+    description: "Tests sums of overlapping sequences",
+    minSamples: 100_000,
+  },
+  {
+    id: "diehard_runs",
+    name: "Runs Test",
+    description: "Tests runs of ascending/descending sequences",
+    minSamples: 100_000,
+  },
+  {
+    id: "diehard_craps",
+    name: "Craps Test",
+    description: "Simulates craps dice game",
+    minSamples: 200_000,
+  },
 ] as const;
 
 const testFormSchema = z
@@ -203,7 +263,6 @@ const testFormSchema = z
       .number()
       .min(100, "Minimum 100 samples")
       .max(10000000, "Maximum 10M samples"),
-    seed: z.number().int().min(0, "Seed must be positive"),
   })
   .refine(
     (data) => {
@@ -221,24 +280,37 @@ const testFormSchema = z
       path: ["rng_id"],
     }
   )
-  .refine(
-    (data) => {
-      if (data.test_type === "single") {
-        return !!data.single_test;
+  .superRefine((data, ctx) => {
+    if (data.test_type === "single") {
+      if (!data.single_test) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please select a single test",
+          path: ["single_test"],
+        });
       }
-      if (data.test_type === "nist_suite") {
-        return data.nist_tests && data.nist_tests.length > 0;
-      }
-      if (data.test_type === "diehard_suite") {
-        return data.diehard_tests && data.diehard_tests.length > 0;
-      }
-      return false;
-    },
-    {
-      message: "Please select at least one test",
-      path: ["nist_tests"],
     }
-  );
+    if (data.test_type === "nist_suite") {
+      if (!data.nist_tests || data.nist_tests.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please select at least one NIST test",
+          path: ["nist_tests"],
+        });
+      }
+    }
+
+    // Walidacja dla DIEHARD
+    if (data.test_type === "diehard_suite") {
+      if (!data.diehard_tests || data.diehard_tests.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please select at least one Diehard test",
+          path: ["diehard_tests"],
+        });
+      }
+    }
+  });
 
 export const Tests = () => {
   const [rngs, setRngs] = useState<RNG[]>([]);
@@ -279,7 +351,6 @@ export const Tests = () => {
       nist_tests: [],
       diehard_tests: [],
       samples_count: 100000,
-      seed: 42,
       algorithm_params: {},
       advanced_params: {},
       use_defaults: true,
@@ -321,30 +392,57 @@ export const Tests = () => {
   const inputType = form?.watch("input_type");
   const customBits = form?.watch("custom_bits");
   const rngId = form?.watch("rng_id");
+  const singleTest = form?.watch("single_test");
+  const nistTests = form?.watch("nist_tests");
+  const diehardTests = form?.watch("diehard_tests");
 
   const customBitCount = customBits?.replace(/\s/g, "").length || 0;
+
+  // Auto-uncheck Diehard tests when samples/bits fall below minimum
+  useEffect(() => {
+    if (testType === "diehard_suite") {
+      const effectiveBitCount =
+        inputType === "custom_bits" ? customBitCount : samplesCount;
+
+      const currentTests = form.getValues("diehard_tests") || [];
+      const validTests = currentTests.filter((testId) => {
+        const test = DIEHARD_TESTS.find((t) => t.id === testId);
+        return test && effectiveBitCount >= test.minSamples;
+      });
+
+      // Only update if the lists are different
+      if (validTests.length !== currentTests.length) {
+        form.setValue("diehard_tests", validTests);
+      }
+    }
+  }, [testType, samplesCount, customBitCount, inputType, form]);
 
   // Load algorithm parameters when RNG changes
   useEffect(() => {
     if (rngId && inputType === "algorithm") {
       const selectedRng = rngs.find((rng) => rng.id.toString() === rngId);
-      if (selectedRng && selectedRng.id in ALGORITHM_PARAMS) {
-        const algoId = selectedRng.id as AlgorithmId;
-        const algoConfig = ALGORITHM_PARAMS[algoId];
+      const savedRngId = activeSession?.config?.rng_id;
+      const isRngChange = savedRngId !== rngId;
+      if (isRngChange) {
+        if (selectedRng && selectedRng.id in ALGORITHM_PARAMS) {
+          const algoId = selectedRng.id as AlgorithmId;
+          const algoConfig = ALGORITHM_PARAMS[algoId];
 
-        // Always load fresh parameters for the selected algorithm
-        setAlgorithmParams({ ...algoConfig.params });
-        setAdvancedParams({ ...algoConfig.defaults });
-      } else {
-        setAlgorithmParams({});
-        setAdvancedParams({});
+          // Always load fresh parameters for the selected algorithm
+          setAlgorithmParams({ ...algoConfig.params });
+          setAdvancedParams({ ...algoConfig.defaults });
+          setUseDefaults(true);
+        } else {
+          setAlgorithmParams({});
+          setAdvancedParams({});
+        }
       }
     } else if (inputType === "custom_bits") {
       // Clear params when switching to custom bits
       setAlgorithmParams({});
       setAdvancedParams({});
     }
-  }, [rngId, inputType, rngs]);
+  }, [rngId, inputType, rngs, activeSession?.config?.rng_id]);
 
   // Focus edit input when editing starts
   useEffect(() => {
@@ -436,11 +534,10 @@ export const Tests = () => {
     testType,
     samplesCount,
     customBits,
-    form.watch("rng_id"),
-    form.watch("single_test"),
-    form.watch("nist_tests"),
-    form.watch("diehard_tests"),
-    form.watch("seed"),
+    rngId,
+    singleTest,
+    nistTests,
+    diehardTests,
     algorithmParams,
     advancedParams,
     useDefaults,
@@ -513,6 +610,17 @@ export const Tests = () => {
     const session = testSessions.find((s) => s.id === activeTab);
     if (!session) return;
 
+    const valuesWithParams: TestFormValues = {
+      ...values,
+      algorithm_params: algorithmParams,
+      advanced_params: useDefaults
+        ? rngId && (parseInt(rngId) as AlgorithmId) in ALGORITHM_PARAMS
+          ? ALGORITHM_PARAMS[parseInt(rngId) as AlgorithmId].defaults
+          : {}
+        : advancedParams,
+      use_defaults: useDefaults,
+    };
+
     let totalTests = 0;
     if (values.test_type === "single") {
       totalTests = 1;
@@ -531,15 +639,23 @@ export const Tests = () => {
 
     try {
       if (values.test_type === "single" && values.single_test) {
-        await runSingleTest(values, values.single_test, activeTab);
+        await runSingleTest(valuesWithParams, values.single_test, activeTab);
       } else if (values.test_type === "nist_suite" && values.nist_tests) {
         for (let i = 0; i < values.nist_tests.length; i++) {
-          await runSingleTest(values, values.nist_tests[i], activeTab);
+          await runSingleTest(
+            valuesWithParams,
+            values.nist_tests[i],
+            activeTab
+          );
           incrementCurrentTest(activeTab);
         }
       } else if (values.test_type === "diehard_suite" && values.diehard_tests) {
         for (let i = 0; i < values.diehard_tests.length; i++) {
-          await runSingleTest(values, values.diehard_tests[i], activeTab);
+          await runSingleTest(
+            valuesWithParams,
+            values.diehard_tests[i],
+            activeTab
+          );
           incrementCurrentTest(activeTab);
         }
       }
@@ -623,7 +739,7 @@ export const Tests = () => {
               bits_count: bits.length,
               test_name: testName,
             }),
-            signal, // Dodaj signal do fetch
+            signal,
           }
         );
 
@@ -643,7 +759,6 @@ export const Tests = () => {
             body: JSON.stringify({
               test_name: testName,
               samples_count: values.samples_count,
-              seed: values.seed,
               parameters: {
                 ...values.algorithm_params,
                 ...values.advanced_params,
@@ -1214,7 +1329,11 @@ export const Tests = () => {
                         {/* Algorithm Parameters Section */}
                         {inputType === "algorithm" &&
                           rngId &&
-                          Object.keys(algorithmParams).length > 0 && (
+                          rngId in ALGORITHM_PARAMS &&
+                          Object.keys(
+                            ALGORITHM_PARAMS[parseInt(rngId) as AlgorithmId]
+                              .params
+                          ).length > 0 && (
                             <>
                               <Separator />
                               <div className="space-y-3">
@@ -1226,7 +1345,7 @@ export const Tests = () => {
                                         htmlFor={`algo-${key}`}
                                         className="text-sm capitalize"
                                       >
-                                        {key.replace("_", " ")}
+                                        {key.replace(/_/g, " ")}
                                       </FormLabel>
                                       <Input
                                         id={`algo-${key}`}
@@ -1242,62 +1361,63 @@ export const Tests = () => {
                                   )
                                 )}
                               </div>
+                            </>
+                          )}
 
-                              <Separator />
+                        <Separator />
+
+                        {/* Advanced Parameters Section - ZAWSZE dla algorytmów w ALGORITHM_PARAMS */}
+                        {inputType === "algorithm" &&
+                          rngId &&
+                          parseInt(rngId) in ALGORITHM_PARAMS && (
+                            <div className="space-y-3">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="useDefaults"
+                                  checked={useDefaults}
+                                  onCheckedChange={(checked) =>
+                                    setUseDefaults(checked as boolean)
+                                  }
+                                />
+                                <FormLabel
+                                  htmlFor="useDefaults"
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  Use default advanced parameters
+                                </FormLabel>
+                              </div>
 
                               <div className="space-y-3">
-                                <div className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id="useDefaults"
-                                    checked={useDefaults}
-                                    onCheckedChange={(checked) =>
-                                      setUseDefaults(checked as boolean)
-                                    }
-                                  />
-                                  <FormLabel
-                                    htmlFor="useDefaults"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    Use default advanced parameters
-                                  </FormLabel>
-                                </div>
-
-                                <div className="space-y-3">
-                                  <FormLabel>Advanced Parameters</FormLabel>
-                                  {Object.entries(
-                                    useDefaults
-                                      ? rngId &&
-                                        (parseInt(rngId) as AlgorithmId) in
-                                          ALGORITHM_PARAMS
-                                        ? ALGORITHM_PARAMS[
-                                            parseInt(rngId) as AlgorithmId
-                                          ].defaults
-                                        : {}
-                                      : advancedParams
-                                  ).map(([key, value]) => (
-                                    <div key={key} className="space-y-2">
-                                      <FormLabel
-                                        htmlFor={`adv-${key}`}
-                                        className="text-sm capitalize"
-                                      >
-                                        {key.replace("_", " ")}
-                                      </FormLabel>
-                                      <Input
-                                        id={`adv-${key}`}
-                                        value={value}
-                                        onChange={(e) =>
-                                          setAdvancedParams({
-                                            ...advancedParams,
-                                            [key]: e.target.value,
-                                          })
-                                        }
-                                        disabled={useDefaults}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
+                                <FormLabel>Advanced Parameters</FormLabel>
+                                {Object.entries(
+                                  useDefaults
+                                    ? ALGORITHM_PARAMS[
+                                        parseInt(rngId) as AlgorithmId
+                                      ].defaults
+                                    : advancedParams
+                                ).map(([key, value]) => (
+                                  <div key={key} className="space-y-2">
+                                    <FormLabel
+                                      htmlFor={`adv-${key}`}
+                                      className="text-sm capitalize"
+                                    >
+                                      {key.replace(/_/g, " ")}
+                                    </FormLabel>
+                                    <Input
+                                      id={`adv-${key}`}
+                                      value={value}
+                                      onChange={(e) =>
+                                        setAdvancedParams({
+                                          ...advancedParams,
+                                          [key]: e.target.value,
+                                        })
+                                      }
+                                      disabled={useDefaults}
+                                    />
+                                  </div>
+                                ))}
                               </div>
-                            </>
+                            </div>
                           )}
 
                         {/* Custom Bits Input */}
@@ -1678,36 +1798,6 @@ export const Tests = () => {
                                 <FormDescription>
                                   Number of random samples to generate (100 -
                                   10,000,000)
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-
-                        {/* Seed */}
-                        {inputType === "algorithm" && (
-                          <FormField
-                            control={form.control}
-                            name="seed"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Random Seed</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    placeholder="42"
-                                    value={field.value}
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                    onBlur={field.onBlur}
-                                    name={field.name}
-                                    ref={field.ref}
-                                  />
-                                </FormControl>
-                                <FormDescription>
-                                  Initial seed value for reproducible results
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>

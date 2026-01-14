@@ -6,6 +6,7 @@ export interface TestResult {
   duration: number;
   score?: number;
   passed: boolean;
+  test_parameters?: Record<string, any>;
 }
 
 export interface TestFormValues {
@@ -17,7 +18,6 @@ export interface TestFormValues {
   nist_tests?: string[];
   diehard_tests?: string[];
   samples_count: number;
-  seed: number;
   algorithm_params?: Record<string, any>;
   advanced_params?: Record<string, any>;
   use_defaults?: boolean;
@@ -66,7 +66,6 @@ const defaultConfig: TestFormValues = {
   nist_tests: [],
   diehard_tests: [],
   samples_count: 100000,
-  seed: 42,
   algorithm_params: {},
   advanced_params: {},
   use_defaults: true,

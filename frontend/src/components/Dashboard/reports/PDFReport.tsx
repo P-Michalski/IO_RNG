@@ -26,7 +26,6 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
   const primaryColor = data.chartImages?.themeColors?.primary || "#3b82f6";
   const primaryForeground =
     data.chartImages?.themeColors?.primaryForeground || "#ffffff";
-  const mutedColor = data.chartImages?.themeColors?.muted || "#f1f5f9";
   const borderColor = data.chartImages?.themeColors?.border || "#e2e8f0";
 
   return (
@@ -535,7 +534,7 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
                 algorithm
               </Text>
 
-              {data.chartImages.algorithmTrends.map((chart, index) => (
+              {data.chartImages.algorithmTrends.map((chart) => (
                 <View
                   key={chart.id}
                   style={styles.mt3}
@@ -602,7 +601,7 @@ export const PDFReport: React.FC<PDFReportProps> = ({ data }) => {
                 type
               </Text>
 
-              {data.chartImages.testTrends.map((chart, index) => (
+              {data.chartImages.testTrends.map((chart) => (
                 <View
                   key={chart.id}
                   style={styles.mt3}
