@@ -6,6 +6,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 import "highlight.js/styles/github-dark.css";
 import "katex/dist/katex.min.css"; // Dodaj style KaTeX
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface MarkdownRendererProps {
   content: string;
@@ -48,12 +49,15 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
                 {children}
               </code>
             ) : (
-              <code
-                className="block bg-muted p-4 rounded-lg overflow-x-auto"
-                {...props}
-              >
-                {children}
-              </code>
+              <ScrollArea className="rounded-lg bg-muted w-full">
+                <code
+                  className="block bg-muted p-4 text-sm font-mono"
+                  {...props}
+                >
+                  {children}
+                </code>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
             ),
           blockquote: ({ node, ...props }) => (
             <blockquote
