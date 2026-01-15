@@ -126,116 +126,26 @@ Niniejszy dokument stanowi raport z przeprowadzonych testów oprogramowania syst
 
 \subsubsection{Testowanie klasy RNG}
 
-\begin{lstlisting}[language=Python, caption=Test tworzenia encji RNG]
-import pytest
-from io_rng.core.entities.rng import RNG, Language, Algorithm
-
-class TestRNGEntity:
-    def test_create_valid_rng(self):
-        # Arrange & Act
-        rng = RNG(
-            name="Test LCG",
-            language=Language.PYTHON,
-            algorithm=Algorithm.LINEAR_CONGRUENTIAL,
-            description="Test generator",
-            code_path="algorithms/lcg.py"
-        )
-        
-        # Assert
-        assert rng.name == "Test LCG"
-        assert rng.language == Language.PYTHON
-        assert rng.is_active == True
-    
-    def test_create_rng_with_empty_name_raises_error(self):
-        # Arrange & Act & Assert
-        with pytest.raises(ValueError, match="name cannot be empty"):
-            RNG(
-                name="",
-                language=Language.PYTHON,
-                algorithm=Algorithm.PCG,
-                description="Test",
-                code_path="test.py"
-            )
-    
-    def test_validate_for_execution(self):
-        # Arrange
-        rng = RNG(
-            name="Test",
-            language=Language.PYTHON,
-            algorithm=Algorithm.PCG,
-            description="Test",
-            code_path="test.py",
-            is_active=True
-        )
-        
-        # Act & Assert
-        assert rng.validate_for_execution() == True
-    
-    def test_get_parameter_returns_value(self):
-        # Arrange
-        rng = RNG(
-            name="LCG",
-            language=Language.PYTHON,
-            algorithm=Algorithm.LINEAR_CONGRUENTIAL,
-            description="Test",
-            code_path="lcg.py",
-            parameters={"a": 1103515245, "c": 12345}
-        )
-        
-        # Act & Assert
-        assert rng.get_parameter("a") == 1103515245
-        assert rng.get_parameter("nonexistent", 999) == 999
-\end{lstlisting}
-
-\textbf{Wyniki:}
+\textbf{Testowane funkcjonalności:}
 \begin{itemize}
-    \item Wykonanych testów: 4
-    \item Zaliczonych: 4
-    \item Pokrycie kodu: 95\%
+    \item Tworzenie encji z poprawnymi danymi
+    \item Walidacja pustej nazwy (ValueError)
+    \item Metoda \texttt{validate\_for\_execution()}
+    \item Bezpieczny dostęp do parametrów przez \texttt{get\_parameter()}
 \end{itemize}
+
+\textbf{Wyniki:} 4/4 testy zaliczone, pokrycie: 95\%
 
 \subsubsection{Testowanie klasy TestResult}
 
-\begin{lstlisting}[language=Python, caption=Test encji TestResult]
-from io_rng.core.entities.test_result import TestResult, DataType
-
-class TestTestResultEntity:
-    def test_create_valid_result(self):
-        # Arrange & Act
-        result = TestResult(
-            rng_id=1,
-            test_name="chi_square",
-            passed=True,
-            score=0.85,
-            execution_time_ms=123.45,
-            samples_count=100000,
-            statistics={"p_value": 0.85}
-        )
-        
-        # Assert
-        assert result.passed == True
-        assert result.score == 0.85
-    
-    def test_invalid_score_raises_error(self):
-        # Arrange & Act & Assert
-        with pytest.raises(ValueError, match="Score must be between 0 and 1"):
-            TestResult(
-                rng_id=1,
-                test_name="test",
-                passed=True,
-                score=1.5,  # Invalid!
-                execution_time_ms=100,
-                samples_count=1000,
-                statistics={}
-            )
-\end{lstlisting}
-
-\textbf{Wyniki:}
+\textbf{Testowane funkcjonalności:}
 \begin{itemize}
-    \item Wykonanych testów: 2
-    \item Zaliczonych: 2
-    \item Pokrycie kodu: 90\%
+    \item Tworzenie encji z wynikiem testu
+    \item Walidacja zakresu score (0-1)
+    \item Walidacja ujemnego czasu wykonania
 \end{itemize}
+
+\textbf{Wyniki:} 2/2 testy zaliczone, pokrycie: 90\%
 
 \newpage
 
@@ -243,130 +153,28 @@ class TestTestResultEntity:
 
 \subsubsection{Testowanie DjangoRNGRepository}
 
-\begin{lstlisting}[language=Python, caption=Test repozytorium RNG]
-from django.test import TestCase
-from io_rng.infrastructure.repositories.django_repositories import DjangoRNGRepository
-from io_rng.core.entities.rng import RNG, Language, Algorithm
-
-class TestDjangoRNGRepository(TestCase):
-    def setUp(self):
-        self.repository = DjangoRNGRepository()
-    
-    def test_save_new_rng(self):
-        # Arrange
-        rng = RNG(
-            name="Test RNG",
-            language=Language.PYTHON,
-            algorithm=Algorithm.PCG,
-            description="Test",
-            code_path="test.py"
-        )
-        
-        # Act
-        saved_rng = self.repository.save(rng)
-        
-        # Assert
-        assert saved_rng.id is not None
-        assert saved_rng.name == "Test RNG"
-    
-    def test_get_by_id_existing(self):
-        # Arrange
-        rng = RNG(name="Test", language=Language.PYTHON,
-                 algorithm=Algorithm.PCG, description="Test",
-                 code_path="test.py")
-        saved = self.repository.save(rng)
-        
-        # Act
-        retrieved = self.repository.get_by_id(saved.id)
-        
-        # Assert
-        assert retrieved is not None
-        assert retrieved.id == saved.id
-    
-    def test_get_by_id_nonexistent(self):
-        # Act
-        result = self.repository.get_by_id(99999)
-        
-        # Assert
-        assert result is None
-    
-    def test_delete_existing_rng(self):
-        # Arrange
-        rng = RNG(name="To Delete", language=Language.PYTHON,
-                 algorithm=Algorithm.PCG, description="Test",
-                 code_path="test.py")
-        saved = self.repository.save(rng)
-        
-        # Act
-        deleted = self.repository.delete(saved.id)
-        
-        # Assert
-        assert deleted == True
-        assert self.repository.get_by_id(saved.id) is None
-\end{lstlisting}
-
-\textbf{Wyniki:}
+\textbf{Testowane operacje CRUD:}
 \begin{itemize}
-    \item Wykonanych testów: 4
-    \item Zaliczonych: 4
-    \item Pokrycie kodu: 88\%
+    \item \texttt{save()} - tworzenie nowego RNG, przypisanie ID
+    \item \texttt{get\_by\_id()} - pobieranie istniejącego RNG
+    \item \texttt{get\_by\_id()} - obsługa nieistniejącego ID (zwraca None)
+    \item \texttt{delete()} - usuwanie RNG z bazy danych
 \end{itemize}
+
+\textbf{Wyniki:} 4/4 testy zaliczone, pokrycie: 88\%
 
 \subsection{Testy runnerów}
 
 \subsubsection{Testowanie PythonRNGRunner}
 
-\begin{lstlisting}[language=Python, caption=Test Python Runner]
-from io_rng.infrastructure.runners.python_runner import PythonRNGRunner
-from io_rng.core.entities.rng import RNG, Language, Algorithm
-
-class TestPythonRNGRunner:
-    def setUp(self):
-        self.runner = PythonRNGRunner()
-    
-    def test_can_run_python_rng(self):
-        # Arrange
-        rng = RNG(name="Test", language=Language.PYTHON,
-                 algorithm=Algorithm.PCG, description="Test",
-                 code_path="test.py")
-        
-        # Act & Assert
-        assert self.runner.can_run(rng) == True
-    
-    def test_cannot_run_cpp_rng(self):
-        # Arrange
-        rng = RNG(name="Test", language=Language.CPP,
-                 algorithm=Algorithm.PCG, description="Test",
-                 code_path="test.cpp")
-        
-        # Act & Assert
-        assert self.runner.can_run(rng) == False
-    
-    def test_generate_numbers_returns_floats(self):
-        # Arrange
-        rng = RNG(
-            name="PCG32",
-            language=Language.PYTHON,
-            algorithm=Algorithm.PCG,
-            description="PCG generator",
-            code_path="PCG32.py"
-        )
-        
-        # Act
-        numbers = self.runner.generate_numbers(rng, count=100, seed=42)
-        
-        # Assert
-        assert len(numbers) == 100
-        assert all(0.0 <= num <= 1.0 for num in numbers)
-        assert all(isinstance(num, float) for num in numbers)
-\end{lstlisting}
-
-\textbf{Wyniki:}
+\textbf{Testowane funkcjonalności:}
 \begin{itemize}
-    \item Wykonanych testów: 3
-    \item Zaliczonych: 3
-    \item Pokrycie kodu: 75\%
+    \item \texttt{can\_run()} - weryfikacja języka Python (zwraca True)
+    \item \texttt{can\_run()} - odrzucenie języka C++ (zwraca False)
+    \item \texttt{generate\_numbers()} - generowanie liczb float [0,1]
 \end{itemize}
+
+\textbf{Wyniki:} 3/3 testy zaliczone, pokrycie: 75\%
 
 \newpage
 
@@ -376,68 +184,14 @@ class TestPythonRNGRunner:
 
 \subsubsection{Test RunRNGTestUseCase}
 
-\begin{lstlisting}[language=Python, caption=Test przypadku uzycia]
-from django.test import TestCase
-from io_rng.core.use_cases.run_rng_test import RunRNGTestUseCase
-from io_rng.infrastructure.repositories.django_repositories import (
-    DjangoRNGRepository, DjangoTestResultRepository
-)
-from io_rng.infrastructure.runners.python_runner import PythonRNGRunner
-
-class TestRunRNGTestUseCase(TestCase):
-    def setUp(self):
-        self.rng_repo = DjangoRNGRepository()
-        self.result_repo = DjangoTestResultRepository()
-        self.runners = [PythonRNGRunner()]
-        self.use_case = RunRNGTestUseCase(
-            self.rng_repo,
-            self.result_repo,
-            self.runners
-        )
-    
-    def test_execute_chi_square_test(self):
-        # Arrange
-        rng = RNG(
-            name="PCG32",
-            language=Language.PYTHON,
-            algorithm=Algorithm.PCG,
-            description="PCG generator",
-            code_path="PCG32.py"
-        )
-        saved_rng = self.rng_repo.save(rng)
-        
-        # Act
-        result = self.use_case.execute(
-            rng_id=saved_rng.id,
-            test_name="chi_square",
-            samples_count=10000,
-            seed=42
-        )
-        
-        # Assert
-        assert result is not None
-        assert result.id is not None
-        assert result.rng_id == saved_rng.id
-        assert result.test_name == "chi_square"
-        assert 0.0 <= result.score <= 1.0
-        assert result.execution_time_ms > 0
-    
-    def test_execute_with_nonexistent_rng_raises_error(self):
-        # Act & Assert
-        with pytest.raises(ValueError, match="not found"):
-            self.use_case.execute(
-                rng_id=99999,
-                test_name="chi_square",
-                samples_count=1000
-            )
-\end{lstlisting}
-
-\textbf{Wyniki:}
+\textbf{Testowane scenariusze:}
 \begin{itemize}
-    \item Wykonanych testów: 2
-    \item Zaliczonych: 2
-    \item Czas wykonania: 2.3s
+    \item Wykonanie testu chi-square na generatorze PCG
+    \item Weryfikacja zapisu wyniku do bazy danych
+    \item Obsługa błędu - nieistniejący RNG (ValueError)
 \end{itemize}
+
+\textbf{Wyniki:} 2/2 testy zaliczone, czas: 2.3s
 
 \newpage
 
@@ -447,113 +201,29 @@ class TestRunRNGTestUseCase(TestCase):
 
 \subsubsection{Test GET /api/rngs}
 
-\begin{lstlisting}[language=Python, caption=Test pobierania listy RNG]
-from rest_framework.test import APITestCase
-from rest_framework import status
-
-class TestRNGAPI(APITestCase):
-    def test_list_rngs_empty(self):
-        # Act
-        response = self.client.get('/api/rngs/')
-        
-        # Assert
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 0
-    
-    def test_list_rngs_with_data(self):
-        # Arrange
-        RNGModel.objects.create(
-            name="Test RNG",
-            language="python",
-            algorithm="pcg",
-            description="Test",
-            code_path="test.py"
-        )
-        
-        # Act
-        response = self.client.get('/api/rngs/')
-        
-        # Assert
-        assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 1
-        assert response.data[0]['name'] == "Test RNG"
-\end{lstlisting}
+\textbf{Testowane scenariusze:}
+\begin{itemize}
+    \item Pobieranie pustej listy RNG (200 OK)
+    \item Pobieranie listy z danymi (1 element)
+\end{itemize}
 
 \subsubsection{Test POST /api/rngs}
 
-\begin{lstlisting}[language=Python, caption=Test tworzenia RNG przez API]
-def test_create_rng_valid_data(self):
-    # Arrange
-    data = {
-        "name": "New RNG",
-        "language": "python",
-        "algorithm": "pcg",
-        "description": "New generator",
-        "code_path": "new.py",
-        "is_active": True
-    }
-    
-    # Act
-    response = self.client.post('/api/rngs/', data, format='json')
-    
-    # Assert
-    assert response.status_code == status.HTTP_201_CREATED
-    assert response.data['name'] == "New RNG"
-    assert response.data['id'] is not None
-
-def test_create_rng_invalid_data(self):
-    # Arrange
-    data = {
-        "name": "",  # Invalid!
-        "language": "python",
-        "algorithm": "pcg"
-    }
-    
-    # Act
-    response = self.client.post('/api/rngs/', data, format='json')
-    
-    # Assert
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
-\end{lstlisting}
+\textbf{Testowane scenariusze:}
+\begin{itemize}
+    \item Utworzenie RNG z poprawnymi danymi (201 Created)
+    \item Walidacja - pusta nazwa (400 Bad Request)
+\end{itemize}
 
 \subsubsection{Test POST /api/rngs/\{id\}/run\_test}
 
-\begin{lstlisting}[language=Python, caption=Test uruchamiania testu]
-def test_run_test_valid(self):
-    # Arrange
-    rng = RNGModel.objects.create(
-        name="PCG32",
-        language="python",
-        algorithm="pcg",
-        description="Test",
-        code_path="PCG32.py"
-    )
-    data = {
-        "test_name": "chi_square",
-        "samples_count": 10000,
-        "seed": 42
-    }
-    
-    # Act
-    response = self.client.post(
-        f'/api/rngs/{rng.id}/run_test/',
-        data,
-        format='json'
-    )
-    
-    # Assert
-    assert response.status_code == status.HTTP_200_OK
-    assert 'score' in response.data
-    assert 'passed' in response.data
-    assert 'execution_time_ms' in response.data
-\end{lstlisting}
-
-\textbf{Wyniki testów API:}
+\textbf{Testowane scenariusze:}
 \begin{itemize}
-    \item Wykonanych testów: 8
-    \item Zaliczonych: 8
-    \item Pokrycie endpointów: 100\%
+    \item Wykonanie testu chi-square (200 OK)
+    \item Weryfikacja pól w odpowiedzi (score, passed, execution\_time\_ms)
 \end{itemize}
+
+\textbf{Wyniki testów API:} 8/8 zaliczonych, pokrycie endpointów: 100\%
 
 \newpage
 
@@ -837,36 +507,14 @@ Niski & 1 & 1 & 0 \\
 
 \subsection{Konfiguracja GitHub Actions}
 
-\begin{lstlisting}[caption=GitHub Actions - automatyczne testy]
-name: Tests
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        pip install -r backend/requirements.txt
-        pip install pytest pytest-cov pytest-django
-    
-    - name: Run tests with coverage
-      run: |
-        cd backend
-        pytest --cov=io_rng --cov-report=xml --cov-report=html
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-\end{lstlisting}
+\textbf{Konfiguracja GitHub Actions:}
+\begin{itemize}
+    \item Trigger: push, pull request
+    \item Python 3.11, Ubuntu latest
+    \item Instalacja: pytest, pytest-cov, pytest-django
+    \item Uruchomienie testów z coverage (XML/HTML)
+    \item Upload do Codecov
+\end{itemize}
 
 \subsection{Automatyzacja testów}
 
@@ -993,56 +641,30 @@ Testy E2E & 5 & 3.9\% \\
 
 \subsection{Komendy uruchamiania testów}
 
-\begin{lstlisting}[language=bash, caption=Uruchamianie testow]
-# Wszystkie testy
-pytest
+\textbf{Podstawowe komendy pytest:}
+\begin{itemize}
+    \item \texttt{pytest} - wszystkie testy
+    \item \texttt{pytest --cov=io\_rng --cov-report=html} - z coverage
+    \item \texttt{pytest tests/unit/} - tylko jednostkowe
+    \item \texttt{pytest -v} - verbose output
+\end{itemize}
 
-# Testy z coverage
-pytest --cov=io_rng --cov-report=html
+\subsection{Wyniki testów}
 
-# Tylko testy jednostkowe
-pytest tests/unit/
+\textbf{Podsumowanie wykonania:}
+\begin{itemize}
+    \item Zebrano 127 testów
+    \item 127 zaliczonych (100\%)
+    \item Czas wykonania: 45.3s
+    \item Pokrycie kodu: 89\%
+\end{itemize}
 
-# Tylko testy integracyjne
-pytest tests/integration/
-
-# Testy z verbose output
-pytest -v
-
-# Testy konkretnego modulu
-pytest tests/test_entities.py
-
-# Testy z markerem
-pytest -m "slow"
-\end{lstlisting}
-
-\subsection{Przykładowy output z pytest}
-
-\begin{lstlisting}[caption=Przyklad wyniku testow]
-============================= test session starts ==============================
-platform win32 -- Python 3.11.5, pytest-7.4.3
-collected 127 items
-
-tests/test_entities.py ..................                              [ 14%]
-tests/test_repositories.py ..................                          [ 28%]
-tests/test_runners.py ................                                 [ 41%]
-tests/test_use_cases.py ..................                             [ 55%]
-tests/test_api.py ..................                                   [ 69%]
-tests/test_integration.py ..................                           [ 83%]
-tests/test_functional.py ..................                            [100%]
-
----------- coverage: platform win32, python 3.11.5-final-0 -----------
-Name                                    Stmts   Miss  Cover
------------------------------------------------------------
-io_rng/core/entities/rng.py               65      3    95%
-io_rng/core/entities/test_result.py       28      2    93%
-io_rng/core/use_cases/run_rng_test.py    245     28    89%
-io_rng/infrastructure/repositories.py     156     17    89%
-io_rng/infrastructure/runners.py          234     47    80%
------------------------------------------------------------
-TOTAL                                    3683    391    89%
-
-======================== 127 passed in 45.3s ===============================
-\end{lstlisting}
+\textbf{Pokrycie według modułów:}
+\begin{itemize}
+    \item Encje: 95\% (rng.py), 93\% (test\_result.py)
+    \item Use Cases: 89\%
+    \item Repozytoria: 89\%
+    \item Runnery: 80\%
+\end{itemize}
 
 \end{document}
