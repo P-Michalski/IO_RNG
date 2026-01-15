@@ -149,10 +149,9 @@ export const Results = () => {
     ? 1
     : Math.ceil(filteredResults.length / resultsPerPage);
   const startIndex = showAllResults ? 0 : (currentPage - 1) * resultsPerPage;
-  const paginatedResults = filteredResults.slice(
-    startIndex,
-    startIndex + resultsPerPage
-  );
+  const paginatedResults = showAllResults
+    ? filteredResults
+    : filteredResults.slice(startIndex, startIndex + resultsPerPage);
 
   // Reset page when filters change
   useEffect(() => {
@@ -491,13 +490,13 @@ export const Results = () => {
                 className="gap-2"
               >
                 <Trash2 className="h-4 w-4" />
-                Delete ({selectedIds.size + 1})
+                Delete ({selectedIds.size})
               </Button>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Delete {selectedIds.size + 1} test result
-                    {selectedIds.size > 0 ? "s" : ""}?
+                    Delete {selectedIds.size} test result
+                    {selectedIds.size > 1 ? "s" : ""}?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
