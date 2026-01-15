@@ -18,6 +18,12 @@ try:
 except ImportError:
     HAS_SCIPY_FFT = False
 
+try:
+    from scipy.special import gammaincc
+    HAS_GAMMAINCC = True
+except ImportError:
+    HAS_GAMMAINCC = False
+
 from io_rng.core.entities.rng import RNG
 from io_rng.core.entities.test_result import TestResult
 from io_rng.core.interfaces.rng_runner import IRNGRunner
@@ -423,8 +429,12 @@ class RunRNGTestUseCase:
                 chi_square += (proportion - 0.5) ** 2
             chi_square *= 4 * block_size
 
-        # P-value using incomplete gamma function approximation
-        p_value = erfc(math.sqrt(chi_square / 2))
+        # P-value using chi-square distribution with df=num_blocks
+        if HAS_GAMMAINCC:
+            p_value = gammaincc(num_blocks / 2, chi_square / 2)
+        else:
+            # Fallback: erfc approximation (mniej dokładne)
+            p_value = erfc(math.sqrt(chi_square / 2))
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
@@ -1003,8 +1013,12 @@ class RunRNGTestUseCase:
         # Chi-square
         chi_square = sum((c - mu) ** 2 for c in counts) / sigma_sq
 
-        # P-value
-        p_value = erfc(math.sqrt(chi_square / 2))
+        # P-value using chi-square distribution with df=(N-1)/2 per NIST
+        if HAS_GAMMAINCC:
+            p_value = gammaincc((N - 1) / 2, chi_square / 2)
+        else:
+            # Fallback: erfc approximation (mniej dokładne)
+            p_value = erfc(math.sqrt(chi_square / 2))
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
@@ -1298,8 +1312,12 @@ class RunRNGTestUseCase:
         # Chi-square
         chi_square = sum((v[i] - N * pi[i]) ** 2 / (N * pi[i]) for i in range(7))
 
-        # P-value
-        p_value = erfc(math.sqrt(chi_square / 2))
+        # P-value using chi-square distribution with df=6 (7 categories - 1)
+        if HAS_GAMMAINCC:
+            p_value = gammaincc(3, chi_square / 2)  # df/2 = 6/2 = 3
+        else:
+            # Fallback: erfc approximation (mniej dokładne)
+            p_value = erfc(math.sqrt(chi_square / 2))
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
@@ -1744,11 +1762,14 @@ class RunRNGTestUseCase:
         for i in range(len(bytes_list) - window_size + 1):
             window = bytes_list[i:i + window_size]
 
-            # Konwertuj do rangi (permutacji)
+            # Konwertuj do rangi (permutacji) - poprawiona wersja z tie-breaking
+            # Sortuj wartości z zachowaniem oryginalnych indeksów
+            indexed_window = sorted(enumerate(window), key=lambda x: (x[1], x[0]))
+
+            # Przypisz rangi na podstawie pozycji w posortowanej liście
             ranks = [0] * window_size
-            for j in range(window_size):
-                rank = sum(1 for k in range(window_size) if window[k] < window[j])
-                ranks[j] = rank
+            for rank, (original_idx, _) in enumerate(indexed_window):
+                ranks[original_idx] = rank
 
             perm_key = tuple(ranks)
             perm_counts[perm_key] = perm_counts.get(perm_key, 0) + 1
@@ -1767,8 +1788,12 @@ class RunRNGTestUseCase:
         # Stopnie swobody = 119 (120 - 1)
         df = num_perms - 1
 
-        # P-value (uproszczone dla dużych df)
-        p_value = erfc((chi_square / (2 * df))**0.5)
+        # P-value using chi-square distribution with df=119
+        if HAS_GAMMAINCC:
+            p_value = gammaincc(df / 2, chi_square / 2)
+        else:
+            # Fallback: erfc approximation (mniej dokładne)
+            p_value = erfc((chi_square / (2 * df))**0.5)
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
@@ -1873,7 +1898,11 @@ class RunRNGTestUseCase:
         )
 
         # df = 3 - 1 = 2
-        p_value = erfc((chi_square / 4)**0.5)
+        if HAS_GAMMAINCC:
+            p_value = gammaincc(1, chi_square / 2)  # df/2 = 2/2 = 1
+        else:
+            # Fallback: erfc approximation (mniej dokładne)
+            p_value = erfc((chi_square / 4)**0.5)
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
@@ -2137,7 +2166,12 @@ class RunRNGTestUseCase:
         # Chi-square dla różnicy
         if expected_singletons > 0:
             chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
-            p_value = erfc((chi_square / 2)**0.5)
+            # df = 1 (testujemy jedną kategorię)
+            if HAS_GAMMAINCC:
+                p_value = gammaincc(0.5, chi_square / 2)
+            else:
+                # Fallback: erfc approximation
+                p_value = erfc((chi_square / 2)**0.5)
         else:
             p_value = 0.0
 
@@ -2248,7 +2282,12 @@ class RunRNGTestUseCase:
 
         if expected_singletons > 0:
             chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
-            p_value = erfc((chi_square / 2)**0.5)
+            # df = 1 (testujemy jedną kategorię)
+            if HAS_GAMMAINCC:
+                p_value = gammaincc(0.5, chi_square / 2)
+            else:
+                # Fallback: erfc approximation
+                p_value = erfc((chi_square / 2)**0.5)
         else:
             p_value = 0.0
 
@@ -2346,7 +2385,12 @@ class RunRNGTestUseCase:
 
         if expected_singletons > 0:
             chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
-            p_value = erfc((chi_square / 2)**0.5)
+            # df = 1 (testujemy jedną kategorię)
+            if HAS_GAMMAINCC:
+                p_value = gammaincc(0.5, chi_square / 2)
+            else:
+                # Fallback: erfc approximation
+                p_value = erfc((chi_square / 2)**0.5)
         else:
             p_value = 0.0
 
