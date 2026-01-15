@@ -980,6 +980,979 @@ System implementuje szereg testów statystycznych:
 
 \newpage
 
+\section{Architektura Backendowa}
+
+\subsection{Przegląd struktury projektu Django}
+
+Backend systemu IO\_RNG zbudowany jest w oparciu o framework Django REST Framework, stosując zasady Clean Architecture. Projekt podzielony jest na wyraźnie oddzielone warstwy, co zapewnia separację odpowiedzialności i łatwość testowania.
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Struktura katalogów backendu]
+\begin{verbatim}
+backend/
+├── io_rng/                    # Główna aplikacja Django
+│   ├── core/                  # Warstwa domeny (Core Layer)
+│   │   ├── entities/          # Encje domenowe
+│   │   │   ├── rng.py         # RNG (Generator)
+│   │   │   ├── test_result.py # Wynik testu
+│   │   │   └── enums.py       # Language, Algorithm, DataType
+│   │   ├── interfaces/        # Interfejsy (ABC)
+│   │   │   ├── repository.py  # IRNGRepository, ITestResultRepository
+│   │   │   └── runner.py      # IRNGRunner
+│   │   └── use_cases/         # Logika biznesowa
+│   │       ├── run_rng_test.py        # Uruchomienie testu
+│   │       ├── compare_rngs.py        # Porównanie generatorów
+│   │       ├── get_test_results.py    # Pobieranie wyników
+│   │       └── test_custom_bits.py    # Test własnych bitów
+│   │
+│   ├── infrastructure/        # Warstwa infrastruktury
+│   │   ├── models.py          # Django ORM Models
+│   │   ├── repositories/      # Implementacje repozytoriów
+│   │   │   └── django_repositories.py
+│   │   └── runners/           # Implementacje runnerów
+│   │       ├── python_runner.py       # Python RNG Runner
+│   │       ├── exe_runner.py          # Executable Runner
+│   │       └── universal_adapter.py   # Uniwersalny adapter
+│   │
+│   ├── api/                   # Warstwa API
+│   │   ├── views.py           # Django REST Framework ViewSets
+│   │   ├── serializers.py     # DRF Serializers
+│   │   └── urls.py            # Routing API
+│   │
+│   ├── settings.py            # Konfiguracja Django
+│   ├── urls.py                # Główny routing
+│   └── wsgi.py                # WSGI application
+│
+├── db.sqlite3                 # Baza danych SQLite
+├── manage.py                  # Django CLI
+└── requirements.txt           # Zależności Python
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection{Core Layer - Warstwa Domeny}
+
+Warstwa Core zawiera całą logikę biznesową systemu i jest całkowicie niezależna od frameworka Django. Wszystkie komponenty w tej warstwie operują na czystych obiektach Pythona (dataclasses, enums, abstrakcyjne klasy).
+
+\subsubsection{Encje Domenowe}
+
+\textbf{RNG Entity} - reprezentuje generator liczb pseudolosowych:
+
+\begin{lstlisting}[language=Python, caption=Encja RNG]
+@dataclass
+class RNG:
+    """Generator liczb pseudolosowych - encja domenowa"""
+    name: str                           # Nazwa generatora
+    language: Language                  # Język implementacji
+    algorithm: Algorithm                # Algorytm RNG
+    description: str                    # Opis generatora
+    code_path: str                      # Ścieżka do pliku
+    parameters: Optional[Dict] = None   # Parametry (LCG: a,c,m)
+    id: Optional[int] = None            # ID w bazie
+    is_active: bool = True              # Czy aktywny
+
+    def __post_init__(self):
+        """Walidacja danych po inicjalizacji"""
+        if not self.name:
+            raise ValueError("RNG name cannot be empty")
+        if not self.code_path:
+            raise ValueError("Code path cannot be empty")
+
+    def validate_for_execution(self) -> bool:
+        """Sprawdza czy generator jest gotowy do wykonania"""
+        return self.is_active and bool(self.code_path)
+
+    def get_parameter(self, key: str, default: Any = None) -> Any:
+        """Bezpieczny dostęp do parametrów"""
+        return self.parameters.get(key, default) if self.parameters else default
+\end{lstlisting}
+
+\textbf{TestResult Entity} - reprezentuje wynik testu statystycznego:
+
+\begin{lstlisting}[language=Python, caption=Encja TestResult]
+@dataclass
+class TestResult:
+    """Wynik testu statystycznego - encja domenowa"""
+    rng_id: int                         # ID testowanego RNG
+    test_name: str                      # Nazwa testu
+    passed: bool                        # Czy test przeszedł
+    score: float                        # Wynik (0-1)
+    execution_time_ms: float            # Czas wykonania
+    samples_count: int                  # Liczba próbek
+    statistics: Dict[str, Any]          # Szczegółowe statystyki
+    seed: Optional[int] = None          # Seed użyty do testu
+    test_parameters: Optional[Dict] = None  # Parametry testu
+    error_message: Optional[str] = None # Komunikat błędu
+    id: Optional[int] = None            # ID w bazie
+
+    def __post_init__(self):
+        """Walidacja wyniku testu"""
+        if not 0.0 <= self.score <= 1.0:
+            raise ValueError("Score must be between 0 and 1")
+        if self.execution_time_ms < 0:
+            raise ValueError("Execution time cannot be negative")
+\end{lstlisting}
+
+\subsubsection{Interfejsy (Porty)}
+
+System definiuje abstrakcyjne interfejsy, które muszą być implementowane przez warstwę Infrastructure:
+
+\begin{lstlisting}[language=Python, caption=Interfejsy repozytoriów]
+class IRNGRepository(ABC):
+    """Interface repozytorium generatorów RNG"""
+
+    @abstractmethod
+    def save(self, rng: RNG) -> RNG:
+        """Zapisuje generator (create lub update)"""
+        pass
+
+    @abstractmethod
+    def get_by_id(self, rng_id: int) -> Optional[RNG]:
+        """Pobiera generator po ID"""
+        pass
+
+    @abstractmethod
+    def get_all(self) -> List[RNG]:
+        """Pobiera wszystkie generatory"""
+        pass
+
+    @abstractmethod
+    def delete(self, rng_id: int) -> bool:
+        """Usuwa generator"""
+        pass
+
+class ITestResultRepository(ABC):
+    """Interface repozytorium wyników testów"""
+
+    @abstractmethod
+    def save(self, result: TestResult) -> TestResult:
+        pass
+
+    @abstractmethod
+    def get_by_rng(self, rng_id: int) -> List[TestResult]:
+        pass
+
+    @abstractmethod
+    def get_all(self) -> List[TestResult]:
+        pass
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Interface runnera]
+class IRNGRunner(ABC):
+    """Interface runnera dla różnych języków programowania"""
+
+    @abstractmethod
+    def can_run(self, rng: RNG) -> bool:
+        """Sprawdza czy runner może uruchomić dany RNG"""
+        pass
+
+    @abstractmethod
+    def generate_numbers(self, rng: RNG, count: int,
+                        seed: int = None) -> List[float]:
+        """Generuje liczby losowe z zakresu [0,1]"""
+        pass
+
+    @abstractmethod
+    def generate_raw(self, rng: RNG, count: int,
+                    seed: int = None) -> Tuple[List[Any], DataType]:
+        """Generuje surowe dane (bity, integery lub floaty)"""
+        pass
+\end{lstlisting}
+
+\subsubsection{Use Cases - Logika Biznesowa}
+
+Use cases orkiestrują przepływ danych między warstwami i implementują logikę biznesową:
+
+\begin{lstlisting}[language=Python, caption=RunRNGTestUseCase - główny przypadek użycia]
+class RunRNGTestUseCase:
+    """Przypadek użycia: Uruchomienie testu statystycznego na RNG"""
+
+    def __init__(self,
+                 rng_repository: IRNGRepository,
+                 result_repository: ITestResultRepository,
+                 runners: List[IRNGRunner]):
+        # Dependency Injection - zależności wstrzykiwane przez konstruktor
+        self.rng_repository = rng_repository
+        self.result_repository = result_repository
+        self.runners = runners
+
+    def execute(self, rng_id: int, test_name: str,
+                samples_count: int, seed: int = None,
+                test_parameters: Dict = None) -> TestResult:
+        """
+        Wykonuje test statystyczny:
+        1. Pobiera RNG z repozytorium
+        2. Znajduje odpowiedni runner
+        3. Generuje liczby/bity
+        4. Przeprowadza test statystyczny
+        5. Zapisuje wynik
+        """
+
+        # 1. Pobranie generatora
+        rng = self.rng_repository.get_by_id(rng_id)
+        if not rng:
+            raise ValueError(f"RNG with id {rng_id} not found")
+
+        # 2. Znalezienie odpowiedniego runnera
+        runner = self._find_runner(rng)
+
+        # 3. Generowanie danych
+        start_time = time.time()
+
+        # Testy NIST wymagają bitów, inne testy floatów
+        if test_name.startswith('nist_') or test_name.startswith('diehard_'):
+            bits, data_type = runner.generate_raw(rng, samples_count, seed)
+            # Konwersja do bitów jeśli potrzeba
+            if data_type != DataType.BITS:
+                bits = self._convert_to_bits(bits, data_type)
+        else:
+            # Podstawowe testy (frequency, uniformity) używają floatów
+            numbers = runner.generate_numbers(rng, samples_count, seed)
+
+        generation_time = (time.time() - start_time) * 1000
+
+        # 4. Przeprowadzenie testu statystycznego
+        test_result = self._perform_test(
+            test_name,
+            bits if 'bits' in locals() else numbers,
+            test_parameters
+        )
+
+        # 5. Utworzenie i zapisanie wyniku
+        result = TestResult(
+            rng_id=rng_id,
+            test_name=test_name,
+            passed=test_result['passed'],
+            score=test_result['score'],
+            execution_time_ms=generation_time + test_result['test_time_ms'],
+            samples_count=samples_count,
+            statistics=test_result['statistics'],
+            seed=seed,
+            test_parameters=test_parameters
+        )
+
+        return self.result_repository.save(result)
+\end{lstlisting}
+
+\newpage
+
+\subsection{Infrastructure Layer - Warstwa Infrastruktury}
+
+Warstwa Infrastructure zawiera konkretne implementacje interfejsów zdefiniowanych w Core Layer. Używa Django ORM do persystencji danych.
+
+\subsubsection{Django Models}
+
+\begin{lstlisting}[language=Python, caption=Modele Django ORM]
+class RNGModel(models.Model):
+    """Model Django dla generatorów RNG"""
+
+    name = models.CharField(max_length=200, unique=True)
+    language = models.CharField(max_length=50)  # python, cpp, rust, etc.
+    algorithm = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    code_path = models.CharField(max_length=500)  # Względna ścieżka
+    parameters = models.JSONField(null=True, blank=True)  # Parametry JSON
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'rngs'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['language']),
+            models.Index(fields=['algorithm']),
+        ]
+
+class TestResultModel(models.Model):
+    """Model Django dla wyników testów"""
+
+    rng = models.ForeignKey(RNGModel, on_delete=models.CASCADE,
+                           related_name='test_results')
+    test_name = models.CharField(max_length=100)
+    passed = models.BooleanField()
+    score = models.FloatField()  # 0.0 - 1.0
+    execution_time_ms = models.FloatField()
+    samples_count = models.IntegerField()
+    statistics = models.JSONField()  # Szczegółowe statystyki
+    seed = models.IntegerField(null=True, blank=True)
+    test_parameters = models.JSONField(null=True, blank=True)
+    error_message = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'test_results'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['rng', '-created_at']),
+            models.Index(fields=['test_name', '-created_at']),
+            models.Index(fields=['passed']),
+        ]
+\end{lstlisting}
+
+\subsubsection{Repository Implementations}
+
+Repozytoria implementują wzorzec Repository, przekształcając encje domenowe w modele Django i vice versa:
+
+\begin{lstlisting}[language=Python, caption=Implementacja DjangoRNGRepository]
+class DjangoRNGRepository(IRNGRepository):
+    """Konkretna implementacja repozytorium używająca Django ORM"""
+
+    def save(self, rng: RNG) -> RNG:
+        """Zapisuje lub aktualizuje RNG"""
+        if rng.id:
+            # Update istniejącego
+            model = RNGModel.objects.get(id=rng.id)
+            self._update_model_from_entity(model, rng)
+        else:
+            # Utworzenie nowego
+            model = self._create_model_from_entity(rng)
+
+        model.save()
+        return self._to_entity(model)
+
+    def get_by_id(self, rng_id: int) -> Optional[RNG]:
+        """Pobiera RNG po ID, zwraca None jeśli nie istnieje"""
+        try:
+            model = RNGModel.objects.get(id=rng_id)
+            return self._to_entity(model)
+        except RNGModel.DoesNotExist:
+            return None
+
+    def _to_entity(self, model: RNGModel) -> RNG:
+        """Konwersja Django Model -> Domain Entity (Factory Method)"""
+        return RNG(
+            id=model.id,
+            name=model.name,
+            language=Language(model.language),
+            algorithm=Algorithm(model.algorithm),
+            description=model.description,
+            code_path=model.code_path,
+            parameters=model.parameters or {},
+            is_active=model.is_active
+        )
+
+    def _create_model_from_entity(self, rng: RNG) -> RNGModel:
+        """Konwersja Domain Entity -> Django Model"""
+        return RNGModel(
+            name=rng.name,
+            language=rng.language.value,
+            algorithm=rng.algorithm.value,
+            description=rng.description,
+            code_path=rng.code_path,
+            parameters=rng.parameters,
+            is_active=rng.is_active
+        )
+\end{lstlisting}
+
+\newpage
+
+\subsubsection{System Runnerów}
+
+System runnerów umożliwia wykonywanie generatorów napisanych w różnych językach programowania. Każdy runner implementuje interfejs \texttt{IRNGRunner}.
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=Obsługiwane języki]
+\begin{itemize}
+    \item \textbf{Python} - dynamiczne ładowanie modułów (importlib)
+    \item \textbf{C++} - kompilacja i uruchomienie plików .exe
+    \item \textbf{Rust} - uruchomienie prekompilowanych binarek
+    \item \textbf{C\#} - uruchomienie plików .exe/.dll
+    \item \textbf{Java} - kompilacja i uruchomienie .class (TODO)
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Python RNG Runner:}
+
+\begin{lstlisting}[language=Python, caption=PythonRNGRunner - wykonywanie generatorów Python]
+class PythonRNGRunner(IRNGRunner):
+    """Runner dla generatorów napisanych w Pythonie"""
+
+    BASE_PATH = Path(__file__).parent.parent.parent / "algorytmy"
+
+    def can_run(self, rng: RNG) -> bool:
+        """Sprawdza czy runner obsługuje dany RNG"""
+        return rng.language == Language.PYTHON
+
+    def generate_numbers(self, rng: RNG, count: int,
+                        seed: int = None) -> List[float]:
+        """Generuje liczby float [0,1]"""
+        # 1. Załaduj moduł Python
+        module = self._load_module(rng.code_path)
+
+        # 2. Utwórz Universal Adapter
+        adapter = UniversalRNGAdapter(module, rng.parameters)
+
+        # 3. Wygeneruj surowe dane
+        raw_data, data_type = adapter.generate_raw(count, seed)
+
+        # 4. Konwertuj do floatów [0,1]
+        return self._convert_to_floats(raw_data, data_type)
+
+    def _load_module(self, code_path: str):
+        """Dynamicznie ładuje moduł Python używając importlib"""
+        full_path = self.BASE_PATH / code_path
+
+        spec = importlib.util.spec_from_file_location(
+            "rng_module", full_path
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        return module
+\end{lstlisting}
+
+\textbf{Executable RNG Runner:}
+
+\begin{lstlisting}[language=Python, caption=ExeRNGRunner - uruchamianie plików wykonywalnych]
+class ExeRNGRunner(IRNGRunner):
+    """Runner dla prekompilowanych plików wykonywalnych (C++, Rust, C#)"""
+
+    def can_run(self, rng: RNG) -> bool:
+        return rng.language == Language.EXECUTABLE
+
+    def generate_raw(self, rng: RNG, count: int,
+                    seed: int = None) -> Tuple[List[Any], DataType]:
+        """Uruchamia plik .exe i parsuje stdout"""
+
+        # 1. Znajdź plik wykonywalny
+        exe_path = self._resolve_executable_path(rng.code_path)
+
+        # 2. Przygotuj argumenty
+        args = [str(exe_path), str(count)]
+        if seed is not None:
+            args.append(str(seed))
+
+        # 3. Uruchom proces
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            timeout=30  # 30s timeout
+        )
+
+        if result.returncode != 0:
+            raise RuntimeError(f"Executable failed: {result.stderr}")
+
+        # 4. Parsuj wyjście (format: liczba na linię lub JSON)
+        output = result.stdout.strip()
+
+        # Wykryj format wyjścia
+        if output.startswith('[') or output.startswith('{'):
+            # Format JSON
+            data = json.loads(output)
+            return data['bits'], DataType.BITS
+        else:
+            # Format tekstowy - liczby w liniach
+            numbers = [float(line) for line in output.split('\n') if line]
+            return numbers, DataType.FLOATS
+\end{lstlisting}
+
+\textbf{Universal RNG Adapter:}
+
+Adapter automatycznie wykrywa typ funkcji generatora i dostosowuje się do jej sygnatury:
+
+\begin{lstlisting}[language=Python, caption=UniversalRNGAdapter - automatyczna detekcja]
+class UniversalRNGAdapter:
+    """
+    Uniwersalny adapter dla różnych typów generatorów.
+    Automatycznie wykrywa:
+    - Typ funkcji (generate, *_bit_stream, etc.)
+    - Typ danych wyjściowych (bits, integers, floats)
+    - Wymagane parametry
+    """
+
+    def __init__(self, module, parameters: Optional[Dict] = None):
+        self.module = module
+        self.parameters = parameters or {}
+        self.generator_func = self._detect_generator_function()
+        self.data_type = self._detect_data_type()
+
+    def _detect_generator_function(self):
+        """Wykrywa funkcję generatora w module"""
+        # Priorytet 1: funkcja generate()
+        if hasattr(self.module, 'generate'):
+            return self.module.generate
+
+        # Priorytet 2: funkcje *_bit_stream()
+        for name in dir(self.module):
+            if name.endswith('_bit_stream'):
+                return getattr(self.module, name)
+
+        # Priorytet 3: pierwsza funkcja publiczna
+        for name in dir(self.module):
+            if not name.startswith('_'):
+                attr = getattr(self.module, name)
+                if callable(attr):
+                    return attr
+
+        raise RuntimeError("No generator function found in module")
+
+    def _detect_data_type(self) -> DataType:
+        """Wykrywa typ danych zwracanych przez generator"""
+        # Sprawdź nazwę funkcji
+        func_name = self.generator_func.__name__
+
+        if 'bit' in func_name.lower():
+            return DataType.BITS
+        elif 'int' in func_name.lower():
+            return DataType.INTEGERS
+        else:
+            return DataType.FLOATS
+
+    def generate_raw(self, count: int, seed: int = None) -> Tuple[List, DataType]:
+        """Generuje surowe dane odpowiadając na sygnaturę funkcji"""
+
+        # Sprawdź sygnaturę funkcji
+        sig = inspect.signature(self.generator_func)
+
+        # Przygotuj argumenty
+        kwargs = {}
+
+        if 'count' in sig.parameters or 'n' in sig.parameters:
+            kwargs['count'] = count
+        if 'seed' in sig.parameters:
+            kwargs['seed'] = seed
+
+        # Dodaj parametry generatora (dla LCG: a, c, m)
+        for param_name in sig.parameters:
+            if param_name in self.parameters:
+                kwargs[param_name] = self.parameters[param_name]
+
+        # Wywołaj funkcję
+        data = self.generator_func(**kwargs)
+
+        return list(data), self.data_type
+\end{lstlisting}
+
+\newpage
+
+\subsection{API Layer - Warstwa Prezentacji}
+
+Warstwa API używa Django REST Framework do udostępniania funkcjonalności systemu przez RESTful API.
+
+\subsubsection{ViewSets}
+
+\begin{lstlisting}[language=Python, caption=RNGViewSet - główny endpoint dla RNG]
+class RNGViewSet(viewsets.ViewSet):
+    """ViewSet obsługujący operacje CRUD na generatorach RNG"""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Dependency Injection - tworzenie zależności
+        self.rng_repository = DjangoRNGRepository()
+        self.result_repository = DjangoTestResultRepository()
+        self.runners = [
+            PythonRNGRunner(),
+            ExeRNGRunner()
+        ]
+
+    def list(self, request):
+        """GET /api/rngs - lista wszystkich generatorów"""
+        rngs = self.rng_repository.get_all()
+        serializer = RNGSerializer(rngs, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """GET /api/rngs/{id} - szczegóły generatora"""
+        rng = self.rng_repository.get_by_id(int(pk))
+        if not rng:
+            return Response(
+                {"error": "RNG not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = RNGSerializer(rng)
+        return Response(serializer.data)
+
+    def create(self, request):
+        """POST /api/rngs - utworzenie nowego generatora"""
+        serializer = RNGSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        rng = serializer.save_to_entity()
+        saved_rng = self.rng_repository.save(rng)
+
+        return Response(
+            RNGSerializer(saved_rng).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=['post'])
+    def run_test(self, request, pk=None):
+        """
+        POST /api/rngs/{id}/run_test
+        Uruchamia test statystyczny na generatorze
+        """
+        # Walidacja danych wejściowych
+        test_name = request.data.get('test_name')
+        samples_count = request.data.get('samples_count', 10000)
+        seed = request.data.get('seed')
+        test_parameters = request.data.get('test_parameters')
+
+        # Wywołanie Use Case
+        use_case = RunRNGTestUseCase(
+            self.rng_repository,
+            self.result_repository,
+            self.runners
+        )
+
+        try:
+            result = use_case.execute(
+                rng_id=int(pk),
+                test_name=test_name,
+                samples_count=samples_count,
+                seed=seed,
+                test_parameters=test_parameters
+            )
+
+            serializer = TestResultSerializer(result)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def generate(self, request, pk=None):
+        """
+        POST /api/rngs/{id}/generate
+        Generuje surowe bity bez przeprowadzania testów
+        """
+        count = request.data.get('count', 10000)
+        seed = request.data.get('seed')
+
+        rng = self.rng_repository.get_by_id(int(pk))
+        if not rng:
+            return Response(
+                {"error": "RNG not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Znajdź runner i wygeneruj
+        runner = self._find_runner(rng)
+
+        start_time = time.time()
+        bits, data_type = runner.generate_raw(rng, count, seed)
+        execution_time = (time.time() - start_time) * 1000
+
+        return Response({
+            "bits": bits,
+            "count": len(bits),
+            "execution_time_ms": execution_time,
+            "rng_id": rng.id,
+            "rng_name": rng.name,
+            "seed": seed
+        })
+\end{lstlisting}
+
+\subsubsection{Serializers}
+
+Serializatory konwertują encje domenowe do/z formatu JSON:
+
+\begin{lstlisting}[language=Python, caption=DRF Serializers]
+class RNGSerializer(serializers.Serializer):
+    """Serializer dla encji RNG"""
+
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=200)
+    language = serializers.ChoiceField(
+        choices=[(lang.value, lang.name) for lang in Language]
+    )
+    algorithm = serializers.ChoiceField(
+        choices=[(alg.value, alg.name) for alg in Algorithm]
+    )
+    description = serializers.CharField(allow_blank=True)
+    code_path = serializers.CharField(max_length=500)
+    parameters = serializers.JSONField(required=False, allow_null=True)
+    is_active = serializers.BooleanField(default=True)
+    created_at = serializers.DateTimeField(read_only=True)
+
+    def save_to_entity(self) -> RNG:
+        """Konwersja validated_data do encji domenowej"""
+        return RNG(
+            name=self.validated_data['name'],
+            language=Language(self.validated_data['language']),
+            algorithm=Algorithm(self.validated_data['algorithm']),
+            description=self.validated_data.get('description', ''),
+            code_path=self.validated_data['code_path'],
+            parameters=self.validated_data.get('parameters'),
+            is_active=self.validated_data.get('is_active', True)
+        )
+
+class TestResultSerializer(serializers.Serializer):
+    """Serializer dla wyników testów"""
+
+    id = serializers.IntegerField(read_only=True)
+    rng_id = serializers.IntegerField()
+    test_name = serializers.CharField()
+    passed = serializers.BooleanField()
+    score = serializers.FloatField(min_value=0.0, max_value=1.0)
+    execution_time_ms = serializers.FloatField()
+    samples_count = serializers.IntegerField()
+    statistics = serializers.JSONField()
+    seed = serializers.IntegerField(allow_null=True, required=False)
+    test_parameters = serializers.JSONField(allow_null=True, required=False)
+    created_at = serializers.DateTimeField(read_only=True)
+\end{lstlisting}
+
+\newpage
+
+\subsection{Testy Statystyczne}
+
+System implementuje kompletne baterie testów statystycznych dla weryfikacji jakości generatorów liczb pseudolosowych.
+
+\subsubsection{NIST Statistical Test Suite}
+
+Pełna implementacja 15 testów NIST SP 800-22:
+
+\begin{table}[H]
+\centering
+\caption{Testy NIST - kompletna bateria}
+\begin{tabular}{|l|p{6cm}|c|}
+\hline
+\textbf{Test} & \textbf{Opis} & \textbf{Min. bitów} \\
+\hline
+Monobit & Proporcja 0s i 1s & 100 \\
+\hline
+Block Frequency & Balans bitów w blokach & 100 \\
+\hline
+Runs & Liczba ciągów jedynek/zer & 100 \\
+\hline
+Longest Run & Najdłuższy ciąg jedynek & 128 \\
+\hline
+Binary Matrix Rank & Ranga macierzy binarnej & 38,912 \\
+\hline
+DFT (Spectral) & Analiza częstotliwości (FFT) & 1,000 \\
+\hline
+Non-Overlapping Template & Wzorce bez nakładania & 1,000 \\
+\hline
+Overlapping Template & Wzorce z nakładaniem & 1,000 \\
+\hline
+Universal (Maurer) & Test kompresji & 387,840 \\
+\hline
+Linear Complexity & Złożoność liniowa (Berlekamp-Massey) & 1,000,000 \\
+\hline
+Serial & Częstość m-bitowych wzorców & 1,000 \\
+\hline
+Approximate Entropy & Entropia przybliżona & 100 \\
+\hline
+Cumulative Sums & Sumy kumulacyjne & 100 \\
+\hline
+Random Excursions & Spacer losowy - cykle & 1,000,000 \\
+\hline
+Random Excursions Variant & Spacer losowy - warianty & 1,000,000 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Diehard Battery of Tests}
+
+Implementacja 15 klasycznych testów Diehard:
+
+\begin{table}[H]
+\centering
+\caption{Testy Diehard - kompletna bateria}
+\begin{tabular}{|l|p{7cm}|}
+\hline
+\textbf{Test} & \textbf{Opis} \\
+\hline
+Birthday Spacings & Kolizje dat urodzin w próbkach \\
+\hline
+Overlapping Permutations & Analiza nakładających się permutacji \\
+\hline
+Binary Rank (31x31) & Ranga macierzy binarnej 31x31 \\
+\hline
+Binary Rank (32x32) & Ranga macierzy binarnej 32x32 \\
+\hline
+Binary Rank (6x8) & Ranga macierzy binarnej 6x8 \\
+\hline
+Bitstream & Nakładające się 20-bitowe słowa \\
+\hline
+OPSO & Overlapping-Pairs-Sparse-Occupancy \\
+\hline
+OQSO & Overlapping-Quadruples-Sparse-Occupancy \\
+\hline
+DNA & Zliczanie 10-literowych "słów DNA" \\
+\hline
+Count the 1s (stream) & Liczenie jedynek w strumieniu \\
+\hline
+Count the 1s (byte) & Liczenie jedynek w bajtach \\
+\hline
+Parking Lot & Test parkowania - kolizje współrzędnych \\
+\hline
+Minimum Distance & Minimalna odległość między punktami \\
+\hline
+3D Spheres & Minimalna odległość punktów na sferze 3D \\
+\hline
+Squeeze & Test kompresji iteracyjnej \\
+\hline
+Overlapping Sums & Sumy nakładających się sekwencji \\
+\hline
+Runs & Analiza długości ciągów \\
+\hline
+Craps & Symulacja gry w kości \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Implementacja testów}
+
+Wszystkie testy zwracają zunifikowany wynik:
+
+\begin{lstlisting}[language=Python, caption=Struktura wyniku testu]
+{
+    "passed": bool,           # Czy test przeszedł (p-value > 0.01)
+    "score": float,           # Wynik 0-1 (wyższy = lepszy)
+    "statistics": {
+        "p_value": float,     # P-value testu
+        # ... inne statystyki specyficzne dla testu
+    },
+    "test_time_ms": float     # Czas wykonania testu
+}
+\end{lstlisting}
+
+\newpage
+
+\subsection{Konfiguracja Django}
+
+\subsubsection{Settings.py}
+
+Kluczowe ustawienia projektu:
+
+\begin{lstlisting}[language=Python, caption=Konfiguracja Django]
+# Backend Settings
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+
+    # Third-party apps
+    'rest_framework',
+    'corsheaders',
+
+    # Local apps
+    'io_rng',
+]
+
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS - musi być na początku
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# CORS Configuration - dla frontendu React
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",      # Vite dev server
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
+}
+
+# Database - SQLite
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+\end{lstlisting}
+
+\subsubsection{URL Routing}
+
+\begin{lstlisting}[language=Python, caption=Konfiguracja URL]
+# backend/io_rng/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .api.views import RNGViewSet, TestResultViewSet
+
+router = DefaultRouter()
+router.register(r'rngs', RNGViewSet, basename='rng')
+router.register(r'test-results', TestResultViewSet, basename='testresult')
+
+urlpatterns = [
+    path('api/', include(router.urls)),
+]
+\end{lstlisting}
+
+\subsection{System Migracji Bazy Danych}
+
+Django używa systemu migracji do zarządzania schematem bazy danych:
+
+\begin{lstlisting}[language=bash, caption=Komendy migracji]
+# Utworzenie nowych migracji po zmianie modeli
+python manage.py makemigrations
+
+# Zastosowanie migracji do bazy danych
+python manage.py migrate
+
+# Wyświetlenie stanu migracji
+python manage.py showmigrations
+
+# Cofnięcie migracji
+python manage.py migrate io_rng 0004_previous_migration
+\end{lstlisting}
+
+Przykład migracji:
+
+\begin{lstlisting}[language=Python, caption=Przykładowa migracja Django]
+# io_rng/infrastructure/migrations/0005_testresultmodel_test_parameters.py
+from django.db import migrations, models
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ('io_rng', '0004_previous_migration'),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name='testresultmodel',
+            name='test_parameters',
+            field=models.JSONField(blank=True, null=True),
+        ),
+    ]
+\end{lstlisting}
+
+\subsection{Zalety architektury backendowej}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=Kluczowe zalety]
+\begin{enumerate}
+    \item \textbf{Clean Architecture} - pełna separacja warstw, niezależność od frameworka
+    \item \textbf{Testowalność} - łatwe mockowanie dzięki Dependency Injection
+    \item \textbf{Rozszerzalność} - łatwe dodawanie nowych runnerów, testów, algorytmów
+    \item \textbf{Type Safety} - type hints w całym projekcie
+    \item \textbf{Wielojęzyczność} - obsługa RNG w Python, C++, Rust, C\#
+    \item \textbf{Uniwersalność} - Universal Adapter automatycznie dopasowuje się do różnych sygnatur
+    \item \textbf{Wydajność} - optymalizacja poprzez kompresję Base64, numpy
+    \item \textbf{Kompletność} - pełne baterie NIST (15 testów) i Diehard (15 testów)
+\end{enumerate}
+\end{tcolorbox}
+
+\newpage
+
 \section{Architektura Frontendowa}
 
 \subsection{Struktura komponentów React}
