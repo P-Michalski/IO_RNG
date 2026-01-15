@@ -8,24 +8,31 @@
     "net9.0": []
   },
   "packageFolders": {
-    "/home/bienia/.nuget/packages/": {}
+    "C:\\Users\\kania\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/bienia/PycharmProjects/IO_RNG/algorytmy/Xorshift256/Xoshiro256.csproj",
+      "projectUniqueName": "C:\\Users\\kania\\Documents\\RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj",
       "projectName": "Xoshiro256",
-      "projectPath": "/home/bienia/PycharmProjects/IO_RNG/algorytmy/Xorshift256/Xoshiro256.csproj",
-      "packagesPath": "/home/bienia/.nuget/packages/",
-      "outputPath": "/home/bienia/PycharmProjects/IO_RNG/algorytmy/Xorshift256/obj/",
+      "projectPath": "C:\\Users\\kania\\Documents\\RNG\\IO_RNG\\algorytmy\\Xorshift256\\Xoshiro256.csproj",
+      "packagesPath": "C:\\Users\\kania\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\kania\\Documents\\RNG\\IO_RNG\\algorytmy\\Xorshift256\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "/home/bienia/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\kania\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -44,7 +51,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net9.0": {
@@ -60,26 +67,12 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[9.0.11, 9.0.11]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Host.linux-x64",
-            "version": "[9.0.11, 9.0.11]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[9.0.11, 9.0.11]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.100/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
