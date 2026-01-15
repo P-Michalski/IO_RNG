@@ -1,0 +1,15 @@
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\bin\Release\net9.0\Xoshiro256.exe
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\bin\Release\net9.0\Xoshiro256.deps.json
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\bin\Release\net9.0\Xoshiro256.runtimeconfig.json
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\bin\Release\net9.0\Xoshiro256.dll
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\bin\Release\net9.0\Xoshiro256.pdb
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\Xoshiro256.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\Xoshiro256.AssemblyInfoInputs.cache
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\Xoshiro256.AssemblyInfo.cs
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\Xoshiro256.csproj.CoreCompileInputs.cache
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\Xoshiro256.sourcelink.json
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\Xoshiro256.dll
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\refint\Xoshiro256.dll
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\Xoshiro256.pdb
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\Xoshiro256.genruntimeconfig.cache
+C:\Users\kania\Documents\RNG\IO_RNG\algorytmy\Xorshift256\obj\Release\net9.0\ref\Xoshiro256.dll

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Linq;
 
@@ -13,21 +12,21 @@ public class RngResult
 }
 
 /*
-Systemowy CSPRNG — Windows RNGCryptoServiceProvider (ekwiwalent BCryptGenRandom).
+Xoshiro256** — wbudowany generator w .NET 6+
 
 Funkcja publiczna:
-    SystemRandomBitStream(seed, nBits, bitsPerValue=null, msbFirst=true, returnTime=false)
+    Xoshiro256BitStream(seed, nBits, bitsPerValue=null, msbFirst=true, returnTime=false)
 
 Parametry:
-    seed : ignorowany (dla kompatybilności z innymi generatorami)
+    seed : object            -- seed do inicjalizacji Random (jeśli null, używa Random.Shared)
     nBits : int              -- liczba bitów do zwrócenia
     bitsPerValue : int       -- ile bitów pobrać z każdej wartości (domyślnie 32)
     msbFirst : bool          -- True: MSB-first, False: LSB-first
     returnTime : bool        -- jeśli True, funkcja zwraca (bity, czas_w_sekundach)
 
-Używa RNGCryptoServiceProvider na Windowsie do operacji CSPRNG.
+Używa wbudowanego Random (xoshiro256**) w .NET 6+.
 */
-public class SystemRNG
+public class Xoshiro256
 {
     private static List<int> IntToBits(ulong value, int bits, bool msbFirst = true)
     {
@@ -54,7 +53,7 @@ public class SystemRNG
         return result;
     }
 
-    public static (List<int> bits, double time)? SystemRandomBitStream(
+    public static (List<int> bits, double time)? Xoshiro256BitStream(
         object seed,
         int nBits,
         int? bitsPerValue = null,
@@ -69,41 +68,43 @@ public class SystemRNG
         }
 
         int bpv = bitsPerValue ?? 32;
-        int numBytes = (bpv + 7) / 8;
+        
+        // Inicjalizuj Random z seedem (lub Random.Shared jeśli seed == null)
+        Random rng = seed is int seedInt ? new Random(seedInt) : new Random();
 
         var output = new List<int>();
         var stopwatch = returnTime ? Stopwatch.StartNew() : null;
 
         while (output.Count < nBits)
         {
-            byte[] buffer = new byte[numBytes];
-            RandomNumberGenerator.Fill(buffer);
+            // Generuj ulong (64-bity) z Random
+            ulong val;
+            if (bpv <= 32)
+            {
+                val = (ulong)rng.Next();
+            }
+            else
+            {
+                val = ((ulong)rng.NextInt64() & 0xFFFFFFFFFFFFFFFFUL);
+            }
 
-                // Convert bytes to ulong (big-endian)
-                ulong val = 0;
-                for (int i = 0; i < numBytes; i++)
-                {
-                    val = (val << 8) | buffer[i];
-                }
+            // Mask to bitsPerValue
+            if (bpv < 64)
+            {
+                val = val & ((1UL << bpv) - 1);
+            }
 
-                // Mask to bitsPerValue
-                int maxBits = 8 * numBytes;
-                if (bpv < maxBits)
-                {
-                    val = val & ((1UL << bpv) - 1);
-                }
+            var bits = IntToBits(val, bpv, msbFirst);
+            int remaining = nBits - output.Count;
 
-                var bits = IntToBits(val, bpv, msbFirst);
-                int remaining = nBits - output.Count;
-
-                if (remaining >= bits.Count)
-                {
-                    output.AddRange(bits);
-                }
-                else
-                {
-                    output.AddRange(bits.GetRange(0, remaining));
-                }
+            if (remaining >= bits.Count)
+            {
+                output.AddRange(bits);
+            }
+            else
+            {
+                output.AddRange(bits.GetRange(0, remaining));
+            }
         }
 
         if (returnTime)
@@ -115,13 +116,13 @@ public class SystemRNG
         return (output, 0.0);
     }
 
-    public static List<int> SystemRandomBitStream(
+    public static List<int> Xoshiro256BitStream(
         object seed,
         int nBits,
         int? bitsPerValue = null,
         bool msbFirst = true)
     {
-        var result = SystemRandomBitStream(seed, nBits, bitsPerValue, msbFirst, false);
+        var result = Xoshiro256BitStream(seed, nBits, bitsPerValue, msbFirst, false);
         return result?.bits ?? new List<int>();
     }
 }
@@ -136,6 +137,7 @@ class Program
             int nBits = 200;
             int bitsPerValue = 32;
             bool msbFirst = true;
+            int? seedValue = null;
 
             // Parsowanie argumentów z linii poleceń
             if (args.Length > 0 && int.TryParse(args[0], out int bits))
@@ -144,9 +146,11 @@ class Program
                 bitsPerValue = bpv;
             if (args.Length > 2)
                 msbFirst = args[2].ToLower() != "false";
+            if (args.Length > 3 && int.TryParse(args[3], out int seed))
+                seedValue = seed;
 
             // Generuj bity z pomiarem czasu
-            var result = SystemRNG.SystemRandomBitStream(null, nBits, bitsPerValue, msbFirst, true);
+            var result = Xoshiro256.Xoshiro256BitStream(seedValue, nBits, bitsPerValue, msbFirst, true);
             
             if (result.HasValue)
             {
@@ -176,13 +180,13 @@ class Program
 Krótki przykład użycia z terminala:
 
 # Domyślnie: 200 bitów, 32 bity na wartość, MSB-first
-.\bin\Xoshiro256.exe
+.\bin\Release\net8.0\Xoshiro256.exe
 
-# Z parametrami: nBits=100 bitsPerValue=16 msbFirst=true
-.\bin\Xoshiro256.exe 100 16 true
+# Z parametrami: nBits=1000000 bitsPerValue=32 msbFirst=true seed=12345
+.\bin\Release\net8.0\Xoshiro256.exe 1000000 32 true 12345
 
 # Wynik: JSON z bitami i czasem wykonania
 {"bits":[1,0,1,1,0,1,0,1,...],"time":0.001234}
-*/
 
-/// 
+Korzysta z wbudowanego Random (xoshiro256**) w .NET 6+
+*/ 
