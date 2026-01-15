@@ -1583,12 +1583,45 @@ export const Tests = () => {
                             render={() => (
                               <FormItem>
                                 <div className="mb-4">
-                                  <FormLabel className="text-base">
-                                    NIST Tests
-                                  </FormLabel>
-                                  <FormDescription>
-                                    Select which NIST tests to run
-                                  </FormDescription>
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <FormLabel className="text-base">
+                                        NIST Tests
+                                      </FormLabel>
+                                      <FormDescription>
+                                        Select which NIST tests to run
+                                      </FormDescription>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const allSelected = NIST_TESTS.every(
+                                          (test) =>
+                                            form
+                                              .getValues("nist_tests")
+                                              ?.includes(test.id)
+                                        );
+                                        if (allSelected) {
+                                          form.setValue("nist_tests", []);
+                                        } else {
+                                          form.setValue(
+                                            "nist_tests",
+                                            NIST_TESTS.map((t) => t.id)
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      {NIST_TESTS.every((test) =>
+                                        form
+                                          .watch("nist_tests")
+                                          ?.includes(test.id)
+                                      )
+                                        ? "Deselect All"
+                                        : "Select All"}
+                                    </Button>
+                                  </div>
                                 </div>
                                 <div className="max-h-96 border rounded-md overflow-hidden">
                                   <ScrollArea className="h-full">
@@ -1664,13 +1697,70 @@ export const Tests = () => {
                             render={() => (
                               <FormItem>
                                 <div className="mb-4">
-                                  <FormLabel className="text-base">
-                                    Diehard Tests
-                                  </FormLabel>
-                                  <FormDescription>
-                                    Select which Diehard tests to run (some
-                                    tests require minimum bit counts)
-                                  </FormDescription>
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <FormLabel className="text-base">
+                                        Diehard Tests
+                                      </FormLabel>
+                                      <FormDescription>
+                                        Select which Diehard tests to run (some
+                                        tests require minimum bit counts)
+                                      </FormDescription>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const effectiveBitCount =
+                                          inputType === "custom_bits"
+                                            ? customBitCount
+                                            : samplesCount;
+
+                                        // Get all valid tests (not disabled)
+                                        const validTests = DIEHARD_TESTS.filter(
+                                          (test) =>
+                                            effectiveBitCount >= test.minSamples
+                                        ).map((t) => t.id);
+
+                                        const allValidSelected =
+                                          validTests.every((testId) =>
+                                            form
+                                              .getValues("diehard_tests")
+                                              ?.includes(testId)
+                                          );
+
+                                        if (allValidSelected) {
+                                          form.setValue("diehard_tests", []);
+                                        } else {
+                                          form.setValue(
+                                            "diehard_tests",
+                                            validTests
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      {(() => {
+                                        const effectiveBitCount =
+                                          inputType === "custom_bits"
+                                            ? customBitCount
+                                            : samplesCount;
+                                        const validTests = DIEHARD_TESTS.filter(
+                                          (test) =>
+                                            effectiveBitCount >= test.minSamples
+                                        ).map((t) => t.id);
+                                        const allValidSelected =
+                                          validTests.every((testId) =>
+                                            form
+                                              .watch("diehard_tests")
+                                              ?.includes(testId)
+                                          );
+                                        return allValidSelected
+                                          ? "Deselect All"
+                                          : "Select All";
+                                      })()}
+                                    </Button>
+                                  </div>
                                 </div>
                                 <div className="max-h-96 border rounded-md overflow-hidden">
                                   <ScrollArea className="h-full">

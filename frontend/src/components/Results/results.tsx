@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, CheckSquare } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -144,8 +144,11 @@ export const Results = () => {
   }, [results, selectedTest, availableAlgorithms]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredResults.length / resultsPerPage);
-  const startIndex = (currentPage - 1) * resultsPerPage;
+  const showAllResults = resultsPerPage === -1;
+  const totalPages = showAllResults
+    ? 1
+    : Math.ceil(filteredResults.length / resultsPerPage);
+  const startIndex = showAllResults ? 0 : (currentPage - 1) * resultsPerPage;
   const paginatedResults = filteredResults.slice(
     startIndex,
     startIndex + resultsPerPage
@@ -178,6 +181,16 @@ export const Results = () => {
       }
       return newSet;
     });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paginatedResults.length) {
+      // Jeśli wszystkie zaznaczone, odznacz
+      setSelectedIds(new Set());
+    } else {
+      // Zaznacz wszystkie widoczne
+      setSelectedIds(new Set(paginatedResults.map((r) => r.id)));
+    }
   };
 
   const handleBulkDelete = async () => {
@@ -407,7 +420,10 @@ export const Results = () => {
               </label>
               <Select
                 value={String(resultsPerPage)}
-                onValueChange={(val) => setResultsPerPage(Number(val))}
+                onValueChange={(val) => {
+                  setResultsPerPage(Number(val));
+                  setCurrentPage(1);
+                }}
               >
                 <SelectTrigger className="h-9 w-full">
                   <SelectValue />
@@ -417,6 +433,7 @@ export const Results = () => {
                   <SelectItem value="20">20</SelectItem>
                   <SelectItem value="40">40</SelectItem>
                   <SelectItem value="80">80</SelectItem>
+                  <SelectItem value="-1">All</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -427,10 +444,31 @@ export const Results = () => {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              Showing {startIndex + 1}-
-              {Math.min(startIndex + resultsPerPage, filteredResults.length)} of{" "}
-              {filteredResults.length} results
+              Showing{" "}
+              {showAllResults
+                ? `all ${filteredResults.length}`
+                : `${startIndex + 1}-${Math.min(
+                    startIndex + resultsPerPage,
+                    filteredResults.length
+                  )} of ${filteredResults.length}`}{" "}
+              results
             </p>
+
+            {paginatedResults.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+                className="gap-2"
+              >
+                <CheckSquare className="h-4 w-4" />
+                {selectedIds.size === paginatedResults.length &&
+                paginatedResults.length > 0
+                  ? "Deselect All"
+                  : "Select All"}
+              </Button>
+            )}
+
             {hasActiveFilters && (
               <Button
                 variant="ghost"
@@ -453,13 +491,13 @@ export const Results = () => {
                 className="gap-2"
               >
                 <Trash2 className="h-4 w-4" />
-                Delete ({selectedIds.size})
+                Delete ({selectedIds.size + 1})
               </Button>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Delete {selectedIds.size} test result
-                    {selectedIds.size > 1 ? "s" : ""}?
+                    Delete {selectedIds.size + 1} test result
+                    {selectedIds.size > 0 ? "s" : ""}?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
@@ -506,7 +544,7 @@ export const Results = () => {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {!showAllResults && totalPages > 1 && (
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
