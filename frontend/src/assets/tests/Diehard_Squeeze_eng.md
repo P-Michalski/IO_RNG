@@ -17,10 +17,12 @@ vᵢ₊₁ = vᵢ × floatᵢ
 
 Count iterations until vₙ < 1
 
-Theoretical mean: ≈ 47 iterations
+Theoretical mean: ≈ 47 iterations (from Diehard empirical simulation)
+
+Standard error: SE = std_count / √n
 
 Z-score:
-z = |mean_count - 47| / std_count
+z = |mean_count - 47| / SE
 
 p-value = erfc(z / √2)
 ```
@@ -57,6 +59,8 @@ curl -X POST http://localhost:8000/api/rngs/24/run_test \
 - **score > 0.7**: Very good result
 - **score < 0.5**: Weak generator, incorrect squeeze distribution
 - **passed = false**: Generator failed the test
+
+**Note**: The expected mean of 47 iterations comes from Marsaglia's empirical simulations in the original Diehard test suite. The test now correctly uses standard error for the z-score calculation.
 
 ## Test parameters
 

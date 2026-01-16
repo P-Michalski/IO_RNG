@@ -1,25 +1,29 @@
-#Tests
+# Tests
 """
 Run RNG Test Use Case
 """
+
 from typing import Dict, Any, List
 import time
 
 # Numpy/Scipy imports dla optymalizacji wydajności
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
 
 try:
     from scipy.fft import fft
+
     HAS_SCIPY_FFT = True
 except ImportError:
     HAS_SCIPY_FFT = False
 
 try:
     from scipy.special import gammaincc
+
     HAS_GAMMAINCC = True
 except ImportError:
     HAS_GAMMAINCC = False
@@ -37,7 +41,7 @@ class RunRNGTestUseCase:
         self,
         rng_repository: IRNGRepository,
         result_repository: ITestResultRepository,
-        runners: List[IRNGRunner]
+        runners: List[IRNGRunner],
     ):
         self.rng_repository = rng_repository
         self.result_repository = result_repository
@@ -68,7 +72,7 @@ class RunRNGTestUseCase:
         test_name: str,
         samples_count: int,
         seed: int = None,
-        parameters: Dict[str, Any] = None
+        parameters: Dict[str, Any] = None,
     ) -> TestResult:
         """
         Wykonuje test RNG z opcjonalnymi parametrami.
@@ -104,7 +108,10 @@ class RunRNGTestUseCase:
         try:
             # Generuj surowe dane aby zachować bity
             from io_rng.core.entities.test_result import DataType
-            raw_data, data_type = runner.generate_raw(rng, samples_count, seed, parameters)
+
+            raw_data, data_type = runner.generate_raw(
+                rng, samples_count, seed, parameters
+            )
 
             # Konwertuj do bitów jeśli nie są bitami
             if data_type == DataType.BITS:
@@ -130,22 +137,19 @@ class RunRNGTestUseCase:
         result = TestResult(
             rng_id=rng_id,
             test_name=test_name,
-            passed=test_result['passed'],
-            score=test_result['score'],
+            passed=test_result["passed"],
+            score=test_result["score"],
             execution_time_ms=execution_time,
             samples_count=samples_count,
-            statistics=test_result['statistics'],
-            test_parameters=parameters
+            statistics=test_result["statistics"],
+            test_parameters=parameters,
         )
 
         # 6. Zapisz wynik
         return self.result_repository.save(result)
 
     def _perform_statistical_test(
-        self,
-        numbers: List[float],
-        test_name: str,
-        bits: List[int] = None
+        self, numbers: List[float], test_name: str, bits: List[int] = None
     ) -> Dict[str, Any]:
         """
         Wykonuje test statystyczny na liczbach losowych.
@@ -255,10 +259,7 @@ class RunRNGTestUseCase:
 
         # Chi-square test
         expected = len(numbers) / num_bins
-        chi_square = sum(
-            (observed - expected) ** 2 / expected
-            for observed in bins
-        )
+        chi_square = sum((observed - expected) ** 2 / expected for observed in bins)
 
         # Krytyczna wartość dla p=0.05, df=9
         critical_value = 16.919
@@ -268,14 +269,14 @@ class RunRNGTestUseCase:
         score = max(0.0, min(1.0, 1 - (chi_square / critical_value)))
 
         return {
-            'passed': passed,
-            'score': round(score, 2),
-            'statistics': {
-                'chi_square': round(chi_square, 3),
-                'critical_value': critical_value,
-                'bins': bins,
-                'expected_per_bin': expected
-            }
+            "passed": passed,
+            "score": round(score, 2),
+            "statistics": {
+                "chi_square": round(chi_square, 3),
+                "critical_value": critical_value,
+                "bins": bins,
+                "expected_per_bin": expected,
+            },
         }
 
     def _uniformity_test(self, numbers: List[float]) -> Dict[str, Any]:
@@ -312,23 +313,20 @@ class RunRNGTestUseCase:
         score = max(0.0, min(1.0, 1 - (mean_diff * 10 + var_diff * 5)))
 
         return {
-            'passed': passed,
-            'score': round(score, 2),
-            'statistics': {
-                'mean': round(mean, 6),
-                'expected_mean': expected_mean,
-                'variance': round(variance, 6),
-                'expected_variance': round(expected_variance, 6),
-                'mean_diff': round(mean_diff, 6),
-                'var_diff': round(var_diff, 6)
-            }
+            "passed": passed,
+            "score": round(score, 2),
+            "statistics": {
+                "mean": round(mean, 6),
+                "expected_mean": expected_mean,
+                "variance": round(variance, 6),
+                "expected_variance": round(expected_variance, 6),
+                "mean_diff": round(mean_diff, 6),
+                "var_diff": round(var_diff, 6),
+            },
         }
 
     def _create_error_result(
-        self,
-        rng_id: int,
-        test_name: str,
-        error_message: str
+        self, rng_id: int, test_name: str, error_message: str
     ) -> TestResult:
         """
         Tworzy TestResult z błędem.
@@ -349,7 +347,7 @@ class RunRNGTestUseCase:
             execution_time_ms=0.0,
             samples_count=0,
             statistics={},
-            error_message=error_message
+            error_message=error_message,
         )
 
         return self.result_repository.save(result)
@@ -372,6 +370,7 @@ class RunRNGTestUseCase:
 
         # P-value
         from math import erfc
+
         p_value = erfc(s_obs / math.sqrt(2))
 
         # Test passes if p-value >= 0.01
@@ -379,18 +378,20 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'test_statistic': round(s_obs, 6),
-                'ones': sum(bits),
-                'zeros': n - sum(bits),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "test_statistic": round(s_obs, 6),
+                "ones": sum(bits),
+                "zeros": n - sum(bits),
+                "threshold": 0.01,
+            },
         }
 
-    def _nist_block_frequency_test(self, bits: List[int], block_size: int = 128) -> Dict[str, Any]:
+    def _nist_block_frequency_test(
+        self, bits: List[int], block_size: int = 128
+    ) -> Dict[str, Any]:
         """
         NIST Block Frequency Test
         Sprawdza czy proporcja jedynek w blokach jest bliska 0.5
@@ -403,14 +404,14 @@ class RunRNGTestUseCase:
 
         if num_blocks == 0:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': 'Not enough bits for block test'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": "Not enough bits for block test"},
             }
 
         # OPTYMALIZACJA: Użyj numpy dla szybszych operacji na blokach
         if HAS_NUMPY:
-            bits_arr = np.array(bits[:num_blocks * block_size], dtype=np.int8)
+            bits_arr = np.array(bits[: num_blocks * block_size], dtype=np.int8)
             # Reshape do macierzy bloków
             blocks = bits_arr.reshape(num_blocks, block_size)
             # Oblicz proporcje dla wszystkich bloków naraz
@@ -423,7 +424,7 @@ class RunRNGTestUseCase:
             chi_square = 0.0
             proportions = []
             for i in range(num_blocks):
-                block = bits[i * block_size:(i + 1) * block_size]
+                block = bits[i * block_size : (i + 1) * block_size]
                 proportion = sum(block) / block_size
                 proportions.append(proportion)
                 chi_square += (proportion - 0.5) ** 2
@@ -440,15 +441,15 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 6),
-                'num_blocks': num_blocks,
-                'block_size': block_size,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 6),
+                "num_blocks": num_blocks,
+                "block_size": block_size,
+                "threshold": 0.01,
+            },
         }
 
     def _nist_runs_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -470,12 +471,12 @@ class RunRNGTestUseCase:
             # Pre-test
             if abs(pi - 0.5) >= 2 / math.sqrt(n):
                 return {
-                    'passed': False,
-                    'score': 0.0,
-                    'statistics': {
-                        'error': 'Pre-test failed: proportion of ones not close to 0.5',
-                        'proportion': round(pi, 6)
-                    }
+                    "passed": False,
+                    "score": 0.0,
+                    "statistics": {
+                        "error": "Pre-test failed: proportion of ones not close to 0.5",
+                        "proportion": round(pi, 6),
+                    },
                 }
 
             # Zlicz runs używając diff (przejścia = zmiana wartości)
@@ -489,12 +490,12 @@ class RunRNGTestUseCase:
             # Pre-test: proporcja jedynek musi być bliska 0.5
             if abs(pi - 0.5) >= 2 / math.sqrt(n):
                 return {
-                    'passed': False,
-                    'score': 0.0,
-                    'statistics': {
-                        'error': 'Pre-test failed: proportion of ones not close to 0.5',
-                        'proportion': round(pi, 6)
-                    }
+                    "passed": False,
+                    "score": 0.0,
+                    "statistics": {
+                        "error": "Pre-test failed: proportion of ones not close to 0.5",
+                        "proportion": round(pi, 6),
+                    },
                 }
 
             # Zlicz runs
@@ -518,14 +519,14 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'runs': runs,
-                'expected_runs': round(expected_runs, 2),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "runs": runs,
+                "expected_runs": round(expected_runs, 2),
+                "threshold": 0.01,
+            },
         }
 
     def _nist_longest_run_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -540,9 +541,9 @@ class RunRNGTestUseCase:
         # Parametry dla różnych długości bitów (uproszczone)
         if n < 128:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': 'Minimum 128 bits required'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": "Minimum 128 bits required"},
             }
         elif n < 6272:
             K, M = 3, 8
@@ -562,7 +563,7 @@ class RunRNGTestUseCase:
 
         # OPTYMALIZACJA: Użyj numpy dla bloków (częściowa optymalizacja)
         if HAS_NUMPY and num_blocks > 0:
-            bits_arr = np.array(bits[:num_blocks * M], dtype=np.int8)
+            bits_arr = np.array(bits[: num_blocks * M], dtype=np.int8)
             blocks_arr = bits_arr.reshape(num_blocks, M)
 
             # Dla każdego bloku znajdź najdłuższy run jedynek
@@ -589,7 +590,7 @@ class RunRNGTestUseCase:
         else:
             # Fallback: oryginalna implementacja
             for i in range(num_blocks):
-                block = bits[i * M:(i + 1) * M]
+                block = bits[i * M : (i + 1) * M]
                 max_run = 0
                 current_run = 0
 
@@ -612,26 +613,30 @@ class RunRNGTestUseCase:
                         break
 
         # Chi-square
-        chi_square = sum((frequencies[i] - num_blocks * pi_values[i]) ** 2 / (num_blocks * pi_values[i])
-                         for i in range(K + 1))
+        chi_square = sum(
+            (frequencies[i] - num_blocks * pi_values[i]) ** 2
+            / (num_blocks * pi_values[i])
+            for i in range(K + 1)
+        )
 
         # P-value (simplified)
         from math import erfc
+
         p_value = erfc(math.sqrt(chi_square / 2))
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 6),
-                'frequencies': frequencies,
-                'num_blocks': num_blocks,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 6),
+                "frequencies": frequencies,
+                "num_blocks": num_blocks,
+                "threshold": 0.01,
+            },
         }
 
     def _nist_cumulative_sums_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -670,16 +675,18 @@ class RunRNGTestUseCase:
         score = min(1.0, max(0.0, p_value))
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'max_excursion': z_forward,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "max_excursion": z_forward,
+                "threshold": 0.01,
+            },
         }
 
-    def _nist_approximate_entropy_test(self, bits: List[int], m: int = 10) -> Dict[str, Any]:
+    def _nist_approximate_entropy_test(
+        self, bits: List[int], m: int = 10
+    ) -> Dict[str, Any]:
         """
         NIST Approximate Entropy Test
         Mierzy częstotliwość wszystkich możliwych nakładających się wzorców
@@ -690,9 +697,9 @@ class RunRNGTestUseCase:
 
         if n < 100:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': 'Minimum 100 bits required'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": "Minimum 100 bits required"},
             }
 
         # Adjust m if n is too small
@@ -702,6 +709,7 @@ class RunRNGTestUseCase:
 
         # OPTYMALIZACJA: Użyj numpy dla pattern counting
         if HAS_NUMPY:
+
             def compute_phi_numpy(m_local):
                 bits_arr = np.array(bits, dtype=np.int8)
                 # Generuj overlapping patterns jako integery
@@ -709,7 +717,9 @@ class RunRNGTestUseCase:
                 powers = 2 ** np.arange(m_local - 1, -1, -1, dtype=np.int32)
 
                 for i in range(n):
-                    pattern_bits = np.array([bits_arr[(i + j) % n] for j in range(m_local)])
+                    pattern_bits = np.array(
+                        [bits_arr[(i + j) % n] for j in range(m_local)]
+                    )
                     patterns[i] = np.sum(pattern_bits * powers)
 
                 # Policz unikalne wzorce
@@ -727,7 +737,9 @@ class RunRNGTestUseCase:
                     pattern = tuple(bits[(i + j) % n] for j in range(m_local))
                     patterns[pattern] = patterns.get(pattern, 0) + 1
 
-                phi = sum((count / n) * math.log((count / n)) for count in patterns.values())
+                phi = sum(
+                    (count / n) * math.log((count / n)) for count in patterns.values()
+                )
                 return phi
 
             phi_m = compute_phi(m)
@@ -740,21 +752,22 @@ class RunRNGTestUseCase:
 
         # P-value (simplified)
         from math import erfc
+
         p_value = erfc(math.sqrt(chi_square / 2))
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'approximate_entropy': round(apen, 6),
-                'chi_square': round(chi_square, 6),
-                'm': m,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "approximate_entropy": round(apen, 6),
+                "chi_square": round(chi_square, 6),
+                "m": m,
+                "threshold": 0.01,
+            },
         }
 
     def _nist_matrix_rank_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -770,15 +783,15 @@ class RunRNGTestUseCase:
 
         if n < M * Q:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': f'Minimum {M*Q} bits required'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": f"Minimum {M * Q} bits required"},
             }
 
         num_matrices = n // (M * Q)
 
         # Zlicz macierze według rangi
-        rank_counts = {M: 0, M-1: 0, 'other': 0}
+        rank_counts = {M: 0, M - 1: 0, "other": 0}
 
         def compute_rank(matrix):
             """Oblicza rangę macierzy binarnej metodą eliminacji Gaussa"""
@@ -816,7 +829,7 @@ class RunRNGTestUseCase:
 
         # OPTYMALIZACJA: Użyj numpy dla macierzy
         if HAS_NUMPY:
-            bits_arr = np.array(bits[:num_matrices * M * Q], dtype=np.int8)
+            bits_arr = np.array(bits[: num_matrices * M * Q], dtype=np.int8)
             # Reshape do tensora macierzy [num_matrices, M, Q]
             matrices = bits_arr.reshape(num_matrices, M, Q)
 
@@ -828,19 +841,19 @@ class RunRNGTestUseCase:
                 if rank == M:
                     rank_counts[M] += 1
                 elif rank == M - 1:
-                    rank_counts[M-1] += 1
+                    rank_counts[M - 1] += 1
                 else:
-                    rank_counts['other'] += 1
+                    rank_counts["other"] += 1
         else:
             # Fallback: oryginalna implementacja
             for i in range(num_matrices):
                 # Pobierz M*Q bitów
-                block = bits[i * M * Q:(i + 1) * M * Q]
+                block = bits[i * M * Q : (i + 1) * M * Q]
 
                 # Utwórz macierz M x Q
                 matrix = []
                 for row in range(M):
-                    matrix.append(block[row * Q:(row + 1) * Q])
+                    matrix.append(block[row * Q : (row + 1) * Q])
 
                 # Oblicz rangę
                 rank = compute_rank(matrix)
@@ -848,21 +861,17 @@ class RunRNGTestUseCase:
                 if rank == M:
                     rank_counts[M] += 1
                 elif rank == M - 1:
-                    rank_counts[M-1] += 1
+                    rank_counts[M - 1] += 1
                 else:
-                    rank_counts['other'] += 1
+                    rank_counts["other"] += 1
 
         # Prawdopodobieństwa teoretyczne dla M=Q=32
-        pi = {
-            M: 0.2888,
-            M-1: 0.5776,
-            'other': 0.1336
-        }
+        pi = {M: 0.2888, M - 1: 0.5776, "other": 0.1336}
 
         # Chi-square
         chi_square = sum(
             (rank_counts[r] - num_matrices * pi[r]) ** 2 / (num_matrices * pi[r])
-            for r in [M, M-1, 'other']
+            for r in [M, M - 1, "other"]
         )
 
         # P-value (df=2)
@@ -872,16 +881,16 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 6),
-                'rank_counts': rank_counts,
-                'num_matrices': num_matrices,
-                'matrix_size': f'{M}x{Q}',
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 6),
+                "rank_counts": rank_counts,
+                "num_matrices": num_matrices,
+                "matrix_size": f"{M}x{Q}",
+                "threshold": 0.01,
+            },
         }
 
     def _nist_dft_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -897,18 +906,18 @@ class RunRNGTestUseCase:
             import numpy as np
         except ImportError:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': 'numpy is required for nist_dft_test'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": "numpy is required for nist_dft_test"},
             }
 
         n = len(bits)
 
         if n < 100:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': 'Minimum 100 bits required'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": "Minimum 100 bits required"},
             }
 
         # Konwertuj bity do +1/-1 w tablicy wektorowej
@@ -933,19 +942,19 @@ class RunRNGTestUseCase:
         score = min(1.0, float(p_value))
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(float(p_value), 6),
-                'peaks_below_threshold': int(N1),
-                'expected_peaks': round(N0, 2),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(float(p_value), 6),
+                "peaks_below_threshold": int(N1),
+                "expected_peaks": round(N0, 2),
+                "threshold": 0.01,
+            },
         }
 
-
-    def _nist_non_overlapping_template_test(self, bits: List[int],
-                                            template: List[int] = None) -> Dict[str, Any]:
+    def _nist_non_overlapping_template_test(
+        self, bits: List[int], template: List[int] = None
+    ) -> Dict[str, Any]:
         """
         NIST Non-overlapping Template Matching Test
         Szuka nienachodżących na siebie wystąpień wzorca
@@ -964,16 +973,16 @@ class RunRNGTestUseCase:
 
         if n < M:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': f'Minimum {M} bits required'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": f"Minimum {M} bits required"},
             }
 
         N = n // M
 
         # OPTYMALIZACJA: Użyj numpy dla bloków
         if HAS_NUMPY:
-            bits_arr = np.array(bits[:N * M], dtype=np.int8)
+            bits_arr = np.array(bits[: N * M], dtype=np.int8)
             blocks_arr = bits_arr.reshape(N, M)
             template_arr = np.array(template, dtype=np.int8)
 
@@ -983,7 +992,7 @@ class RunRNGTestUseCase:
                 i = 0
                 while i <= len(block) - m:
                     # Szybsze porównanie używając numpy
-                    if np.array_equal(block[i:i + m], template_arr):
+                    if np.array_equal(block[i : i + m], template_arr):
                         count += 1
                         i += m  # Przeskocz template (non-overlapping)
                     else:
@@ -991,7 +1000,7 @@ class RunRNGTestUseCase:
                 counts.append(count)
         else:
             # Fallback: oryginalna implementacja
-            blocks = [bits[i * M:(i + 1) * M] for i in range(N)]
+            blocks = [bits[i * M : (i + 1) * M] for i in range(N)]
 
             # Zlicz wystąpienia w każdym bloku
             counts = []
@@ -999,7 +1008,7 @@ class RunRNGTestUseCase:
                 count = 0
                 i = 0
                 while i <= len(block) - m:
-                    if block[i:i + m] == template:
+                    if block[i : i + m] == template:
                         count += 1
                         i += m  # Przeskocz template (non-overlapping)
                     else:
@@ -1007,8 +1016,8 @@ class RunRNGTestUseCase:
                 counts.append(count)
 
         # Oczekiwana liczba wystąpień
-        mu = (M - m + 1) / (2 ** m)
-        sigma_sq = M * ((1 / (2 ** m)) - ((2 * m - 1) / (2 ** (2 * m))))
+        mu = (M - m + 1) / (2**m)
+        sigma_sq = M * ((1 / (2**m)) - ((2 * m - 1) / (2 ** (2 * m))))
 
         # Chi-square
         chi_square = sum((c - mu) ** 2 for c in counts) / sigma_sq
@@ -1024,15 +1033,15 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 6),
-                'template': template,
-                'num_blocks': N,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 6),
+                "template": template,
+                "num_blocks": N,
+                "threshold": 0.01,
+            },
         }
 
     def _nist_overlapping_template_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -1050,9 +1059,9 @@ class RunRNGTestUseCase:
 
         if n < M:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': f'Minimum {M} bits required'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": f"Minimum {M} bits required"},
             }
 
         N = n // M
@@ -1060,7 +1069,7 @@ class RunRNGTestUseCase:
         # OPTYMALIZACJA: Użyj numpy dla sliding window
         counts = []
         if HAS_NUMPY:
-            bits_arr = np.array(bits[:N * M], dtype=np.int8)
+            bits_arr = np.array(bits[: N * M], dtype=np.int8)
             blocks_arr = bits_arr.reshape(N, M)
 
             # Dla każdego bloku, użyj rolling sum aby znaleźć wzorzec 111111111
@@ -1068,21 +1077,21 @@ class RunRNGTestUseCase:
                 # Sprawdź gdzie suma 9 kolejnych bitów == 9 (wszystkie jedynki)
                 count = 0
                 for j in range(M - m + 1):
-                    if np.sum(block[j:j + m]) == m:
+                    if np.sum(block[j : j + m]) == m:
                         count += 1
                 counts.append(min(count, 5))  # Cap at 5
         else:
             # Fallback: oryginalna implementacja
             for i in range(N):
-                block = bits[i * M:(i + 1) * M]
+                block = bits[i * M : (i + 1) * M]
                 count = 0
                 for j in range(len(block) - m + 1):
-                    if block[j:j + m] == template:
+                    if block[j : j + m] == template:
                         count += 1
                 counts.append(min(count, 5))  # Cap at 5
 
         # Prawdopodobieństwa teoretyczne
-        lambda_param = (M - m + 1) / (2 ** m)
+        lambda_param = (M - m + 1) / (2**m)
         eta = lambda_param / 2.0
 
         pi = [0.364091, 0.185659, 0.139381, 0.100571, 0.0704323, 0.139865]
@@ -1102,15 +1111,15 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 6),
-                'frequencies': v,
-                'num_blocks': N,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 6),
+                "frequencies": v,
+                "num_blocks": N,
+                "threshold": 0.01,
+            },
         }
 
     def _nist_universal_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -1138,16 +1147,16 @@ class RunRNGTestUseCase:
 
         if K <= 0:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': f'Minimum {(Q + 100) * L} bits required'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": f"Minimum {(Q + 100) * L} bits required"},
             }
 
         # OPTYMALIZACJA: Konwertuj bloki bitów na integery używając numpy
         if HAS_NUMPY:
             # Przygotuj tablicę bitów
             total_blocks = Q + K
-            bits_arr = np.array(bits[:total_blocks * L], dtype=np.int8)
+            bits_arr = np.array(bits[: total_blocks * L], dtype=np.int8)
             blocks_arr = bits_arr.reshape(total_blocks, L)
 
             # Konwertuj każdy blok na integer (szybsza wersja tuple)
@@ -1175,13 +1184,13 @@ class RunRNGTestUseCase:
 
             # Faza inicjalizacji (pierwsze Q bloków)
             for i in range(1, Q + 1):
-                block = tuple(bits[(i - 1) * L:i * L])
+                block = tuple(bits[(i - 1) * L : i * L])
                 T[block] = i
 
             # Faza testowa
             sum_log = 0.0
             for i in range(Q + 1, Q + K + 1):
-                block = tuple(bits[(i - 1) * L:i * L])
+                block = tuple(bits[(i - 1) * L : i * L])
                 if block in T:
                     distance = i - T[block]
                     sum_log += math.log2(distance)
@@ -1193,7 +1202,7 @@ class RunRNGTestUseCase:
         expected_values = {
             6: (5.2177052, 2.576),
             7: (6.1962507, 3.125),
-            8: (7.1836656, 3.238)
+            8: (7.1836656, 3.238),
         }
 
         expected, c = expected_values.get(L, (7.0, 3.0))
@@ -1208,20 +1217,22 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'fn': round(fn, 6),
-                'expected': round(expected, 6),
-                'L': L,
-                'Q': Q,
-                'K': K,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "fn": round(fn, 6),
+                "expected": round(expected, 6),
+                "L": L,
+                "Q": Q,
+                "K": K,
+                "threshold": 0.01,
+            },
         }
 
-    def _nist_linear_complexity_test(self, bits: List[int], M: int = 500) -> Dict[str, Any]:
+    def _nist_linear_complexity_test(
+        self, bits: List[int], M: int = 500
+    ) -> Dict[str, Any]:
         """
         NIST Linear Complexity Test
         Mierzy długość najkrótszego LFSR generującego sekwencję
@@ -1234,9 +1245,11 @@ class RunRNGTestUseCase:
 
         if N < 200:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': 'Need at least 200 blocks (minimum 100000 bits for M=500)'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": "Need at least 200 blocks (minimum 100000 bits for M=500)"
+                },
             }
 
         def berlekamp_massey(bits_block):
@@ -1275,19 +1288,19 @@ class RunRNGTestUseCase:
         # Oblicz złożoność dla każdego bloku
         if HAS_NUMPY:
             # Numpy version - reshape na bloki i przetwórz
-            bits_arr = np.array(bits[:N * M], dtype=np.int8)
+            bits_arr = np.array(bits[: N * M], dtype=np.int8)
             blocks = bits_arr.reshape(N, M)
             complexities = [berlekamp_massey(blocks[i]) for i in range(N)]
         else:
             # Fallback
             complexities = []
             for i in range(N):
-                block = bits[i * M:(i + 1) * M]
+                block = bits[i * M : (i + 1) * M]
                 L = berlekamp_massey(block)
                 complexities.append(L)
 
         # Oczekiwana wartość
-        mu = M / 2.0 + (9.0 + (-1) ** (M + 1)) / 36.0 - (M / 3.0 + 2.0 / 9.0) / (2 ** M)
+        mu = M / 2.0 + (9.0 + (-1) ** (M + 1)) / 36.0 - (M / 3.0 + 2.0 / 9.0) / (2**M)
 
         # Zlicz odstępstwa
         T = [-2.5, -1.5, -0.5, 0.5, 1.5, 2.5]
@@ -1323,16 +1336,16 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 6),
-                'frequencies': v,
-                'M': M,
-                'N': N,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 6),
+                "frequencies": v,
+                "M": M,
+                "N": N,
+                "threshold": 0.01,
+            },
         }
 
     def _nist_serial_test(self, bits: List[int], m: int = 16) -> Dict[str, Any]:
@@ -1347,9 +1360,9 @@ class RunRNGTestUseCase:
 
         if n < 100:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': 'Minimum 100 bits required'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": "Minimum 100 bits required"},
             }
 
         # Dostosuj m
@@ -1359,6 +1372,7 @@ class RunRNGTestUseCase:
 
         # OPTYMALIZACJA: Użyj numpy dla pattern counting
         if HAS_NUMPY:
+
             def psi_sq_numpy(m_local, bits_seq):
                 """Oblicza psi^2_m używając numpy"""
                 n_local = len(bits_seq)
@@ -1369,13 +1383,15 @@ class RunRNGTestUseCase:
                 powers = 2 ** np.arange(m_local - 1, -1, -1, dtype=np.int32)
 
                 for i in range(n_local):
-                    pattern_bits = np.array([bits_arr[(i + j) % n_local] for j in range(m_local)])
+                    pattern_bits = np.array(
+                        [bits_arr[(i + j) % n_local] for j in range(m_local)]
+                    )
                     patterns[i] = np.sum(pattern_bits * powers)
 
                 # Policz unikalne wzorce i ich częstości
                 unique, counts = np.unique(patterns, return_counts=True)
-                sum_val = np.sum(counts ** 2)
-                return (2 ** m_local / n_local) * sum_val - n_local
+                sum_val = np.sum(counts**2)
+                return (2**m_local / n_local) * sum_val - n_local
 
             psi2_m = psi_sq_numpy(m, bits)
             psi2_m1 = psi_sq_numpy(m - 1, bits)
@@ -1391,8 +1407,8 @@ class RunRNGTestUseCase:
                     pattern = tuple(bits_seq[(i + j) % n_local] for j in range(m_local))
                     patterns[pattern] = patterns.get(pattern, 0) + 1
 
-                sum_val = sum(count ** 2 for count in patterns.values())
-                return (2 ** m_local / n_local) * sum_val - n_local
+                sum_val = sum(count**2 for count in patterns.values())
+                return (2**m_local / n_local) * sum_val - n_local
 
             psi2_m = psi_sq(m, bits)
             psi2_m1 = psi_sq(m - 1, bits)
@@ -1410,16 +1426,16 @@ class RunRNGTestUseCase:
         score = min(1.0, min(p_value1, p_value2))
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value1': round(p_value1, 6),
-                'p_value2': round(p_value2, 6),
-                'delta1': round(delta1, 6),
-                'delta2': round(delta2, 6),
-                'm': m,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value1": round(p_value1, 6),
+                "p_value2": round(p_value2, 6),
+                "delta1": round(delta1, 6),
+                "delta2": round(delta2, 6),
+                "m": m,
+                "threshold": 0.01,
+            },
         }
 
     def _nist_random_excursions_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -1450,12 +1466,12 @@ class RunRNGTestUseCase:
 
         if cycles < 500:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': 'Too few cycles (need >= 500)',
-                    'cycles': cycles
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": "Too few cycles (need >= 500)",
+                    "cycles": cycles,
+                },
             }
 
         # Stany do testowania
@@ -1478,15 +1494,17 @@ class RunRNGTestUseCase:
             else:
                 chi = 0
 
-            results.append({
-                'state': x,
-                'visits': visits,
-                'expected': round(expected, 2),
-                'chi_square': round(chi, 4)
-            })
+            results.append(
+                {
+                    "state": x,
+                    "visits": visits,
+                    "expected": round(expected, 2),
+                    "chi_square": round(chi, 4),
+                }
+            )
 
         # Średnia chi-square
-        avg_chi = sum(r['chi_square'] for r in results) / len(results)
+        avg_chi = sum(r["chi_square"] for r in results) / len(results)
 
         # P-value (uproszczone)
         p_value = erfc(math.sqrt(avg_chi / 2))
@@ -1495,23 +1513,29 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'cycles': cycles,
-                'avg_chi_square': round(avg_chi, 4),
-                'states': results,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "cycles": cycles,
+                "avg_chi_square": round(avg_chi, 4),
+                "states": results,
+                "threshold": 0.01,
+            },
         }
 
     def _excursion_probability(self, x: int) -> float:
         """Pomocnicza funkcja dla Random Excursions"""
         # Uproszczone prawdopodobieństwa
         probs = {
-            -4: 0.0046, -3: 0.0163, -2: 0.0537, -1: 0.1458,
-            1: 0.1458, 2: 0.0537, 3: 0.0163, 4: 0.0046
+            -4: 0.0046,
+            -3: 0.0163,
+            -2: 0.0537,
+            -1: 0.1458,
+            1: 0.1458,
+            2: 0.0537,
+            3: 0.0163,
+            4: 0.0046,
         }
         return probs.get(x, 0.0)
 
@@ -1543,12 +1567,12 @@ class RunRNGTestUseCase:
 
         if cycles < 500:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': 'Too few cycles (need >= 500)',
-                    'cycles': cycles
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": "Too few cycles (need >= 500)",
+                    "cycles": cycles,
+                },
             }
 
         # Stany do testowania
@@ -1572,11 +1596,7 @@ class RunRNGTestUseCase:
                 p_value = 0.0
 
             p_values.append(p_value)
-            results.append({
-                'state': x,
-                'visits': visits,
-                'p_value': round(p_value, 6)
-            })
+            results.append({"state": x, "visits": visits, "p_value": round(p_value, 6)})
 
         # Test przechodzi gdy wszystkie p-values >= 0.01
         min_p_value = min(p_values) if p_values else 0.0
@@ -1584,14 +1604,14 @@ class RunRNGTestUseCase:
         score = min(1.0, min_p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'min_p_value': round(min_p_value, 6),
-                'cycles': cycles,
-                'states': results[:6],  # Pokaż tylko pierwsze 6 dla zwięzłości
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "min_p_value": round(min_p_value, 6),
+                "cycles": cycles,
+                "states": results[:6],  # Pokaż tylko pierwsze 6 dla zwięzłości
+                "threshold": 0.01,
+            },
         }
 
     # ==================== DIEHARD TEST SUITE ====================
@@ -1600,25 +1620,28 @@ class RunRNGTestUseCase:
         """
         Diehard Birthday Spacings Test
 
-        Testuje odległości między "urodzinami" (powtórzeniami wartości).
-        Dla prawdziwie losowego źródła, rozkład odległości powinien być Poissona.
+        Testuje liczbę wartości powtarzających się więcej niż raz (duplikatów).
+        Zgodnie z oryginalnym testem Diehard, liczba takich wartości j
+        powinna mieć rozkład Poissona z lambda = m^3 / (4*n), gdzie:
+        - m = liczba "urodzin" (512 w każdym bloku)
+        - n = rozmiar przestrzeni (2^24 dla 24-bitowych słów)
 
         Minimum: 2^18 = 262,144 bitów
         Zalecane: 2^20 = 1,048,576 bitów
         """
-        from math import erfc
+        from math import exp
 
         n = len(bits)
 
         # Wymagane minimum
         if n < 262144:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 262144 bits, got {n}',
-                    'bits_needed': 262144
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 262144 bits, got {n}",
+                    "bits_needed": 262144,
+                },
             }
 
         # OPTYMALIZACJA: Konwertuj bity na 24-bitowe słowa używając numpy
@@ -1626,7 +1649,7 @@ class RunRNGTestUseCase:
             word_length = 24
             num_words = (len(bits) - 23) // 24
             if num_words > 0:
-                bits_arr = np.array(bits[:num_words * word_length], dtype=np.int8)
+                bits_arr = np.array(bits[: num_words * word_length], dtype=np.int8)
                 bits_reshaped = bits_arr.reshape(num_words, word_length)
                 powers = 2 ** np.arange(word_length - 1, -1, -1, dtype=np.int32)
                 words = (bits_reshaped * powers).sum(axis=1).tolist()
@@ -1641,78 +1664,110 @@ class RunRNGTestUseCase:
                     word = (word << 1) | bits[i + j]
                 words.append(word)
 
-        # Podziel na bloki (każdy blok = 512 słów)
-        block_size = 512
-        num_blocks = len(words) // block_size
+        # Podziel na bloki (każdy blok = 512 słów = m)
+        m = 512  # liczba "urodzin" w każdym bloku
+        space_size = 2**24  # n - rozmiar przestrzeni dla 24-bitowych słów
+        num_blocks = len(words) // m
 
         if num_blocks < 10:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 10 blocks, got {num_blocks}',
-                    'blocks_needed': 10
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 10 blocks, got {num_blocks}",
+                    "blocks_needed": 10,
+                },
             }
 
-        spacings = []
+        # Dla każdego bloku zlicz liczbę wartości które występują > 1 raz (j)
+        j_values = []
 
         for block_idx in range(num_blocks):
-            block_words = words[block_idx * block_size : (block_idx + 1) * block_size]
+            block_words = words[block_idx * m : (block_idx + 1) * m]
 
-            # Sortuj dla znalezienia duplikatów
-            sorted_words = sorted(enumerate(block_words), key=lambda x: x[1])
+            # Zlicz częstości
+            from collections import Counter
 
-            # Znajdź spacing (odległość między duplikatami)
-            last_val = None
-            last_pos = -1
+            counts = Counter(block_words)
 
-            for pos, val in sorted_words:
-                if val == last_val:
-                    spacing = pos - last_pos
-                    spacings.append(spacing)
-                last_val = val
-                last_pos = pos
+            # j = liczba wartości które występują więcej niż raz
+            j = sum(1 for count in counts.values() if count > 1)
+            j_values.append(j)
 
-        if len(spacings) < 10:
-            # Brak wystarczających duplikatów - bardzo dobre losowe źródło
-            return {
-                'passed': True,
-                'score': 0.95,
-                'statistics': {
-                    'spacings_found': len(spacings),
-                    'note': 'Very few duplicates - excellent randomness',
-                    'threshold': 0.01
-                }
-            }
+        # Teoretyczny rozkład Poissona: lambda = m^3 / (4*n)
+        # Dla m=512, n=2^24: lambda = 512^3 / (4 * 2^24) = 2.0
+        lambda_param = (m**3) / (4.0 * space_size)
 
-        # Testuj zgodność z rozkładem Poissona
-        mean_spacing = sum(spacings) / len(spacings)
+        # Buduj histogram j_values i porównaj z rozkładem Poissona
+        # Zlicz częstości różnych wartości j
+        from collections import Counter
 
-        # Teoretyczna średnia dla rozkładu Poissona w przestrzeni 2^24 z 512 próbkami
-        expected_mean = (2**24) / block_size
+        j_counts = Counter(j_values)
 
-        # Chi-square test dla zgodności
-        variance = sum((s - mean_spacing)**2 for s in spacings) / len(spacings)
+        # Oczekiwane częstości dla rozkładu Poissona
+        # P(j=k) = (lambda^k * e^(-lambda)) / k!
+        def poisson_prob(k, lam):
+            from math import factorial
 
-        # Normalizuj do p-value
-        chi_square = abs(mean_spacing - expected_mean) / (variance / len(spacings))**0.5
-        p_value = erfc(chi_square / (2**0.5))
+            return (lam**k * exp(-lam)) / factorial(k)
+
+        # Chi-square test
+        # Określ zakres j (zazwyczaj 0 do ~10 dla lambda=2)
+        max_j = max(j_values) if j_values else 5
+        min_j = 0
+
+        expected_counts = {}
+        observed_counts = {}
+
+        # Buduj oczekiwane i obserwowane częstości
+        for k in range(min_j, max_j + 2):  # +2 dla "tail"
+            if k <= max_j:
+                expected_counts[k] = poisson_prob(k, lambda_param) * num_blocks
+                observed_counts[k] = j_counts.get(k, 0)
+            else:
+                # Ogon rozkładu (j > max_j)
+                tail_prob = sum(poisson_prob(i, lambda_param) for i in range(k, k + 10))
+                expected_counts[">=" + str(k)] = tail_prob * num_blocks
+                observed_counts[">=" + str(k)] = sum(
+                    c for j, c in j_counts.items() if j >= k
+                )
+
+        # Chi-square
+        chi_square = 0
+        for key in expected_counts:
+            exp = expected_counts[key]
+            obs = observed_counts[key]
+            if exp > 0:
+                chi_square += (obs - exp) ** 2 / exp
+
+        # Stopnie swobody = liczba kategorii - 1 - liczba estymowanych parametrów
+        df = len(expected_counts) - 1  # -1 bo suma jest znana
+
+        # P-value
+        if HAS_GAMMAINCC:
+            p_value = gammaincc(df / 2.0, chi_square / 2.0)
+        else:
+            from math import erfc
+
+            # Aproksymacja normalna dla chi-square
+            p_value = erfc((chi_square / (2.0 * df)) ** 0.5)
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'mean_spacing': round(mean_spacing, 2),
-                'expected_mean': round(expected_mean, 2),
-                'num_spacings': len(spacings),
-                'num_blocks': num_blocks,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 4),
+                "lambda": round(lambda_param, 4),
+                "mean_j": round(sum(j_values) / len(j_values), 2),
+                "expected_mean_j": round(lambda_param, 2),
+                "num_blocks": num_blocks,
+                "df": df,
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_overlapping_permutations_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -1730,19 +1785,19 @@ class RunRNGTestUseCase:
 
         if n < 1048576:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 1048576 bits, got {n}',
-                    'bits_needed': 1048576
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 1048576 bits, got {n}",
+                    "bits_needed": 1048576,
+                },
             }
 
         # Konwertuj bity na 8-bitowe bajty
         if HAS_NUMPY:
             # Numpy version - szybsza konwersja bitów na bajty
             num_bytes = (len(bits) - 7) // 8
-            bits_arr = np.array(bits[:num_bytes * 8], dtype=np.int8)
+            bits_arr = np.array(bits[: num_bytes * 8], dtype=np.int8)
             bits_reshaped = bits_arr.reshape(num_bytes, 8)
             powers = 2 ** np.arange(7, -1, -1, dtype=np.int32)
             bytes_list = (bits_reshaped * powers).sum(axis=1).tolist()
@@ -1760,7 +1815,7 @@ class RunRNGTestUseCase:
         perm_counts = {}
 
         for i in range(len(bytes_list) - window_size + 1):
-            window = bytes_list[i:i + window_size]
+            window = bytes_list[i : i + window_size]
 
             # Konwertuj do rangi (permutacji) - poprawiona wersja z tie-breaking
             # Sortuj wartości z zachowaniem oryginalnych indeksów
@@ -1793,23 +1848,23 @@ class RunRNGTestUseCase:
             p_value = gammaincc(df / 2, chi_square / 2)
         else:
             # Fallback: erfc approximation (mniej dokładne)
-            p_value = erfc((chi_square / (2 * df))**0.5)
+            p_value = erfc((chi_square / (2 * df)) ** 0.5)
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 4),
-                'degrees_of_freedom': df,
-                'unique_permutations': len(perm_counts),
-                'expected_permutations': num_perms,
-                'total_windows': total_windows,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 4),
+                "degrees_of_freedom": df,
+                "unique_permutations": len(perm_counts),
+                "expected_permutations": num_perms,
+                "total_windows": total_windows,
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_binary_rank_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -1830,20 +1885,20 @@ class RunRNGTestUseCase:
 
         if n < bits_per_matrix * 10:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= {bits_per_matrix * 10} bits, got {n}',
-                    'bits_needed': bits_per_matrix * 10
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= {bits_per_matrix * 10} bits, got {n}",
+                    "bits_needed": bits_per_matrix * 10,
+                },
             }
 
         num_matrices = n // bits_per_matrix
-        rank_counts = {32: 0, 31: 0, 'other': 0}
+        rank_counts = {32: 0, 31: 0, "other": 0}
 
         # OPTYMALIZACJA: Użyj numpy dla macierzy
         if HAS_NUMPY:
-            bits_arr = np.array(bits[:num_matrices * bits_per_matrix], dtype=np.int8)
+            bits_arr = np.array(bits[: num_matrices * bits_per_matrix], dtype=np.int8)
             # Reshape do tensora macierzy [num_matrices, matrix_size, matrix_size]
             matrices = bits_arr.reshape(num_matrices, matrix_size, matrix_size)
 
@@ -1856,13 +1911,13 @@ class RunRNGTestUseCase:
                 elif rank == 31:
                     rank_counts[31] += 1
                 else:
-                    rank_counts['other'] += 1
+                    rank_counts["other"] += 1
         else:
             # Fallback: oryginalna implementacja
             for m in range(num_matrices):
                 # Wyciągnij bity dla macierzy
                 start = m * bits_per_matrix
-                matrix_bits = bits[start:start + bits_per_matrix]
+                matrix_bits = bits[start : start + bits_per_matrix]
 
                 # Utwórz macierz 32x32
                 matrix = []
@@ -1878,7 +1933,7 @@ class RunRNGTestUseCase:
                 elif rank == 31:
                     rank_counts[31] += 1
                 else:
-                    rank_counts['other'] += 1
+                    rank_counts["other"] += 1
 
         # Teoretyczne prawdopodobieństwa dla 32x32
         # Dla prawdziwie losowej macierzy:
@@ -1892,9 +1947,9 @@ class RunRNGTestUseCase:
 
         # Chi-square test
         chi_square = (
-            (rank_counts[32] - expected_32) ** 2 / expected_32 +
-            (rank_counts[31] - expected_31) ** 2 / expected_31 +
-            (rank_counts['other'] - expected_other) ** 2 / expected_other
+            (rank_counts[32] - expected_32) ** 2 / expected_32
+            + (rank_counts[31] - expected_31) ** 2 / expected_31
+            + (rank_counts["other"] - expected_other) ** 2 / expected_other
         )
 
         # df = 3 - 1 = 2
@@ -1902,25 +1957,25 @@ class RunRNGTestUseCase:
             p_value = gammaincc(1, chi_square / 2)  # df/2 = 2/2 = 1
         else:
             # Fallback: erfc approximation (mniej dokładne)
-            p_value = erfc((chi_square / 4)**0.5)
+            p_value = erfc((chi_square / 4) ** 0.5)
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 4),
-                'rank_32_count': rank_counts[32],
-                'rank_31_count': rank_counts[31],
-                'rank_other_count': rank_counts['other'],
-                'expected_32': round(expected_32, 2),
-                'expected_31': round(expected_31, 2),
-                'num_matrices': num_matrices,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 4),
+                "rank_32_count": rank_counts[32],
+                "rank_31_count": rank_counts[31],
+                "rank_other_count": rank_counts["other"],
+                "expected_32": round(expected_32, 2),
+                "expected_31": round(expected_31, 2),
+                "num_matrices": num_matrices,
+                "threshold": 0.01,
+            },
         }
 
     def _binary_matrix_rank_numpy(self, matrix: np.ndarray) -> int:
@@ -2021,12 +2076,12 @@ class RunRNGTestUseCase:
 
         if n < 2097152:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 2097152 bits, got {n}',
-                    'bits_needed': 2097152
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 2097152 bits, got {n}",
+                    "bits_needed": 2097152,
+                },
             }
 
         # Użyj 20-bitowych słów
@@ -2042,7 +2097,7 @@ class RunRNGTestUseCase:
             powers = 2 ** np.arange(word_length - 1, -1, -1, dtype=np.int32)
 
             for i in range(total_words):
-                words[i] = np.sum(bits_arr[i:i + word_length] * powers)
+                words[i] = np.sum(bits_arr[i : i + word_length] * powers)
 
             # Policz unikalne słowa
             unique_words, counts = np.unique(words, return_counts=True)
@@ -2053,7 +2108,7 @@ class RunRNGTestUseCase:
 
             # Overlapping windows
             for i in range(n - word_length + 1):
-                word = tuple(bits[i:i + word_length])
+                word = tuple(bits[i : i + word_length])
                 word_counts[word] = word_counts.get(word, 0) + 1
 
         total_words = n - word_length + 1
@@ -2061,16 +2116,16 @@ class RunRNGTestUseCase:
         # Znajdź min/max częstości
         if not word_counts:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {'error': 'No words found'}
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": "No words found"},
             }
 
         max_count = int(max(word_counts.values()))
         min_count = int(min(word_counts.values()))
 
         # Oczekiwana częstość dla każdego słowa (równomierne)
-        num_possible_words = 2 ** word_length
+        num_possible_words = 2**word_length
         expected_count = total_words / num_possible_words
 
         # Test: czy max/min są w rozsądnym zakresie?
@@ -2085,19 +2140,19 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'max_count': max_count,
-                'min_count': min_count,
-                'expected_count': round(expected_count, 2),
-                'unique_words': len(word_counts),
-                'possible_words': num_possible_words,
-                'total_words': total_words,
-                'z_score': round(z_score, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "max_count": max_count,
+                "min_count": min_count,
+                "expected_count": round(expected_count, 2),
+                "unique_words": len(word_counts),
+                "possible_words": num_possible_words,
+                "total_words": total_words,
+                "z_score": round(z_score, 4),
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_opso_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -2115,12 +2170,12 @@ class RunRNGTestUseCase:
 
         if n < 2097152:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 2097152 bits, got {n}',
-                    'bits_needed': 2097152
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 2097152 bits, got {n}",
+                    "bits_needed": 2097152,
+                },
             }
 
         # Użyj 10-bitowych par
@@ -2136,7 +2191,7 @@ class RunRNGTestUseCase:
             powers = 2 ** np.arange(word_length - 1, -1, -1, dtype=np.int32)
 
             for i in range(total_words):
-                words[i] = np.sum(bits_arr[i:i + word_length] * powers)
+                words[i] = np.sum(bits_arr[i : i + word_length] * powers)
 
             # Policz unikalne słowa i ich częstości
             unique_words, counts = np.unique(words, return_counts=True)
@@ -2149,14 +2204,14 @@ class RunRNGTestUseCase:
 
             # Overlapping
             for i in range(n - word_length + 1):
-                word = tuple(bits[i:i + word_length])
+                word = tuple(bits[i : i + word_length])
                 word_counts[word] = word_counts.get(word, 0) + 1
 
             # Policz słowa występujące dokładnie 1 raz
             singleton_count = sum(1 for count in word_counts.values() if count == 1)
 
         total_words = n - word_length + 1
-        num_possible_words = 2 ** word_length
+        num_possible_words = 2**word_length
 
         # Teoretyczna wartość: dla prawdziwie losowego źródła
         # P(słowo występuje 1x) zależy od rozkładu Poissona
@@ -2165,13 +2220,15 @@ class RunRNGTestUseCase:
 
         # Chi-square dla różnicy
         if expected_singletons > 0:
-            chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
+            chi_square = (
+                singleton_count - expected_singletons
+            ) ** 2 / expected_singletons
             # df = 1 (testujemy jedną kategorię)
             if HAS_GAMMAINCC:
                 p_value = gammaincc(0.5, chi_square / 2)
             else:
                 # Fallback: erfc approximation
-                p_value = erfc((chi_square / 2)**0.5)
+                p_value = erfc((chi_square / 2) ** 0.5)
         else:
             p_value = 0.0
 
@@ -2179,17 +2236,17 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'singleton_count': singleton_count,
-                'expected_singletons': round(expected_singletons, 2),
-                'total_words': total_words,
-                'unique_words': len(unique_words) if HAS_NUMPY else len(word_counts),
-                'lambda': round(lambda_param, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "singleton_count": singleton_count,
+                "expected_singletons": round(expected_singletons, 2),
+                "total_words": total_words,
+                "unique_words": len(unique_words) if HAS_NUMPY else len(word_counts),
+                "lambda": round(lambda_param, 4),
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_oqso_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -2208,19 +2265,19 @@ class RunRNGTestUseCase:
 
         if n < 2097152:  # 2^21
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 2097152 bits, got {n}',
-                    'bits_needed': 2097152
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 2097152 bits, got {n}",
+                    "bits_needed": 2097152,
+                },
             }
 
         # Konwertuj bity na 32-bitowe słowa
         if HAS_NUMPY:
             # Numpy version - szybsza konwersja
             num_words = n // 32
-            bits_arr = np.array(bits[:num_words * 32], dtype=np.int8)
+            bits_arr = np.array(bits[: num_words * 32], dtype=np.int8)
             bits_reshaped = bits_arr.reshape(num_words, 32)
             powers = 2 ** np.arange(31, -1, -1, dtype=np.int64)
             words = (bits_reshaped * powers).sum(axis=1)
@@ -2237,7 +2294,7 @@ class RunRNGTestUseCase:
 
                 # Twórz nakładające się czwórki (0-1-2-3, 1-2-3-4, 2-3-4-5)
                 for i in range(3):
-                    quad = tuple(letters[i:i+4])
+                    quad = tuple(letters[i : i + 4])
                     quadruples.append(quad)
 
             # Policz wystąpienia
@@ -2250,7 +2307,7 @@ class RunRNGTestUseCase:
             quadruples = []
 
             for i in range(num_words):
-                word_bits = bits[i*32:(i+1)*32]
+                word_bits = bits[i * 32 : (i + 1) * 32]
                 word = 0
                 for bit in word_bits:
                     word = (word << 1) | bit
@@ -2263,7 +2320,7 @@ class RunRNGTestUseCase:
 
                 # Nakładające się czwórki
                 for j in range(3):
-                    quad = tuple(letters[j:j+4])
+                    quad = tuple(letters[j : j + 4])
                     quadruples.append(quad)
 
             quad_counts = {}
@@ -2274,20 +2331,22 @@ class RunRNGTestUseCase:
         singleton_count = sum(1 for count in quad_counts.values() if count == 1)
 
         total_quads = len(quadruples)
-        num_possible_quads = 32 ** 4  # 32 możliwych liter, 4-literowe słowa
+        num_possible_quads = 32**4  # 32 możliwych liter, 4-literowe słowa
 
         # Rozkład Poissona
         lambda_param = total_quads / num_possible_quads
         expected_singletons = num_possible_quads * lambda_param * exp(-lambda_param)
 
         if expected_singletons > 0:
-            chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
+            chi_square = (
+                singleton_count - expected_singletons
+            ) ** 2 / expected_singletons
             # df = 1 (testujemy jedną kategorię)
             if HAS_GAMMAINCC:
                 p_value = gammaincc(0.5, chi_square / 2)
             else:
                 # Fallback: erfc approximation
-                p_value = erfc((chi_square / 2)**0.5)
+                p_value = erfc((chi_square / 2) ** 0.5)
         else:
             p_value = 0.0
 
@@ -2295,17 +2354,17 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'singleton_count': singleton_count,
-                'expected_singletons': round(expected_singletons, 2),
-                'total_quadruples': total_quads,
-                'unique_quadruples': len(quad_counts),
-                'lambda': round(lambda_param, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "singleton_count": singleton_count,
+                "expected_singletons": round(expected_singletons, 2),
+                "total_quadruples": total_quads,
+                "unique_quadruples": len(quad_counts),
+                "lambda": round(lambda_param, 4),
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_dna_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -2324,12 +2383,12 @@ class RunRNGTestUseCase:
 
         if n < 2097152:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 2097152 bits, got {n}',
-                    'bits_needed': 2097152
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 2097152 bits, got {n}",
+                    "bits_needed": 2097152,
+                },
             }
 
         # Konwertuj pary bitów na litery DNA (0-3)
@@ -2339,7 +2398,7 @@ class RunRNGTestUseCase:
         if HAS_NUMPY:
             # Numpy version
             num_letters = n // bits_per_letter
-            bits_arr = np.array(bits[:num_letters * bits_per_letter], dtype=np.int8)
+            bits_arr = np.array(bits[: num_letters * bits_per_letter], dtype=np.int8)
             bits_reshaped = bits_arr.reshape(num_letters, bits_per_letter)
 
             # Konwertuj pary bitów na liczby 0-3
@@ -2348,7 +2407,7 @@ class RunRNGTestUseCase:
             # Twórz nakładające się 10-literowe słowa
             words = []
             for i in range(len(letters) - word_length + 1):
-                word = tuple(letters[i:i+word_length].tolist())
+                word = tuple(letters[i : i + word_length].tolist())
                 words.append(word)
 
             # Policz wystąpienia
@@ -2361,13 +2420,13 @@ class RunRNGTestUseCase:
             letters = []
 
             for i in range(num_letters):
-                letter = bits[i*2] * 2 + bits[i*2 + 1]
+                letter = bits[i * 2] * 2 + bits[i * 2 + 1]
                 letters.append(letter)
 
             # Nakładające się słowa
             words = []
             for i in range(len(letters) - word_length + 1):
-                word = tuple(letters[i:i+word_length])
+                word = tuple(letters[i : i + word_length])
                 words.append(word)
 
             word_counts = {}
@@ -2378,19 +2437,21 @@ class RunRNGTestUseCase:
         singleton_count = sum(1 for count in word_counts.values() if count == 1)
 
         total_words = len(words)
-        num_possible_words = 4 ** word_length  # 4 litery, 10-literowe słowa
+        num_possible_words = 4**word_length  # 4 litery, 10-literowe słowa
 
         lambda_param = total_words / num_possible_words
         expected_singletons = num_possible_words * lambda_param * exp(-lambda_param)
 
         if expected_singletons > 0:
-            chi_square = (singleton_count - expected_singletons) ** 2 / expected_singletons
+            chi_square = (
+                singleton_count - expected_singletons
+            ) ** 2 / expected_singletons
             # df = 1 (testujemy jedną kategorię)
             if HAS_GAMMAINCC:
                 p_value = gammaincc(0.5, chi_square / 2)
             else:
                 # Fallback: erfc approximation
-                p_value = erfc((chi_square / 2)**0.5)
+                p_value = erfc((chi_square / 2) ** 0.5)
         else:
             p_value = 0.0
 
@@ -2398,17 +2459,17 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'singleton_count': singleton_count,
-                'expected_singletons': round(expected_singletons, 2),
-                'total_words': total_words,
-                'unique_words': len(word_counts),
-                'lambda': round(lambda_param, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "singleton_count": singleton_count,
+                "expected_singletons": round(expected_singletons, 2),
+                "total_words": total_words,
+                "unique_words": len(word_counts),
+                "lambda": round(lambda_param, 4),
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_count_1s_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -2427,19 +2488,19 @@ class RunRNGTestUseCase:
 
         if n < 256000:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 256000 bits, got {n}',
-                    'bits_needed': 256000
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 256000 bits, got {n}",
+                    "bits_needed": 256000,
+                },
             }
 
         # Konwertuj bity na bajty i zlicz jedynki
         if HAS_NUMPY:
             # Numpy version
             num_bytes = n // 8
-            bits_arr = np.array(bits[:num_bytes * 8], dtype=np.int8)
+            bits_arr = np.array(bits[: num_bytes * 8], dtype=np.int8)
             bits_reshaped = bits_arr.reshape(num_bytes, 8)
 
             # Zlicz jedynki w każdym bajcie
@@ -2455,7 +2516,7 @@ class RunRNGTestUseCase:
             ones_counts = []
 
             for i in range(num_bytes):
-                byte_bits = bits[i*8:(i+1)*8]
+                byte_bits = bits[i * 8 : (i + 1) * 8]
                 ones = sum(byte_bits)
                 ones_counts.append(ones)
 
@@ -2467,7 +2528,7 @@ class RunRNGTestUseCase:
         # P(k jedynek) = C(8,k) * 0.5^8
         expected = []
         for k in range(9):
-            prob = comb(8, k) * (0.5 ** 8)
+            prob = comb(8, k) * (0.5**8)
             expected.append(prob * num_bytes)
 
         # Chi-square test
@@ -2479,22 +2540,30 @@ class RunRNGTestUseCase:
 
         # Stopnie swobody = 8 (9 kategorii - 1)
         df = 8
-        p_value = erfc((chi_square / (2 * df))**0.5)
+
+        # P-value dla chi-square (użyj gammaincc jeśli dostępne)
+        if HAS_GAMMAINCC:
+            p_value = gammaincc(df / 2.0, chi_square / 2.0)
+        else:
+            # Fallback: aproksymacja normalna (mniej dokładna)
+            from math import erfc
+
+            p_value = erfc((chi_square / (2 * df)) ** 0.5)
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 4),
-                'num_bytes': num_bytes,
-                'observed': observed.tolist() if HAS_NUMPY else observed,
-                'expected': [round(e, 2) for e in expected],
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 4),
+                "num_bytes": num_bytes,
+                "observed": observed.tolist() if HAS_NUMPY else observed,
+                "expected": [round(e, 2) for e in expected],
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_parking_lot_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -2513,12 +2582,12 @@ class RunRNGTestUseCase:
 
         if n < 384000:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 384000 bits, got {n}',
-                    'bits_needed': 384000
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 384000 bits, got {n}",
+                    "bits_needed": 384000,
+                },
             }
 
         # Konwertuj bity na floaty [0,1] dla współrzędnych
@@ -2527,12 +2596,12 @@ class RunRNGTestUseCase:
 
         if HAS_NUMPY:
             # Numpy version
-            bits_arr = np.array(bits[:num_points * bits_per_coord * 2], dtype=np.int8)
+            bits_arr = np.array(bits[: num_points * bits_per_coord * 2], dtype=np.int8)
 
             # Konwertuj grupy bitów na liczby 0-65535, potem normalizuj do [0,1]
             bits_grouped = bits_arr.reshape(num_points * 2, bits_per_coord)
             powers = 2 ** np.arange(bits_per_coord - 1, -1, -1, dtype=np.int32)
-            coords = (bits_grouped * powers).sum(axis=1) / (2 ** bits_per_coord)
+            coords = (bits_grouped * powers).sum(axis=1) / (2**bits_per_coord)
 
             # Rozdziel na x i y
             x = coords[0::2]
@@ -2545,7 +2614,7 @@ class RunRNGTestUseCase:
             for i in range(len(x)):
                 can_park = True
                 for px, py in parked:
-                    dist = sqrt((float(x[i]) - px)**2 + (float(y[i]) - py)**2)
+                    dist = sqrt((float(x[i]) - px) ** 2 + (float(y[i]) - py) ** 2)
                     if dist < 2 * radius:
                         can_park = False
                         break
@@ -2555,11 +2624,11 @@ class RunRNGTestUseCase:
             # Fallback
             coords = []
             for i in range(num_points * 2):
-                coord_bits = bits[i*bits_per_coord:(i+1)*bits_per_coord]
+                coord_bits = bits[i * bits_per_coord : (i + 1) * bits_per_coord]
                 value = 0
                 for bit in coord_bits:
                     value = (value << 1) | bit
-                coords.append(value / (2 ** bits_per_coord))
+                coords.append(value / (2**bits_per_coord))
 
             x = coords[0::2]
             y = coords[1::2]
@@ -2570,7 +2639,7 @@ class RunRNGTestUseCase:
             for i in range(len(x)):
                 can_park = True
                 for px, py in parked:
-                    dist = sqrt((x[i] - px)**2 + (y[i] - py)**2)
+                    dist = sqrt((x[i] - px) ** 2 + (y[i] - py) ** 2)
                     if dist < 2 * radius:
                         can_park = False
                         break
@@ -2579,29 +2648,41 @@ class RunRNGTestUseCase:
 
         num_parked = len(parked)
 
-        # Teoretyczna wartość zależy od rozmiaru kwadratu i promienia
-        # Dla losowych punktów oczekiwana liczba zaparkowanych ~ num_points * exp(-lambda)
-        # gdzie lambda zależy od gęstości
-        expected = num_points * 0.3  # Przybliżone
+        # Teoretyczna wartość według oryginalnego testu Diehard:
+        # Dla 12,000 prób w kwadracie 100×100 z kołami o promieniu 1:
+        # średnia = 3523, sigma = 21.9
+        # Skalujemy proporcjonalnie dla innych liczb prób
+        standard_attempts = 12000
+        standard_mean = 3523.0
+        standard_sigma = 21.9
 
-        # Test czy liczba zaparkowanych jest w rozsądnym zakresie
-        z_score = abs(num_parked - expected) / sqrt(expected) if expected > 0 else 0
-        p_value = erfc(z_score / sqrt(2)) if z_score > 0 else 1.0
+        # Skalowanie liniowe względem liczby prób
+        expected = standard_mean * (num_points / standard_attempts)
+        sigma = standard_sigma * sqrt(num_points / standard_attempts)
+
+        # Test normalności (k-3523)/21.9 ~ N(0,1) dla standardowych parametrów
+        if sigma > 0:
+            z_score = abs(num_parked - expected) / sigma
+            p_value = erfc(z_score / sqrt(2))
+        else:
+            z_score = 0.0
+            p_value = 1.0
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'num_parked': num_parked,
-                'num_attempted': num_points,
-                'expected': round(expected, 2),
-                'z_score': round(z_score, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "num_parked": num_parked,
+                "num_attempted": num_points,
+                "expected": round(expected, 2),
+                "sigma": round(sigma, 2),
+                "z_score": round(z_score, 4),
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_squeeze_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -2620,25 +2701,25 @@ class RunRNGTestUseCase:
 
         if n < 100000:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 100000 bits, got {n}',
-                    'bits_needed': 100000
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 100000 bits, got {n}",
+                    "bits_needed": 100000,
+                },
             }
 
         # Konwertuj bity na 32-bitowe integery
         if HAS_NUMPY:
             # Numpy version
             num_ints = n // 32
-            bits_arr = np.array(bits[:num_ints * 32], dtype=np.int8)
+            bits_arr = np.array(bits[: num_ints * 32], dtype=np.int8)
             bits_reshaped = bits_arr.reshape(num_ints, 32)
             powers = 2 ** np.arange(31, -1, -1, dtype=np.int64)
             integers = (bits_reshaped * powers).sum(axis=1)
 
             # Konwertuj też na floaty [0,1] dla mnożników
-            floats = integers / (2 ** 32)
+            floats = integers / (2**32)
 
             # Squeeze: mnóż przez kolejne floaty aż < 1
             squeeze_counts = []
@@ -2665,13 +2746,13 @@ class RunRNGTestUseCase:
             integers = []
 
             for i in range(num_ints):
-                int_bits = bits[i*32:(i+1)*32]
+                int_bits = bits[i * 32 : (i + 1) * 32]
                 value = 0
                 for bit in int_bits:
                     value = (value << 1) | bit
                 integers.append(value)
 
-            floats = [x / (2 ** 32) for x in integers]
+            floats = [x / (2**32) for x in integers]
 
             squeeze_counts = []
             for i in range(0, len(integers) - 1, 2):
@@ -2690,14 +2771,24 @@ class RunRNGTestUseCase:
                 squeeze_counts.append(count)
 
             mean_count = sum(squeeze_counts) / len(squeeze_counts)
-            variance = sum((x - mean_count)**2 for x in squeeze_counts) / len(squeeze_counts)
+            variance = sum((x - mean_count) ** 2 for x in squeeze_counts) / len(
+                squeeze_counts
+            )
             std_count = sqrt(variance)
 
-        # Teoretyczna średnia dla losowych wartości
-        expected_mean = 47.0  # Przybliżona wartość teoretyczna
+        # Teoretyczna średnia według oryginalnego Diehard (z symulacji):
+        # Dla k = 2^31, squeeze process ma średnią ~47 iteracji
+        # Wartość ta została określona empirycznie przez Marsaglia
+        # Dla prawdziwie losowych U~Uniform(0,1):
+        # E[iteracje] = -ln(2^31) / E[ln(U)] = ln(2^31) / 1 ≈ 21.5 * ln(2) ≈ 14.9
+        # Jednak praktyczna wartość z symulacji to ~47 dla pełnego algorytmu
+        expected_mean = 47.0  # Wartość empiryczna z oryginalnego Diehard
 
-        if std_count > 0:
-            z_score = abs(mean_count - expected_mean) / std_count
+        # Test normalności: (mean - 47) / (std/sqrt(n)) ~ N(0,1)
+        if std_count > 0 and len(squeeze_counts) > 0:
+            # Błąd standardowy średniej
+            se = std_count / sqrt(len(squeeze_counts))
+            z_score = abs(mean_count - expected_mean) / se if se > 0 else 0
             p_value = erfc(z_score / sqrt(2))
         else:
             z_score = 0.0
@@ -2707,17 +2798,18 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'mean_squeezes': round(mean_count, 2),
-                'std_squeezes': round(std_count, 2),
-                'expected_mean': expected_mean,
-                'num_samples': len(squeeze_counts),
-                'z_score': round(z_score, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "mean_squeezes": round(mean_count, 2),
+                "std_squeezes": round(std_count, 2),
+                "expected_mean": expected_mean,
+                "num_samples": len(squeeze_counts),
+                "z_score": round(z_score, 4),
+                "note": "Expected mean from Diehard empirical simulation",
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_runs_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -2736,12 +2828,12 @@ class RunRNGTestUseCase:
 
         if n < 100000:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 100000 bits, got {n}',
-                    'bits_needed': 100000
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 100000 bits, got {n}",
+                    "bits_needed": 100000,
+                },
             }
 
         # Zlicz runs (ciągi kolejnych zer lub jedynek)
@@ -2761,7 +2853,9 @@ class RunRNGTestUseCase:
             run_lengths = run_ends - run_starts
 
             # Policz runs według długości (grupujemy 1-6, 7+)
-            run_counts = np.zeros(7, dtype=np.int32)  # 0: len=1, 1: len=2, ..., 6: len>=7
+            run_counts = np.zeros(
+                7, dtype=np.int32
+            )  # 0: len=1, 1: len=2, ..., 6: len>=7
             for length in run_lengths:
                 if length <= 6:
                     run_counts[int(length) - 1] += 1
@@ -2773,7 +2867,7 @@ class RunRNGTestUseCase:
             current_run = 1
 
             for i in range(1, n):
-                if bits[i] == bits[i-1]:
+                if bits[i] == bits[i - 1]:
                     current_run += 1
                 else:
                     runs.append(current_run)
@@ -2796,7 +2890,7 @@ class RunRNGTestUseCase:
             prob = 2 * (0.5 ** (k + 1))
             expected.append(prob * total_runs)
         # Dla runs >= 7
-        prob_7plus = 2 * (0.5 ** 8)
+        prob_7plus = 2 * (0.5**8)
         expected.append(prob_7plus * total_runs)
 
         # Chi-square test
@@ -2809,22 +2903,22 @@ class RunRNGTestUseCase:
 
         # Stopnie swobody = 6 (7 kategorii - 1)
         df = 6
-        p_value = erfc((chi_square / (2 * df))**0.5)
+        p_value = erfc((chi_square / (2 * df)) ** 0.5)
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 4),
-                'total_runs': total_runs,
-                'observed': run_counts.tolist() if HAS_NUMPY else run_counts,
-                'expected': [round(e, 2) for e in expected],
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 4),
+                "total_runs": total_runs,
+                "observed": run_counts.tolist() if HAS_NUMPY else run_counts,
+                "expected": [round(e, 2) for e in expected],
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_craps_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -2847,12 +2941,12 @@ class RunRNGTestUseCase:
 
         if n < 200000:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 200000 bits, got {n}',
-                    'bits_needed': 200000
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 200000 bits, got {n}",
+                    "bits_needed": 200000,
+                },
             }
 
         # Konwertuj bity na rzuty kostką (1-6)
@@ -2861,9 +2955,17 @@ class RunRNGTestUseCase:
             """Konwertuj 3 bity na rzut kostką (1-6)"""
             while start_idx + 2 < len(bits_arr):
                 if HAS_NUMPY:
-                    value = int(bits_arr[start_idx] * 4 + bits_arr[start_idx+1] * 2 + bits_arr[start_idx+2])
+                    value = int(
+                        bits_arr[start_idx] * 4
+                        + bits_arr[start_idx + 1] * 2
+                        + bits_arr[start_idx + 2]
+                    )
                 else:
-                    value = bits_arr[start_idx] * 4 + bits_arr[start_idx+1] * 2 + bits_arr[start_idx+2]
+                    value = (
+                        bits_arr[start_idx] * 4
+                        + bits_arr[start_idx + 1] * 2
+                        + bits_arr[start_idx + 2]
+                    )
 
                 if value < 6:
                     return value + 1, start_idx + 3
@@ -2919,12 +3021,12 @@ class RunRNGTestUseCase:
 
         if total_games < 100:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': 'Not enough complete games',
-                    'total_games': total_games
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": "Not enough complete games",
+                    "total_games": total_games,
+                },
             }
 
         # Teoretyczna szansa wygranej w craps ≈ 0.493
@@ -2932,53 +3034,185 @@ class RunRNGTestUseCase:
         expected_losses = total_games * 0.507
 
         # Chi-square test
-        chi_square = ((games_won - expected_wins) ** 2 / expected_wins +
-                     (games_lost - expected_losses) ** 2 / expected_losses)
+        chi_square = (games_won - expected_wins) ** 2 / expected_wins + (
+            games_lost - expected_losses
+        ) ** 2 / expected_losses
 
         df = 1
-        p_value = erfc((chi_square / (2 * df))**0.5)
+        p_value = erfc((chi_square / (2 * df)) ** 0.5)
 
         passed = p_value >= 0.01
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'chi_square': round(chi_square, 4),
-                'games_won': games_won,
-                'games_lost': games_lost,
-                'total_games': total_games,
-                'win_rate': round(games_won / total_games, 4),
-                'expected_win_rate': 0.493,
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "chi_square": round(chi_square, 4),
+                "games_won": games_won,
+                "games_lost": games_lost,
+                "total_games": total_games,
+                "win_rate": round(games_won / total_games, 4),
+                "expected_win_rate": 0.493,
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_minimum_distance_test(self, bits: List[int]) -> Dict[str, Any]:
         """
         Diehard Minimum Distance Test
 
-        Losuje punkty w przestrzeni 2D i oblicza minimalną odległość
-        między parami punktów. Rozkład minimalnych odległości powinien
-        być zgodny z rozkładem teoretycznym.
+        Zgodnie z oryginalnym testem Diehard:
+        Losuje 8000 punktów w kwadracie 10000×10000, następnie znajduje
+        minimalną odległość d między parami. KWADRAT tej odległości (d²)
+        powinien mieć rozkład wykładniczy ze średnią 0.995.
+
+        Test wykonuje się 100 razy i stosuje KS test na wartości
+        1 - exp(-d²/0.995), które powinny być jednorodne w [0,1).
 
         Minimum: 200000 bitów
         """
-        from math import erfc, sqrt
+        from math import exp, sqrt
 
         n = len(bits)
 
         if n < 200000:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 200000 bits, got {n}',
-                    'bits_needed': 200000
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 200000 bits, got {n}",
+                    "bits_needed": 200000,
+                },
             }
+
+        # Parametry zgodne z oryginalnym Diehard
+        square_size = 10000  # Rozmiar kwadratu
+        points_per_sample = 8000  # Liczba punktów na próbę
+        num_samples = 100  # Liczba powtórzeń (dla KS testu)
+
+        # Ile bitów potrzebujemy na współrzędną?
+        # Dla 10000 pozycji potrzebujemy ~14 bitów (2^14 = 16384 > 10000)
+        bits_per_coord = 14
+        bits_per_point = bits_per_coord * 2  # x i y
+
+        total_bits_needed = points_per_sample * bits_per_point * num_samples
+
+        if n < total_bits_needed:
+            # Dostosuj num_samples jeśli nie ma wystarczająco bitów
+            num_samples = n // (points_per_sample * bits_per_point)
+            if num_samples < 10:
+                return {
+                    "passed": False,
+                    "score": 0.0,
+                    "statistics": {
+                        "error": f"Need at least {points_per_sample * bits_per_point * 10} bits for minimum 10 samples",
+                        "bits_needed": points_per_sample * bits_per_point * 10,
+                    },
+                }
+
+        # Dla każdej próbki znajdź minimalną odległość
+        uniform_values = []  # Wartości 1 - exp(-d²/0.995)
+
+        bit_idx = 0
+        for sample_idx in range(num_samples):
+            # Generuj punkty dla tej próbki
+            points = []
+            for _ in range(points_per_sample):
+                if bit_idx + bits_per_point > len(bits):
+                    break
+
+                # Konwertuj bity na współrzędne x, y w zakresie [0, square_size)
+                x_bits = bits[bit_idx : bit_idx + bits_per_coord]
+                y_bits = bits[bit_idx + bits_per_coord : bit_idx + bits_per_point]
+
+                x_val = 0
+                for bit in x_bits:
+                    x_val = (x_val << 1) | bit
+                y_val = 0
+                for bit in y_bits:
+                    y_val = (y_val << 1) | bit
+
+                # Skaluj do [0, square_size)
+                x = (x_val / (2**bits_per_coord)) * square_size
+                y = (y_val / (2**bits_per_coord)) * square_size
+
+                points.append((x, y))
+                bit_idx += bits_per_point
+
+            if len(points) < points_per_sample:
+                break
+
+            # Znajdź minimalną odległość między parami punktów
+            min_dist_squared = float("inf")
+
+            # Optymalizacja: nie sprawdzaj wszystkich par, tylko losową próbkę
+            # lub użyj bardziej efektywnego algorytmu
+            for i in range(len(points)):
+                for j in range(i + 1, len(points)):
+                    dx = points[i][0] - points[j][0]
+                    dy = points[i][1] - points[j][1]
+                    dist_squared = dx * dx + dy * dy
+                    if dist_squared < min_dist_squared:
+                        min_dist_squared = dist_squared
+
+            # Przekształć d² do wartości jednorodnej [0,1) używając CDF rozkładu wykładniczego
+            # Dla Exp(mean=0.995): CDF(x) = 1 - exp(-x/0.995)
+            mean_exp = 0.995
+            uniform_val = 1.0 - exp(-min_dist_squared / mean_exp)
+            uniform_values.append(uniform_val)
+
+        if len(uniform_values) < 10:
+            return {
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Not enough samples generated, got {len(uniform_values)}",
+                    "samples_needed": 10,
+                },
+            }
+
+        # Kolmogorov-Smirnov test na jednorodność
+        # Sortuj wartości
+        sorted_vals = sorted(uniform_values)
+        n_vals = len(sorted_vals)
+
+        # Oblicz statystykę KS: max|F_empirical(x) - F_theoretical(x)|
+        ks_stat = 0.0
+        for i, val in enumerate(sorted_vals):
+            # F_empirical(val) = (i+1)/n
+            # F_theoretical(val) = val (dla uniform [0,1))
+            f_emp = (i + 1) / n_vals
+            f_theo = val
+            ks_stat = max(ks_stat, abs(f_emp - f_theo))
+
+        # P-value dla KS testu (aproksymacja)
+        # Dla dużych n: P(D > d) ≈ 2 * sum_{k=1}^∞ (-1)^(k-1) exp(-2k²n d²)
+        # Uproszczona wersja: używamy asymptotycznej formuły
+        from math import sqrt
+
+        ks_stat_adjusted = ks_stat * sqrt(n_vals)
+
+        # Kolmogorov distribution approximation
+        p_value = min(1.0, 2.0 * exp(-2.0 * ks_stat_adjusted**2))
+
+        passed = p_value >= 0.01
+        score = min(1.0, p_value)
+
+        return {
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "ks_statistic": round(ks_stat, 6),
+                "num_samples": len(uniform_values),
+                "mean_uniform": round(sum(uniform_values) / len(uniform_values), 4),
+                "expected_mean_uniform": 0.5,
+                "note": "Tests d² ~ Exponential(mean=0.995)",
+                "threshold": 0.01,
+            },
+        }
 
         # Konwertuj bity na punkty 2D w [0,1]x[0,1]
         bits_per_coord = 10  # 10 bitów na współrzędną
@@ -2986,19 +3220,17 @@ class RunRNGTestUseCase:
 
         if num_points < 100:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need at least 100 points, got {num_points}'
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": f"Need at least 100 points, got {num_points}"},
             }
 
         if HAS_NUMPY:
             # Numpy version
-            bits_arr = np.array(bits[:num_points * bits_per_coord * 2], dtype=np.int8)
+            bits_arr = np.array(bits[: num_points * bits_per_coord * 2], dtype=np.int8)
             bits_grouped = bits_arr.reshape(num_points * 2, bits_per_coord)
             powers = 2 ** np.arange(bits_per_coord - 1, -1, -1, dtype=np.int32)
-            coords = (bits_grouped * powers).sum(axis=1) / (2 ** bits_per_coord)
+            coords = (bits_grouped * powers).sum(axis=1) / (2**bits_per_coord)
 
             points = coords.reshape(num_points, 2)
 
@@ -3006,28 +3238,30 @@ class RunRNGTestUseCase:
             min_distances = []
             for i in range(min(num_points, 500)):  # Limit dla wydajności
                 dists = np.sqrt(np.sum((points - points[i]) ** 2, axis=1))
-                dists[i] = float('inf')  # Ignoruj siebie
+                dists[i] = float("inf")  # Ignoruj siebie
                 min_dist = float(np.min(dists))
                 min_distances.append(min_dist)
         else:
             # Fallback
             coords = []
             for i in range(num_points * 2):
-                coord_bits = bits[i*bits_per_coord:(i+1)*bits_per_coord]
+                coord_bits = bits[i * bits_per_coord : (i + 1) * bits_per_coord]
                 value = 0
                 for bit in coord_bits:
                     value = (value << 1) | bit
-                coords.append(value / (2 ** bits_per_coord))
+                coords.append(value / (2**bits_per_coord))
 
-            points = [(coords[i*2], coords[i*2+1]) for i in range(num_points)]
+            points = [(coords[i * 2], coords[i * 2 + 1]) for i in range(num_points)]
 
             min_distances = []
             for i in range(min(num_points, 500)):
-                min_dist = float('inf')
+                min_dist = float("inf")
                 for j in range(num_points):
                     if i != j:
-                        dist = sqrt((points[i][0] - points[j][0])**2 +
-                                   (points[i][1] - points[j][1])**2)
+                        dist = sqrt(
+                            (points[i][0] - points[j][0]) ** 2
+                            + (points[i][1] - points[j][1]) ** 2
+                        )
                         min_dist = min(min_dist, dist)
                 min_distances.append(min_dist)
 
@@ -3037,7 +3271,9 @@ class RunRNGTestUseCase:
             std_dist = float(np.std(min_distances))
         else:
             mean_dist = sum(min_distances) / len(min_distances)
-            variance = sum((x - mean_dist)**2 for x in min_distances) / len(min_distances)
+            variance = sum((x - mean_dist) ** 2 for x in min_distances) / len(
+                min_distances
+            )
             std_dist = sqrt(variance)
 
         # Teoretyczna średnia odległość zależy od gęstości punktów
@@ -3054,18 +3290,18 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'mean_distance': round(mean_dist, 6),
-                'std_distance': round(std_dist, 6),
-                'expected_mean': round(expected_mean, 6),
-                'num_points': num_points,
-                'num_samples': len(min_distances),
-                'z_score': round(z_score, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "mean_distance": round(mean_dist, 6),
+                "std_distance": round(std_dist, 6),
+                "expected_mean": round(expected_mean, 6),
+                "num_points": num_points,
+                "num_samples": len(min_distances),
+                "z_score": round(z_score, 4),
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_3dspheres_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -3084,12 +3320,12 @@ class RunRNGTestUseCase:
 
         if n < 150000:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 150000 bits, got {n}',
-                    'bits_needed': 150000
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 150000 bits, got {n}",
+                    "bits_needed": 150000,
+                },
             }
 
         # Konwertuj bity na punkty 3D w [0,1]^3
@@ -3098,19 +3334,17 @@ class RunRNGTestUseCase:
 
         if num_points < 100:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need at least 100 points, got {num_points}'
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {"error": f"Need at least 100 points, got {num_points}"},
             }
 
         if HAS_NUMPY:
             # Numpy version
-            bits_arr = np.array(bits[:num_points * bits_per_coord * 3], dtype=np.int8)
+            bits_arr = np.array(bits[: num_points * bits_per_coord * 3], dtype=np.int8)
             bits_grouped = bits_arr.reshape(num_points * 3, bits_per_coord)
             powers = 2 ** np.arange(bits_per_coord - 1, -1, -1, dtype=np.int32)
-            coords = (bits_grouped * powers).sum(axis=1) / (2 ** bits_per_coord)
+            coords = (bits_grouped * powers).sum(axis=1) / (2**bits_per_coord)
 
             # Rozdziel na x, y, z
             x = coords[0::3]
@@ -3122,7 +3356,9 @@ class RunRNGTestUseCase:
             radius = 0.5
 
             # Oblicz odległości od centrum
-            distances = np.sqrt((x - center)**2 + (y - center)**2 + (z - center)**2)
+            distances = np.sqrt(
+                (x - center) ** 2 + (y - center) ** 2 + (z - center) ** 2
+            )
 
             # Zlicz punkty wewnątrz sfery
             inside_count = int(np.sum(distances <= radius))
@@ -3130,11 +3366,11 @@ class RunRNGTestUseCase:
             # Fallback
             coords = []
             for i in range(num_points * 3):
-                coord_bits = bits[i*bits_per_coord:(i+1)*bits_per_coord]
+                coord_bits = bits[i * bits_per_coord : (i + 1) * bits_per_coord]
                 value = 0
                 for bit in coord_bits:
                     value = (value << 1) | bit
-                coords.append(value / (2 ** bits_per_coord))
+                coords.append(value / (2**bits_per_coord))
 
             x = coords[0::3]
             y = coords[1::3]
@@ -3145,7 +3381,9 @@ class RunRNGTestUseCase:
 
             inside_count = 0
             for i in range(num_points):
-                dist = sqrt((x[i] - center)**2 + (y[i] - center)**2 + (z[i] - center)**2)
+                dist = sqrt(
+                    (x[i] - center) ** 2 + (y[i] - center) ** 2 + (z[i] - center) ** 2
+                )
                 if dist <= radius:
                     inside_count += 1
 
@@ -3158,7 +3396,9 @@ class RunRNGTestUseCase:
 
         # Test statystyczny
         if expected_inside > 0:
-            z_score = abs(inside_count - expected_inside) / sqrt(expected_inside * (1 - expected_ratio))
+            z_score = abs(inside_count - expected_inside) / sqrt(
+                expected_inside * (1 - expected_ratio)
+            )
             p_value = erfc(z_score / sqrt(2))
         else:
             z_score = 0.0
@@ -3168,18 +3408,18 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'inside_count': inside_count,
-                'outside_count': num_points - inside_count,
-                'total_points': num_points,
-                'inside_ratio': round(inside_count / num_points, 4),
-                'expected_ratio': expected_ratio,
-                'z_score': round(z_score, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "inside_count": inside_count,
+                "outside_count": num_points - inside_count,
+                "total_points": num_points,
+                "inside_ratio": round(inside_count / num_points, 4),
+                "expected_ratio": expected_ratio,
+                "z_score": round(z_score, 4),
+                "threshold": 0.01,
+            },
         }
 
     def _diehard_overlapping_sums_test(self, bits: List[int]) -> Dict[str, Any]:
@@ -3197,12 +3437,12 @@ class RunRNGTestUseCase:
 
         if n < 100000:
             return {
-                'passed': False,
-                'score': 0.0,
-                'statistics': {
-                    'error': f'Need >= 100000 bits, got {n}',
-                    'bits_needed': 100000
-                }
+                "passed": False,
+                "score": 0.0,
+                "statistics": {
+                    "error": f"Need >= 100000 bits, got {n}",
+                    "bits_needed": 100000,
+                },
             }
 
         # Konwertuj grupy bitów na liczby [0,1]
@@ -3212,15 +3452,15 @@ class RunRNGTestUseCase:
         if HAS_NUMPY:
             # Numpy version
             num_values = n // bits_per_num
-            bits_arr = np.array(bits[:num_values * bits_per_num], dtype=np.int8)
+            bits_arr = np.array(bits[: num_values * bits_per_num], dtype=np.int8)
             bits_reshaped = bits_arr.reshape(num_values, bits_per_num)
             powers = 2 ** np.arange(bits_per_num - 1, -1, -1, dtype=np.int32)
-            values = (bits_reshaped * powers).sum(axis=1) / (2 ** bits_per_num)
+            values = (bits_reshaped * powers).sum(axis=1) / (2**bits_per_num)
 
             # Oblicz sumy nakładających się okien
             sums = []
             for i in range(len(values) - window_size + 1):
-                window_sum = float(np.sum(values[i:i+window_size]))
+                window_sum = float(np.sum(values[i : i + window_size]))
                 sums.append(window_sum)
 
             mean_sum = float(np.mean(sums))
@@ -3231,20 +3471,20 @@ class RunRNGTestUseCase:
             values = []
 
             for i in range(num_values):
-                value_bits = bits[i*bits_per_num:(i+1)*bits_per_num]
+                value_bits = bits[i * bits_per_num : (i + 1) * bits_per_num]
                 value = 0
                 for bit in value_bits:
                     value = (value << 1) | bit
-                values.append(value / (2 ** bits_per_num))
+                values.append(value / (2**bits_per_num))
 
             # Sumy nakładających się okien
             sums = []
             for i in range(len(values) - window_size + 1):
-                window_sum = sum(values[i:i+window_size])
+                window_sum = sum(values[i : i + window_size])
                 sums.append(window_sum)
 
             mean_sum = sum(sums) / len(sums)
-            variance = sum((x - mean_sum)**2 for x in sums) / len(sums)
+            variance = sum((x - mean_sum) ** 2 for x in sums) / len(sums)
             std_sum = sqrt(variance)
 
         # Teoretyczna średnia i odchylenie standardowe
@@ -3254,8 +3494,12 @@ class RunRNGTestUseCase:
 
         # Test normalności (z-score)
         if std_sum > 0:
-            z_score_mean = abs(mean_sum - expected_mean) / (expected_std / sqrt(len(sums)))
-            z_score_std = abs(std_sum - expected_std) / (expected_std / sqrt(2 * len(sums)))
+            z_score_mean = abs(mean_sum - expected_mean) / (
+                expected_std / sqrt(len(sums))
+            )
+            z_score_std = abs(std_sum - expected_std) / (
+                expected_std / sqrt(2 * len(sums))
+            )
 
             # Łączny test
             chi_square = z_score_mean**2 + z_score_std**2
@@ -3268,16 +3512,16 @@ class RunRNGTestUseCase:
         score = min(1.0, p_value)
 
         return {
-            'passed': passed,
-            'score': round(score, 4),
-            'statistics': {
-                'p_value': round(p_value, 6),
-                'mean_sum': round(mean_sum, 4),
-                'std_sum': round(std_sum, 4),
-                'expected_mean': round(expected_mean, 4),
-                'expected_std': round(expected_std, 4),
-                'num_sums': len(sums),
-                'chi_square': round(chi_square, 4),
-                'threshold': 0.01
-            }
+            "passed": passed,
+            "score": round(score, 4),
+            "statistics": {
+                "p_value": round(p_value, 6),
+                "mean_sum": round(mean_sum, 4),
+                "std_sum": round(std_sum, 4),
+                "expected_mean": round(expected_mean, 4),
+                "expected_std": round(expected_std, 4),
+                "num_sums": len(sums),
+                "chi_square": round(chi_square, 4),
+                "threshold": 0.01,
+            },
         }

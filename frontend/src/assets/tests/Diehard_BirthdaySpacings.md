@@ -1,22 +1,24 @@
-Test Birthday Spacings bada odległości między "urodzinami" (powtórzeniami wartości) w 24-bitowych słowach. Bazuje na problemie urodzin - dla prawdziwie losowego źródła, rozkład odległości między duplikatami powinien być zgodny z rozkładem Poissona.
+Test Birthday Spacings zlicza ile wartości występuje więcej niż raz (duplikaty) w blokach 24-bitowych słów. Zgodnie z oryginalnym testem Diehard, liczba takich duplikatów j powinna mieć rozkład Poissona z λ = m³/(4n), gdzie m=512 (urodziny na blok) i n=2²⁴ (rozmiar przestrzeni).
 
 ## Jak działa
 
 1. Konwertuje bity na 24-bitowe słowa
-2. Dzieli słowa na bloki po 512 elementów
-3. W każdym bloku sortuje słowa i znajduje duplikaty
-4. Mierzy odległość (spacing) między duplikatami
-5. Testuje zgodność rozkładu spacingów z rozkładem Poissona
+2. Dzieli słowa na bloki po 512 elementów (m = 512)
+3. W każdym bloku zlicza ile wartości występuje więcej niż raz (j)
+4. Testuje czy rozkład wartości j jest zgodny z Poisson(λ=2.0)
+5. Używa testu chi-kwadrat do porównania obserwowanych vs oczekiwanych częstości
 
 ## Wzór matematyczny
 
 ```
-Teoretyczna średnia spacing = 2^24 / 512 ≈ 32,768
+Parametr lambda: λ = m³/(4n) = 512³/(4×2²⁴) = 2.0
+
+Prawdopodobieństwo Poissona: P(j=k) = (λᵏ × e⁻ᵏ) / k!
 
 Test Chi-kwadrat:
-χ² = |mean_spacing - expected_mean| / (variance / n)^0.5
+χ² = Σ (observed_k - expected_k)² / expected_k
 
-p-value = erfc(χ² / √2)
+p-value = gammaincc(df/2, χ²/2)
 ```
 
 ## Wartość krytyczna
@@ -48,11 +50,12 @@ curl -X POST http://localhost:8000/api/rngs/24/run_test \
 
 ## Interpretacja wyników
 
-- **score = 1.0**: Idealny rozkład spacingów
+- **score = 1.0**: Idealny rozkład Poissona liczby duplikatów
 - **score > 0.7**: Bardzo dobry wynik
-- **score = 0.95 (mało duplikatów)**: Doskonała losowość
-- **score < 0.5**: Słaby generator, nieprzypadkowy wzorzec
+- **score < 0.5**: Słaby generator, rozkład liczby duplikatów nie jest Poissonem
 - **passed = false**: Generator nie przeszedł testu
+
+**Uwaga**: Test został poprawiony i teraz zgodnie z oryginalną specyfikacją Diehard testuje rozkład Poissona LICZBY wartości duplikujących się (j), a nie odległości między nimi.
 
 ## Parametry testu
 

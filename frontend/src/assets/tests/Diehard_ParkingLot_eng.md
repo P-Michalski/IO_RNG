@@ -16,11 +16,15 @@ Circle parked if distance > 2×radius from all others
 Distance between points:
 dist = √((x₁-x₂)² + (y₁-y₂)²)
 
-Expected number of parked:
-expected ≈ num_points × 0.3
+Expected values (from original Diehard):
+For 12,000 attempts: mean = 3523, sigma = 21.9
+
+For other n: 
+expected = 3523 × (n/12000)
+sigma = 21.9 × √(n/12000)
 
 Z-score:
-z = |num_parked - expected| / √expected
+z = |num_parked - expected| / sigma
 
 p-value = erfc(z / √2)
 ```
@@ -58,6 +62,8 @@ curl -X POST http://localhost:8000/api/rngs/24/run_test \
 - **score > 0.7**: Very good result
 - **score < 0.5**: Weak generator, incorrect spatial distribution
 - **passed = false**: Generator failed the test
+
+**Note**: Now uses correct theoretical values from original Diehard (mean=3523, sigma=21.9 for 12,000 attempts) instead of the previous rough approximation.
 
 ## Test parameters
 

@@ -1,22 +1,24 @@
-The Birthday Spacings test examines distances between "birthdays" (repeated values) in 24-bit words. Based on the birthday problem - for truly random sources, the distribution of distances between duplicates should follow a Poisson distribution.
+The Birthday Spacings test counts how many values appear more than once (duplicates) in blocks of 24-bit words. According to the original Diehard test, the number of such duplicate values j should follow a Poisson distribution with λ = m³/(4n), where m=512 (birthdays per block) and n=2²⁴ (space size).
 
 ## How it works
 
 1. Converts bits into 24-bit words
-2. Divides words into blocks of 512 elements
-3. In each block, sorts words and finds duplicates
-4. Measures the distance (spacing) between duplicates
-5. Tests if the spacing distribution matches Poisson distribution
+2. Divides words into blocks of 512 elements (m = 512)
+3. In each block, counts how many values occur more than once (j)
+4. Tests if the distribution of j values matches Poisson(λ=2.0)
+5. Uses chi-square test to compare observed vs expected frequencies
 
 ## Mathematical formula
 
 ```
-Theoretical mean spacing = 2^24 / 512 ≈ 32,768
+Lambda parameter: λ = m³/(4n) = 512³/(4×2²⁴) = 2.0
+
+Poisson probability: P(j=k) = (λᵏ × e⁻ᵏ) / k!
 
 Chi-square test:
-χ² = |mean_spacing - expected_mean| / (variance / n)^0.5
+χ² = Σ (observed_k - expected_k)² / expected_k
 
-p-value = erfc(χ² / √2)
+p-value = gammaincc(df/2, χ²/2)
 ```
 
 ## Critical value
@@ -48,11 +50,12 @@ curl -X POST http://localhost:8000/api/rngs/24/run_test \
 
 ## Result interpretation
 
-- **score = 1.0**: Perfect spacing distribution
+- **score = 1.0**: Perfect Poisson distribution of duplicate counts
 - **score > 0.7**: Very good result
-- **score = 0.95 (few duplicates)**: Excellent randomness
-- **score < 0.5**: Weak generator, non-random pattern
+- **score < 0.5**: Weak generator, non-Poisson pattern in duplicates
 - **passed = false**: Generator failed the test
+
+**Note**: This test now correctly implements the original Diehard specification by testing the Poisson distribution of the COUNT of duplicate values (j), not the spacing between them.
 
 ## Test parameters
 

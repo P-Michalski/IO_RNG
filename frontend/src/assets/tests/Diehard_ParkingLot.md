@@ -16,11 +16,15 @@ Koło zaparkowane jeśli odległość > 2×radius od wszystkich innych
 Odległość między punktami:
 dist = √((x₁-x₂)² + (y₁-y₂)²)
 
-Oczekiwana liczba zaparkowanych:
-expected ≈ num_points × 0.3
+Oczekiwane wartości (z oryginalnego Diehard):
+Dla 12,000 prób: średnia = 3523, sigma = 21.9
+
+Dla innej liczby prób n:
+expected = 3523 × (n/12000)
+sigma = 21.9 × √(n/12000)
 
 Z-score:
-z = |num_parked - expected| / √expected
+z = |num_parked - expected| / sigma
 
 p-value = erfc(z / √2)
 ```
@@ -57,6 +61,8 @@ curl -X POST http://localhost:8000/api/rngs/24/run_test \
 - **score > 0.7**: Bardzo dobry wynik
 - **score < 0.5**: Słaby generator, nieprawidłowy rozkład przestrzenny
 - **passed = false**: Generator nie przeszedł testu
+
+**Uwaga**: Test używa teraz poprawnych wartości teoretycznych z oryginalnego Diehard (średnia=3523, sigma=21.9 dla 12,000 prób) zamiast poprzedniej grubej aproksymacji.
 
 ## Parametry testu
 
