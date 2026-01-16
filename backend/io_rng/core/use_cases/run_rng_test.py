@@ -374,7 +374,7 @@ class RunRNGTestUseCase:
         p_value = erfc(s_obs / math.sqrt(2))
 
         # Test passes if p-value >= 0.01
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -385,7 +385,7 @@ class RunRNGTestUseCase:
                 "test_statistic": round(s_obs, 6),
                 "ones": sum(bits),
                 "zeros": n - sum(bits),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -437,7 +437,7 @@ class RunRNGTestUseCase:
             # Fallback: erfc approximation (mniej dokładne)
             p_value = erfc(math.sqrt(chi_square / 2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -448,7 +448,7 @@ class RunRNGTestUseCase:
                 "chi_square": round(chi_square, 6),
                 "num_blocks": num_blocks,
                 "block_size": block_size,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -515,7 +515,7 @@ class RunRNGTestUseCase:
         # P-value
         p_value = erfc(test_stat / math.sqrt(2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -525,7 +525,7 @@ class RunRNGTestUseCase:
                 "p_value": round(p_value, 6),
                 "runs": runs,
                 "expected_runs": round(expected_runs, 2),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -624,7 +624,7 @@ class RunRNGTestUseCase:
 
         p_value = erfc(math.sqrt(chi_square / 2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -635,7 +635,7 @@ class RunRNGTestUseCase:
                 "chi_square": round(chi_square, 6),
                 "frequencies": frequencies,
                 "num_blocks": num_blocks,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -671,7 +671,7 @@ class RunRNGTestUseCase:
 
         p_value = 1 - sum_val
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, max(0.0, p_value))
 
         return {
@@ -680,7 +680,7 @@ class RunRNGTestUseCase:
             "statistics": {
                 "p_value": round(p_value, 6),
                 "max_excursion": z_forward,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -755,7 +755,7 @@ class RunRNGTestUseCase:
 
         p_value = erfc(math.sqrt(chi_square / 2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -766,7 +766,7 @@ class RunRNGTestUseCase:
                 "approximate_entropy": round(apen, 6),
                 "chi_square": round(chi_square, 6),
                 "m": m,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -877,7 +877,7 @@ class RunRNGTestUseCase:
         # P-value (df=2)
         p_value = erfc(math.sqrt(chi_square / 2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -889,7 +889,7 @@ class RunRNGTestUseCase:
                 "rank_counts": rank_counts,
                 "num_matrices": num_matrices,
                 "matrix_size": f"{M}x{Q}",
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -938,7 +938,7 @@ class RunRNGTestUseCase:
         d = (N1 - N0) / math.sqrt(n * 0.95 * 0.05 / 4)
         p_value = erfc(abs(d) / math.sqrt(2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, float(p_value))
 
         return {
@@ -948,7 +948,7 @@ class RunRNGTestUseCase:
                 "p_value": round(float(p_value), 6),
                 "peaks_below_threshold": int(N1),
                 "expected_peaks": round(N0, 2),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1029,7 +1029,7 @@ class RunRNGTestUseCase:
             # Fallback: erfc approximation (mniej dokładne)
             p_value = erfc(math.sqrt(chi_square / 2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -1040,7 +1040,7 @@ class RunRNGTestUseCase:
                 "chi_square": round(chi_square, 6),
                 "template": template,
                 "num_blocks": N,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1107,7 +1107,7 @@ class RunRNGTestUseCase:
         # P-value (df=5)
         p_value = erfc(math.sqrt(chi_square / 2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -1118,7 +1118,7 @@ class RunRNGTestUseCase:
                 "chi_square": round(chi_square, 6),
                 "frequencies": v,
                 "num_blocks": N,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1213,7 +1213,7 @@ class RunRNGTestUseCase:
         # P-value
         p_value = erfc(test_stat / math.sqrt(2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -1226,7 +1226,7 @@ class RunRNGTestUseCase:
                 "L": L,
                 "Q": Q,
                 "K": K,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1332,7 +1332,7 @@ class RunRNGTestUseCase:
             # Fallback: erfc approximation (mniej dokładne)
             p_value = erfc(math.sqrt(chi_square / 2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -1344,7 +1344,7 @@ class RunRNGTestUseCase:
                 "frequencies": v,
                 "M": M,
                 "N": N,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1422,7 +1422,7 @@ class RunRNGTestUseCase:
         p_value2 = erfc(math.sqrt(abs(delta2) / 2))
 
         # Test przechodzi gdy obie p-values >= 0.01
-        passed = p_value1 >= 0.01 and p_value2 >= 0.01
+        passed = (0.001 <= p_value1 <= 0.999) and (0.001 <= p_value2 <= 0.999)
         score = min(1.0, min(p_value1, p_value2))
 
         return {
@@ -1434,7 +1434,7 @@ class RunRNGTestUseCase:
                 "delta1": round(delta1, 6),
                 "delta2": round(delta2, 6),
                 "m": m,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1509,7 +1509,7 @@ class RunRNGTestUseCase:
         # P-value (uproszczone)
         p_value = erfc(math.sqrt(avg_chi / 2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -1520,7 +1520,7 @@ class RunRNGTestUseCase:
                 "cycles": cycles,
                 "avg_chi_square": round(avg_chi, 4),
                 "states": results,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1600,7 +1600,7 @@ class RunRNGTestUseCase:
 
         # Test przechodzi gdy wszystkie p-values >= 0.01
         min_p_value = min(p_values) if p_values else 0.0
-        passed = all(p >= 0.01 for p in p_values)
+        passed = all(0.001 <= p <= 0.999 for p in p_values)
         score = min(1.0, min_p_value)
 
         return {
@@ -1610,7 +1610,7 @@ class RunRNGTestUseCase:
                 "min_p_value": round(min_p_value, 6),
                 "cycles": cycles,
                 "states": results[:6],  # Pokaż tylko pierwsze 6 dla zwięzłości
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1752,7 +1752,7 @@ class RunRNGTestUseCase:
             # Aproksymacja normalna dla chi-square
             p_value = erfc((chi_square / (2.0 * df)) ** 0.5)
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -1766,7 +1766,7 @@ class RunRNGTestUseCase:
                 "expected_mean_j": round(lambda_param, 2),
                 "num_blocks": num_blocks,
                 "df": df,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1850,7 +1850,7 @@ class RunRNGTestUseCase:
             # Fallback: erfc approximation (mniej dokładne)
             p_value = erfc((chi_square / (2 * df)) ** 0.5)
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -1863,7 +1863,7 @@ class RunRNGTestUseCase:
                 "unique_permutations": len(perm_counts),
                 "expected_permutations": num_perms,
                 "total_windows": total_windows,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -1959,7 +1959,7 @@ class RunRNGTestUseCase:
             # Fallback: erfc approximation (mniej dokładne)
             p_value = erfc((chi_square / 4) ** 0.5)
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -1974,7 +1974,7 @@ class RunRNGTestUseCase:
                 "expected_32": round(expected_32, 2),
                 "expected_31": round(expected_31, 2),
                 "num_matrices": num_matrices,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -2136,7 +2136,7 @@ class RunRNGTestUseCase:
         z_score = max(max_deviation, min_deviation)
         p_value = erfc(z_score / (2**0.5))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -2151,7 +2151,7 @@ class RunRNGTestUseCase:
                 "possible_words": num_possible_words,
                 "total_words": total_words,
                 "z_score": round(z_score, 4),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -2232,7 +2232,7 @@ class RunRNGTestUseCase:
         else:
             p_value = 0.0
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -2245,7 +2245,7 @@ class RunRNGTestUseCase:
                 "total_words": total_words,
                 "unique_words": len(unique_words) if HAS_NUMPY else len(word_counts),
                 "lambda": round(lambda_param, 4),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -2350,7 +2350,7 @@ class RunRNGTestUseCase:
         else:
             p_value = 0.0
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -2363,7 +2363,7 @@ class RunRNGTestUseCase:
                 "total_quadruples": total_quads,
                 "unique_quadruples": len(quad_counts),
                 "lambda": round(lambda_param, 4),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -2455,7 +2455,7 @@ class RunRNGTestUseCase:
         else:
             p_value = 0.0
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -2468,7 +2468,7 @@ class RunRNGTestUseCase:
                 "total_words": total_words,
                 "unique_words": len(word_counts),
                 "lambda": round(lambda_param, 4),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -2550,7 +2550,7 @@ class RunRNGTestUseCase:
 
             p_value = erfc((chi_square / (2 * df)) ** 0.5)
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -2562,7 +2562,7 @@ class RunRNGTestUseCase:
                 "num_bytes": num_bytes,
                 "observed": observed.tolist() if HAS_NUMPY else observed,
                 "expected": [round(e, 2) for e in expected],
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -2668,7 +2668,7 @@ class RunRNGTestUseCase:
             z_score = 0.0
             p_value = 1.0
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -2681,7 +2681,7 @@ class RunRNGTestUseCase:
                 "expected": round(expected, 2),
                 "sigma": round(sigma, 2),
                 "z_score": round(z_score, 4),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -2794,7 +2794,7 @@ class RunRNGTestUseCase:
             z_score = 0.0
             p_value = 1.0
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -2808,7 +2808,7 @@ class RunRNGTestUseCase:
                 "num_samples": len(squeeze_counts),
                 "z_score": round(z_score, 4),
                 "note": "Expected mean from Diehard empirical simulation",
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -2905,7 +2905,7 @@ class RunRNGTestUseCase:
         df = 6
         p_value = erfc((chi_square / (2 * df)) ** 0.5)
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -2917,7 +2917,7 @@ class RunRNGTestUseCase:
                 "total_runs": total_runs,
                 "observed": run_counts.tolist() if HAS_NUMPY else run_counts,
                 "expected": [round(e, 2) for e in expected],
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -3041,7 +3041,7 @@ class RunRNGTestUseCase:
         df = 1
         p_value = erfc((chi_square / (2 * df)) ** 0.5)
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -3055,7 +3055,7 @@ class RunRNGTestUseCase:
                 "total_games": total_games,
                 "win_rate": round(games_won / total_games, 4),
                 "expected_win_rate": 0.493,
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -3197,7 +3197,7 @@ class RunRNGTestUseCase:
         # Kolmogorov distribution approximation
         p_value = min(1.0, 2.0 * exp(-2.0 * ks_stat_adjusted**2))
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -3210,7 +3210,7 @@ class RunRNGTestUseCase:
                 "mean_uniform": round(sum(uniform_values) / len(uniform_values), 4),
                 "expected_mean_uniform": 0.5,
                 "note": "Tests d² ~ Exponential(mean=0.995)",
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -3286,7 +3286,7 @@ class RunRNGTestUseCase:
             z_score = 0.0
             p_value = 1.0
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -3300,7 +3300,7 @@ class RunRNGTestUseCase:
                 "num_points": num_points,
                 "num_samples": len(min_distances),
                 "z_score": round(z_score, 4),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -3404,7 +3404,7 @@ class RunRNGTestUseCase:
             z_score = 0.0
             p_value = 1.0
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -3418,7 +3418,7 @@ class RunRNGTestUseCase:
                 "inside_ratio": round(inside_count / num_points, 4),
                 "expected_ratio": expected_ratio,
                 "z_score": round(z_score, 4),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
 
@@ -3508,7 +3508,7 @@ class RunRNGTestUseCase:
             chi_square = 0.0
             p_value = 1.0
 
-        passed = p_value >= 0.01
+        passed = 0.001 <= p_value <= 0.999
         score = min(1.0, p_value)
 
         return {
@@ -3522,6 +3522,6 @@ class RunRNGTestUseCase:
                 "expected_std": round(expected_std, 4),
                 "num_sums": len(sums),
                 "chi_square": round(chi_square, 4),
-                "threshold": 0.01,
+                "threshold": 0.001,
             },
         }
