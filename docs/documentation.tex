@@ -56,12 +56,207 @@
 \tableofcontents
 \newpage
 
-\section{Wprowadzenie}
+\section{O projekcie}
 
-IO\_RNG to aplikacja webowa służąca do testowania i porównywania różnych generatorów liczb pseudolosowych (PRNG). System umożliwia wykonywanie testów statystycznych na implementacjach algorytmów RNG w różnych językach programowania (Python, C++, Rust, Java) oraz analizę ich jakości i wydajności.
+\subsection{Cel i przeznaczenie aplikacji}
+
+IO\_RNG to zaawansowana aplikacja webowa dedykowana profesjonalnemu testowaniu i kompleksowemu porównywaniu różnorodnych algorytmów generowania liczb pseudolosowych (PRNG - Pseudo Random Number Generators), w tym także algorytmów kryptograficznie bezpiecznych (CSPRNG - Cryptographically Secure Pseudo Random Number Generators).
+
+\subsubsection{Motywacja}
+
+Generatory liczb pseudolosowych stanowią fundamentalny element wielu dziedzin informatyki i matematyki stosowanej. Ich jakość bezpośrednio wpływa na bezpieczeństwo systemów kryptograficznych, rzetelność symulacji Monte Carlo, wiarygodność algorytmów randomizowanych oraz poprawność metod statystycznych. Mimo powszechnego zastosowania, brakuje narzędzi umożliwiających łatwe i kompleksowe porównanie różnych implementacji algorytmów PRNG pod kątem zarówno jakości generowanych liczb, jak i wydajności obliczeniowej.
+
+Aplikacja IO\_RNG odpowiada na tę potrzebę, oferując zunifikowane środowisko do testowania algorytmów PRNG zaimplementowanych w różnych językach programowania, wykonywania na nich standaryzowanych testów statystycznych oraz wizualizacji wyników w formie interaktywnych wykresów i profesjonalnych raportów PDF.
+
+\subsubsection{Zakres funkcjonalny}
+
+Aplikacja koncentruje się na trzech głównych aspektach:
+
+\begin{itemize}
+    \item \textbf{Generowanie} - produkcja sekwencji bitów lub liczb z zadanego zakresu z wykorzystaniem wybranego algorytmu PRNG wraz z konfigurowalnymi parametrami
+    \item \textbf{Testowanie} - wykonywanie baterii testów statystycznych (NIST, Diehard, testy częstości i jednostajności) na wygenerowanych danych lub ciągach dostarczonych przez użytkownika
+    \item \textbf{Analiza} - wizualizacja wyników, porównywanie algorytmów pod względem jakości i wydajności, generowanie raportów z pełną dokumentacją testów
+\end{itemize}
+
+\subsection{Przewodnik użytkownika}
+
+Aplikacja została zaprojektowana z myślą o intuicyjności i elastyczności. Poniżej przedstawiono funkcjonalność poszczególnych komponentów systemu.
+
+\subsubsection{Generator}
+
+Moduł generatora stanowi centralny punkt interakcji z algorytmami PRNG. Podzielony jest na dwa tryby pracy:
+
+\paragraph{Generator bitów}
+Umożliwia wygenerowanie określonej liczby bitów (0 lub 1) przy użyciu wybranego algorytmu. Użytkownik może:
+\begin{itemize}
+    \item Wybrać algorytm PRNG z dostępnej listy (LCG, Park-Miller, PCG32, Mersenne Twister, Xoshiro256, ChaCha20, Blum-Blum-Shub, etc.)
+    \item Określić liczbę bitów do wygenerowania
+    \item Podać parametry startowe algorytmu (seed, parametry specyficzne dla danego generatora)
+    \item Skonfigurować zaawansowane parametry:
+    \begin{itemize}
+        \item \texttt{bits\_per\_value} - liczba bitów wyodrębnianych z każdej wygenerowanej wartości
+        \item \texttt{msb\_first} - kierunek ekstrakcji bitów (od najbardziej lub najmniej znaczącego bitu)
+    \end{itemize}
+\end{itemize}
+
+Po wygenerowaniu, aplikacja prezentuje wizualizację strumienia bitów wraz z czasem wykonania operacji.
+
+\paragraph{Generator liczb}
+Pozwala na generowanie liczb całkowitych z wybranego zakresu. Dodatkowo oferuje:
+\begin{itemize}
+    \item Interaktywny wykres słupkowy dystrybucji wygenerowanych liczb
+    \item Obliczanie i wyświetlanie średniej arytmetycznej
+    \item Opcjonalną animację procesu generowania z efektami wizualnymi
+    \item Wszystkie funkcje konfiguracji dostępne w generatorze bitów
+\end{itemize}
+
+\subsubsection{Testowanie algorytmów}
+
+Moduł testów umożliwia przeprowadzenie kompleksowej analizy statystycznej algorytmów PRNG. System oferuje dwa źródła danych wejściowych:
+
+\begin{itemize}
+    \item \textbf{Testowanie algorytmu z listy} - wybór konkretnego generatora i automatyczne wygenerowanie wymaganej liczby próbek
+    \item \textbf{Testowanie własnych bitów} - możliwość wklejenia sekwencji bitów dostarczonej przez użytkownika
+\end{itemize}
+
+Dostępne pakiety testów:
+\begin{itemize}
+    \item \textbf{Frequency Test} - test częstości występowania zer i jedynek
+    \item \textbf{Uniformity Test} - test jednostajności rozkładu
+    \item \textbf{NIST Test Suite} - pełny zestaw 15 testów opracowanych przez National Institute of Standards and Technology
+    \item \textbf{Diehard Test Suite} - klasyczny zestaw testów George'a Marsgalii
+\end{itemize}
+
+Po wyborze testów i liczby próbek, system wyświetla pasek postępu wykonywanych testów w czasie rzeczywistym. Po zakończeniu prezentowane są:
+\begin{itemize}
+    \item Całkowity czas wykonania baterii testów
+    \item Liczba testów zaliczonych i niezaliczonych
+    \item Szczegółowa lista wyników z czasem wykonania każdego testu
+    \item Wizualizacja wyników w formie wykresów
+\end{itemize}
+
+\subsubsection{Historia wyników}
+
+Komponent historii przechowuje i zarządza wszystkimi wykonanymi testami. Funkcjonalności:
+\begin{itemize}
+    \item Lista wszystkich przeprowadzonych testów z podstawowymi informacjami (data, algorytm, typ testu, wynik)
+    \item Podgląd szczegółów konkretnego testu (pełne statystyki, parametry użyte podczas testowania)
+    \item Zaawansowane filtrowanie:
+    \begin{itemize}
+        \item Po algorytmie PRNG
+        \item Po typie testu (NIST, Diehard, pojedyncze testy)
+        \item Po dacie wykonania
+        \item Po wyniku (zaliczone/niezaliczone)
+    \end{itemize}
+    \item Usuwanie pojedynczych wyników lub czyszczenie całej historii
+\end{itemize}
+
+\subsubsection{Dashboard i analiza}
+
+Strona główna (Dashboard) stanowi centrum analityczne aplikacji, prezentujące zagregowane dane i umożliwiające głęboką analizę porównawczą:
+
+\paragraph{Statystyki ogólne}
+\begin{itemize}
+    \item Liczba przetestowanych algorytmów
+    \item Łączna liczba przeprowadzonych testów
+    \item Interaktywne wykresy podsumowujące
+\end{itemize}
+
+\paragraph{Analiza wydajności}
+Moduł pozwala na porównanie czasów wykonania różnych algorytmów. Dostępne są:
+\begin{itemize}
+    \item Wykresy porównawcze czasów generowania dla różnych rozmiarów próbek
+    \item Szczegółowa analiza z dodatkowymi metrykami wydajnościowymi
+    \item Wykres punktowy z możliwością dynamicznego odczytu parametrów
+    \item Po wybraniu konkretnego algorytmu i testu - automatyczna transformacja do wykresu liniowego dla lepszej czytelności trendu
+\end{itemize}
+
+\paragraph{Analiza jakości testów}
+Umożliwia ocenę jakości algorytmów pod kątem testów statystycznych:
+\begin{itemize}
+    \item Wizualizacja wskaźników zaliczalności poszczególnych testów
+    \item Porównanie wyników różnych algorytmów na tym samym teście
+    \item Identyfikacja słabych punktów algorytmów
+\end{itemize}
+
+\paragraph{Generator raportów PDF}
+System oferuje zaawansowany mechanizm generowania profesjonalnych raportów w formacie PDF, zawierających:
+\begin{itemize}
+    \item Zestawienie wszystkich przeprowadzonych testów
+    \item Wykresy porównawcze wydajności algorytmów
+    \item Wykresy porównawcze jakości (wskaźniki zaliczalności testów)
+    \item Szczegółowe statystyki dla każdego algorytmu
+    \item Spersonalizowany motyw graficzny (zgodny z ustawieniami kolorystycznymi aplikacji)
+\end{itemize}
+
+\subsubsection{Wiki - baza wiedzy}
+
+Aplikacja zawiera wbudowaną encyklopedię wiedzy o algorytmach PRNG i metodologii testowania:
+
+\paragraph{Algorithms - Dokumentacja algorytmów}
+Każdy dostępny w systemie algorytm PRNG posiada dedykowaną stronę dokumentacji zawierającą:
+\begin{itemize}
+    \item Podstawowe informacje i definicję algorytmu
+    \item Matematyczny opis działania ze wzorami
+    \item Kluczowe fragmenty implementacji w różnych językach programowania
+    \item Kontekst historyczny i autorstwo
+    \item Analiza złożoności obliczeniowej (czasowej i pamięciowej)
+    \item Praktyczne przykłady obliczeniowe
+    \item Zastosowania i ograniczenia
+    \item Rekomendacje dotyczące parametrów
+\end{itemize}
+
+\paragraph{Methodology - Dokumentacja testów}
+Szczegółowe opisy wszystkich dostępnych testów statystycznych:
+\begin{itemize}
+    \item Zasada działania testu
+    \item Wzory matematyczne i podstawy teoretyczne
+    \item Szczegóły implementacji w systemie
+    \item Interpretacja wyników (wartości p-value, poziomy istotności)
+    \item Parametry konfiguracyjne testu
+    \item Bibliografia i źródła
+\end{itemize}
+
+\subsubsection{Ustawienia i personalizacja}
+
+Moduł ustawień demonstruje elastyczność aplikacji pod względem dostosowania interfejsu użytkownika:
+
+\begin{itemize}
+    \item \textbf{Kolor wiodący} - możliwość wyboru głównego koloru motywu aplikacji
+    \item \textbf{Kolor akcentów} - definiowanie koloru elementów interfejsu wyróżniających ważne funkcje
+    \item \textbf{Tryb jasny/ciemny} - automatyczne dostosowanie kontrastu
+    \item \textbf{Synchronizacja motywu} - wybrany schemat kolorystyczny jest automatycznie stosowany również w generowanych raportach PDF, zapewniając spójność wizualną
+\end{itemize}
+
+\subsubsection{O aplikacji}
+
+Sekcja informacyjna zawierająca:
+\begin{itemize}
+    \item Podstawowe informacje o projekcie IO\_RNG
+    \item Możliwość pobrania pełnej dokumentacji technicznej (niniejszy dokument)
+    \item Informacje o twórcach i kontakt
+    \item Licencja i warunki użytkowania
+\end{itemize}
+
+\subsection{Rozszerzenia względem założeń projektowych}
+
+Aplikacja IO\_RNG przekroczyła pierwotne założenia projektowe, oferując szereg dodatkowych funkcjonalności:
+
+\begin{itemize}
+    \item Generator liczb z konfigurowalnymi zakresami (oprócz pierwotnie planowanego generatora bitów)
+    \item Możliwość testowania własnych ciągów bitów dostarczonych przez użytkownika
+    \item Zaawansowany system generowania raportów PDF z wykresami i metrykami
+    \item Kompleksowa baza wiedzy Wiki z dokumentacją algorytmów i testów
+    \item Przyjazny webowy interfejs użytkownika zaprojektowany zgodnie z zasadami UX/UI
+    \item System personalizacji wyglądu z synchronizacją motywu między aplikacją a raportami
+    \item Interaktywne wykresy z możliwością dynamicznego filtrowania i transformacji
+    \item Animacje i efekty wizualne poprawiające doświadczenie użytkownika
+\end{itemize}
+
+\section{Wprowadzenie techniczne}
 
 \subsection{Cel dokumentu}
-Dokument przedstawia architekturę systemu, zastosowane wzorce projektowe, zasady programowania obiektowego oraz wykorzystane struktury danych.
+Dokument przedstawia architekturę techniczną systemu IO\_RNG, zastosowane wzorce projektowe, zasady programowania obiektowego oraz wykorzystane struktury danych. Przeznaczony jest dla deweloperów i architektów oprogramowania zainteresowanych szczegółami implementacyjnymi systemu.
 
 \subsection{Technologie}
 \begin{itemize}
@@ -987,44 +1182,45 @@ System implementuje szereg testów statystycznych:
 Backend systemu IO\_RNG zbudowany jest w oparciu o framework Django REST Framework, stosując zasady Clean Architecture. Projekt podzielony jest na wyraźnie oddzielone warstwy, co zapewnia separację odpowiedzialności i łatwość testowania.
 
 \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Struktura katalogów backendu]
+\small
 \begin{verbatim}
 backend/
-├── io_rng/                    # Główna aplikacja Django
-│   ├── core/                  # Warstwa domeny (Core Layer)
-│   │   ├── entities/          # Encje domenowe
-│   │   │   ├── rng.py         # RNG (Generator)
-│   │   │   ├── test_result.py # Wynik testu
-│   │   │   └── enums.py       # Language, Algorithm, DataType
-│   │   ├── interfaces/        # Interfejsy (ABC)
-│   │   │   ├── repository.py  # IRNGRepository, ITestResultRepository
-│   │   │   └── runner.py      # IRNGRunner
-│   │   └── use_cases/         # Logika biznesowa
-│   │       ├── run_rng_test.py        # Uruchomienie testu
-│   │       ├── compare_rngs.py        # Porównanie generatorów
-│   │       ├── get_test_results.py    # Pobieranie wyników
-│   │       └── test_custom_bits.py    # Test własnych bitów
-│   │
-│   ├── infrastructure/        # Warstwa infrastruktury
-│   │   ├── models.py          # Django ORM Models
-│   │   ├── repositories/      # Implementacje repozytoriów
-│   │   │   └── django_repositories.py
-│   │   └── runners/           # Implementacje runnerów
-│   │       ├── python_runner.py       # Python RNG Runner
-│   │       ├── exe_runner.py          # Executable Runner
-│   │       └── universal_adapter.py   # Uniwersalny adapter
-│   │
-│   ├── api/                   # Warstwa API
-│   │   ├── views.py           # Django REST Framework ViewSets
-│   │   ├── serializers.py     # DRF Serializers
-│   │   └── urls.py            # Routing API
-│   │
-│   ├── settings.py            # Konfiguracja Django
-│   ├── urls.py                # Główny routing
-│   └── wsgi.py                # WSGI application
-│
-├── db.sqlite3                 # Baza danych SQLite
-├── manage.py                  # Django CLI
-└── requirements.txt           # Zależności Python
+  io_rng/                      # Glowna aplikacja Django
+    core/                      # Warstwa domeny (Core Layer)
+      entities/                # Encje domenowe
+        rng.py                 # RNG (Generator)
+        test_result.py         # Wynik testu
+        enums.py               # Language, Algorithm, DataType
+      interfaces/              # Interfejsy (ABC)
+        repository.py          # IRNGRepository, ITestResultRepository
+        runner.py              # IRNGRunner
+      use_cases/               # Logika biznesowa
+        run_rng_test.py        # Uruchomienie testu
+        compare_rngs.py        # Porownanie generatorow
+        get_test_results.py    # Pobieranie wynikow
+        test_custom_bits.py    # Test wlasnych bitow
+    
+    infrastructure/            # Warstwa infrastruktury
+      models.py                # Django ORM Models
+      repositories/            # Implementacje repozytoriow
+        django_repositories.py
+      runners/                 # Implementacje runnerow
+        python_runner.py       # Python RNG Runner
+        exe_runner.py          # Executable Runner
+        universal_adapter.py   # Uniwersalny adapter
+    
+    api/                       # Warstwa API
+      views.py                 # Django REST Framework ViewSets
+      serializers.py           # DRF Serializers
+      urls.py                  # Routing API
+    
+    settings.py                # Konfiguracja Django
+    urls.py                    # Glowny routing
+    wsgi.py                    # WSGI application
+  
+  db.sqlite3                   # Baza danych SQLite
+  manage.py                    # Django CLI
+  requirements.txt             # Zaleznosci Python
 \end{verbatim}
 \end{tcolorbox}
 
