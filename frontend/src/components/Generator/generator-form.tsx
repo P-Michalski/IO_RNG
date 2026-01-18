@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { type RNG } from "@/types/test-results";
+import { Switch } from "@/components/ui/switch";
 
 const ALGORITHM_PARAMS = {
   2: {
@@ -28,6 +29,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 64,
       msb_first: 1,
     },
+    maxBitsPerValue: 64,
   },
   3: {
     name: "LCG",
@@ -41,6 +43,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 32,
       msb_first: 1,
     },
+    maxBitsPerValue: 32,
   },
   4: {
     name: "Park-Miller",
@@ -49,6 +52,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 31,
       msb_first: 1,
     },
+    maxBitsPerValue: 31,
   },
   5: {
     name: "PCG32",
@@ -57,6 +61,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 32,
       msb_first: 1,
     },
+    maxBitsPerValue: 32,
   },
   6: {
     name: "Mersenne Twister (Python random)",
@@ -65,6 +70,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 32,
       msb_first: 1,
     },
+    maxBitsPerValue: 32,
   },
   7: {
     name: "OS /dev/urandom",
@@ -73,6 +79,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 32,
       msb_first: 1,
     },
+    maxBitsPerValue: 32,
   },
   11: {
     name: "AWCG (r=24, s=10)",
@@ -86,6 +93,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 32,
       msb_first: 1,
     },
+    maxBitsPerValue: 32,
   },
   16: {
     name: "Blum Blum Shub",
@@ -94,6 +102,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 1,
       msb_first: 1,
     },
+    maxBitsPerValue: 64,
   },
   23: {
     name: "ChaCha20 (Rust)",
@@ -102,6 +111,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 32,
       msb_first: 1,
     },
+    maxBitsPerValue: 64,
   },
   24: {
     name: "Xoshiro256** (C#/.NET)",
@@ -110,6 +120,7 @@ const ALGORITHM_PARAMS = {
       bits_per_value: 32,
       msb_first: 1,
     },
+    maxBitsPerValue: 64,
   },
 };
 
@@ -230,20 +241,94 @@ export const GeneratorForm = ({
             {Object.entries(
               useDefaults
                 ? ALGORITHM_PARAMS[selectedAlgo].defaults
-                : advancedParams
-            ).map(([key, value]) => (
-              <div key={key} className="space-y-2">
-                <Label htmlFor={key} className="text-sm capitalize">
-                  {key.replace("_", " ")}
-                </Label>
-                <Input
-                  id={key}
-                  value={value}
-                  onChange={(e) => onAdvancedParamChange(key, e.target.value)}
-                  disabled={useDefaults}
-                />
-              </div>
-            ))}
+                : advancedParams,
+            ).map(([key, value]) => {
+              // Dla bits_per_value używamy Input z walidacją
+              if (key === "bits_per_value") {
+                const maxBits = ALGORITHM_PARAMS[selectedAlgo].maxBitsPerValue;
+                return (
+                  <div key={key} className="space-y-2">
+                    <Label htmlFor={key} className="text-sm">
+                      Bits Per Value
+                    </Label>
+                    <Input
+                      id={key}
+                      type="number"
+                      min={1}
+                      max={maxBits}
+                      step={1}
+                      value={value}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        // Prevent non-integer input
+                        if (val === "" || /^\d+$/.test(val)) {
+                          const numVal = parseInt(val);
+                          if (
+                            !isNaN(numVal) &&
+                            numVal >= 1 &&
+                            numVal <= maxBits
+                          ) {
+                            onAdvancedParamChange(key, val);
+                          }
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        // Prevent decimal point, comma, minus, plus, and 'e'
+                        if ([".", ",", "-", "+", "e", "E"].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      disabled={useDefaults}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Range: 1 - {maxBits}
+                    </p>
+                  </div>
+                );
+              }
+
+              // Dla msb_first używamy Switch
+              if (key === "msb_first") {
+                return (
+                  <div key={key} className="space-y-2">
+                    <Label htmlFor={key} className="text-sm">
+                      Bit Order
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        LSB first
+                      </span>
+                      <Switch
+                        id={key}
+                        checked={value === 1}
+                        onCheckedChange={(checked) =>
+                          onAdvancedParamChange(key, checked ? "1" : "0")
+                        }
+                        disabled={useDefaults}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        MSB first
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Dla pozostałych parametrów zwykły Input
+              return (
+                <div key={key} className="space-y-2">
+                  <Label htmlFor={key} className="text-sm capitalize">
+                    {key.replace("_", " ")}
+                  </Label>
+                  <Input
+                    id={key}
+                    value={value}
+                    onChange={(e) => onAdvancedParamChange(key, e.target.value)}
+                    disabled={useDefaults}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
 

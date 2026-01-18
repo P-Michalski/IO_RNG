@@ -74,6 +74,7 @@ import {
   type AlgorithmId,
 } from "../Generator/generator-form";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 
 const NIST_TESTS = [
   {
@@ -278,7 +279,7 @@ const testFormSchema = z
     {
       message: "Please select an RNG or provide custom bits",
       path: ["rng_id"],
-    }
+    },
   )
   .superRefine((data, ctx) => {
     if (data.test_type === "single") {
@@ -361,13 +362,13 @@ export const Tests = () => {
 
   // State for algorithm parameters
   const [algorithmParams, setAlgorithmParams] = useState<Record<string, any>>(
-    activeSession?.config?.algorithm_params || {}
+    activeSession?.config?.algorithm_params || {},
   );
   const [advancedParams, setAdvancedParams] = useState<Record<string, any>>(
-    activeSession?.config?.advanced_params || {}
+    activeSession?.config?.advanced_params || {},
   );
   const [useDefaults, setUseDefaults] = useState(
-    activeSession?.config?.use_defaults ?? true
+    activeSession?.config?.use_defaults ?? true,
   );
 
   useEffect(() => {
@@ -645,7 +646,7 @@ export const Tests = () => {
           await runSingleTest(
             valuesWithParams,
             values.nist_tests[i],
-            activeTab
+            activeTab,
           );
           incrementCurrentTest(activeTab);
         }
@@ -654,7 +655,7 @@ export const Tests = () => {
           await runSingleTest(
             valuesWithParams,
             values.diehard_tests[i],
-            activeTab
+            activeTab,
           );
           incrementCurrentTest(activeTab);
         }
@@ -699,7 +700,7 @@ export const Tests = () => {
   const runSingleTest = async (
     values: TestFormValues,
     testName: string,
-    sessionId: string
+    sessionId: string,
   ) => {
     const startTime = Date.now();
     let result;
@@ -740,7 +741,7 @@ export const Tests = () => {
               test_name: testName,
             }),
             signal,
-          }
+          },
         );
 
         if (!response.ok) {
@@ -765,7 +766,7 @@ export const Tests = () => {
               },
             }),
             signal,
-          }
+          },
         );
 
         if (!response.ok) {
@@ -1148,7 +1149,7 @@ export const Tests = () => {
                       <span>Progress</span>
                       <span>
                         {Math.round(
-                          (session.currentTest / session.totalTests) * 100
+                          (session.currentTest / session.totalTests) * 100,
                         )}
                         %
                       </span>
@@ -1294,7 +1295,7 @@ export const Tests = () => {
                                         {field.value &&
                                           rngs.find(
                                             (rng) =>
-                                              rng.id.toString() === field.value
+                                              rng.id.toString() === field.value,
                                           )?.name}
                                       </SelectValue>
                                     </SelectTrigger>
@@ -1332,7 +1333,7 @@ export const Tests = () => {
                           rngId in ALGORITHM_PARAMS &&
                           Object.keys(
                             ALGORITHM_PARAMS[parseInt(rngId) as AlgorithmId]
-                              .params
+                              .params,
                           ).length > 0 && (
                             <>
                               <Separator />
@@ -1358,7 +1359,7 @@ export const Tests = () => {
                                         }
                                       />
                                     </div>
-                                  )
+                                  ),
                                 )}
                               </div>
                             </>
@@ -1394,28 +1395,129 @@ export const Tests = () => {
                                     ? ALGORITHM_PARAMS[
                                         parseInt(rngId) as AlgorithmId
                                       ].defaults
-                                    : advancedParams
-                                ).map(([key, value]) => (
-                                  <div key={key} className="space-y-2">
-                                    <FormLabel
-                                      htmlFor={`adv-${key}`}
-                                      className="text-sm capitalize"
-                                    >
-                                      {key.replace(/_/g, " ")}
-                                    </FormLabel>
-                                    <Input
-                                      id={`adv-${key}`}
-                                      value={value}
-                                      onChange={(e) =>
-                                        setAdvancedParams({
-                                          ...advancedParams,
-                                          [key]: e.target.value,
-                                        })
-                                      }
-                                      disabled={useDefaults}
-                                    />
-                                  </div>
-                                ))}
+                                    : advancedParams,
+                                ).map(([key, value]) => {
+                                  // Dla bits_per_value używamy Input z walidacją
+                                  if (key === "bits_per_value") {
+                                    const maxBits =
+                                      ALGORITHM_PARAMS[
+                                        parseInt(rngId) as AlgorithmId
+                                      ].maxBitsPerValue;
+                                    return (
+                                      <div key={key} className="space-y-2">
+                                        <FormLabel
+                                          htmlFor={`adv-${key}`}
+                                          className="text-sm"
+                                        >
+                                          Bits Per Value
+                                        </FormLabel>
+                                        <Input
+                                          id={`adv-${key}`}
+                                          type="number"
+                                          min={1}
+                                          max={maxBits}
+                                          step={1}
+                                          value={value}
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            // Prevent non-integer input
+                                            if (
+                                              val === "" ||
+                                              /^\d+$/.test(val)
+                                            ) {
+                                              const numVal = parseInt(val);
+                                              if (
+                                                !isNaN(numVal) &&
+                                                numVal >= 1 &&
+                                                numVal <= maxBits
+                                              ) {
+                                                setAdvancedParams({
+                                                  ...advancedParams,
+                                                  [key]: numVal,
+                                                });
+                                              }
+                                            }
+                                          }}
+                                          onKeyDown={(e) => {
+                                            // Prevent decimal point, comma, minus, plus, and 'e'
+                                            if (
+                                              [
+                                                ".",
+                                                ",",
+                                                "-",
+                                                "+",
+                                                "e",
+                                                "E",
+                                              ].includes(e.key)
+                                            ) {
+                                              e.preventDefault();
+                                            }
+                                          }}
+                                          disabled={useDefaults}
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                          Range: 1 - {maxBits}
+                                        </p>
+                                      </div>
+                                    );
+                                  }
+
+                                  // Dla msb_first używamy Switch
+                                  if (key === "msb_first") {
+                                    return (
+                                      <div key={key} className="space-y-2">
+                                        <FormLabel
+                                          htmlFor={`adv-${key}`}
+                                          className="text-sm"
+                                        >
+                                          Bit Order
+                                        </FormLabel>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm text-muted-foreground">
+                                            LSB first
+                                          </span>
+                                          <Switch
+                                            id={`adv-${key}`}
+                                            checked={value === 1}
+                                            onCheckedChange={(checked) =>
+                                              setAdvancedParams({
+                                                ...advancedParams,
+                                                [key]: checked ? 1 : 0,
+                                              })
+                                            }
+                                            disabled={useDefaults}
+                                          />
+                                          <span className="text-sm text-muted-foreground">
+                                            MSB first
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+
+                                  // Dla pozostałych parametrów zwykły Input
+                                  return (
+                                    <div key={key} className="space-y-2">
+                                      <FormLabel
+                                        htmlFor={`adv-${key}`}
+                                        className="text-sm capitalize"
+                                      >
+                                        {key.replace(/_/g, " ")}
+                                      </FormLabel>
+                                      <Input
+                                        id={`adv-${key}`}
+                                        value={value}
+                                        onChange={(e) =>
+                                          setAdvancedParams({
+                                            ...advancedParams,
+                                            [key]: e.target.value,
+                                          })
+                                        }
+                                        disabled={useDefaults}
+                                      />
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
@@ -1438,7 +1540,7 @@ export const Tests = () => {
                                         const sanitized =
                                           e.target.value.replace(
                                             /[^01\s]/g,
-                                            ""
+                                            "",
                                           );
                                         field.onChange(sanitized);
                                       }}
@@ -1601,14 +1703,14 @@ export const Tests = () => {
                                           (test) =>
                                             form
                                               .getValues("nist_tests")
-                                              ?.includes(test.id)
+                                              ?.includes(test.id),
                                         );
                                         if (allSelected) {
                                           form.setValue("nist_tests", []);
                                         } else {
                                           form.setValue(
                                             "nist_tests",
-                                            NIST_TESTS.map((t) => t.id)
+                                            NIST_TESTS.map((t) => t.id),
                                           );
                                         }
                                       }}
@@ -1616,7 +1718,7 @@ export const Tests = () => {
                                       {NIST_TESTS.every((test) =>
                                         form
                                           .watch("nist_tests")
-                                          ?.includes(test.id)
+                                          ?.includes(test.id),
                                       )
                                         ? "Deselect All"
                                         : "Select All"}
@@ -1645,7 +1747,7 @@ export const Tests = () => {
                                                       id={test.id}
                                                       checked={isChecked}
                                                       onCheckedChange={(
-                                                        checked
+                                                        checked,
                                                       ) => {
                                                         return checked
                                                           ? field.onChange([
@@ -1657,8 +1759,8 @@ export const Tests = () => {
                                                               field.value?.filter(
                                                                 (value) =>
                                                                   value !==
-                                                                  test.id
-                                                              )
+                                                                  test.id,
+                                                              ),
                                                             );
                                                       }}
                                                     />
@@ -1720,14 +1822,15 @@ export const Tests = () => {
                                         // Get all valid tests (not disabled)
                                         const validTests = DIEHARD_TESTS.filter(
                                           (test) =>
-                                            effectiveBitCount >= test.minSamples
+                                            effectiveBitCount >=
+                                            test.minSamples,
                                         ).map((t) => t.id);
 
                                         const allValidSelected =
                                           validTests.every((testId) =>
                                             form
                                               .getValues("diehard_tests")
-                                              ?.includes(testId)
+                                              ?.includes(testId),
                                           );
 
                                         if (allValidSelected) {
@@ -1735,7 +1838,7 @@ export const Tests = () => {
                                         } else {
                                           form.setValue(
                                             "diehard_tests",
-                                            validTests
+                                            validTests,
                                           );
                                         }
                                       }}
@@ -1747,13 +1850,14 @@ export const Tests = () => {
                                             : samplesCount;
                                         const validTests = DIEHARD_TESTS.filter(
                                           (test) =>
-                                            effectiveBitCount >= test.minSamples
+                                            effectiveBitCount >=
+                                            test.minSamples,
                                         ).map((t) => t.id);
                                         const allValidSelected =
                                           validTests.every((testId) =>
                                             form
                                               .watch("diehard_tests")
-                                              ?.includes(testId)
+                                              ?.includes(testId),
                                           );
                                         return allValidSelected
                                           ? "Deselect All"
@@ -1801,7 +1905,7 @@ export const Tests = () => {
                                                         }
                                                         disabled={isDisabled}
                                                         onCheckedChange={(
-                                                          checked
+                                                          checked,
                                                         ) => {
                                                           if (isDisabled)
                                                             return;
@@ -1816,8 +1920,8 @@ export const Tests = () => {
                                                                 field.value?.filter(
                                                                   (value) =>
                                                                     value !==
-                                                                    test.id
-                                                                )
+                                                                    test.id,
+                                                                ),
                                                               );
                                                         }}
                                                       />
