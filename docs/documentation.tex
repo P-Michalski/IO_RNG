@@ -14,7 +14,7 @@
 \usepackage{tcolorbox}
 
 \usetikzlibrary{shapes.geometric, shapes.multipart, arrows, positioning, fit, backgrounds}
-
+\tcbuselibrary{breakable}
 \geometry{margin=2.5cm}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -2275,84 +2275,654 @@ class Migration(migrations.Migration):
 \end{tcolorbox}
 
 \newpage
-
 \section{Architektura Frontendowa}
 
-\subsection{Struktura komponentów React}
+Frontend systemu IO\_RNG zbudowany jest w oparciu o nowoczesny stack technologiczny React + TypeScript + Vite, z wykorzystaniem biblioteki komponentów shadcn/ui opartej na Radix UI. Aplikacja implementuje wzorce projektowe zapewniające skalowalność, łatwość utrzymania oraz doskonałe doświadczenie użytkownika.
 
-Frontend używa architektury komponentowej z podziałem funkcjonalnym:
+\subsection{Technologie i narzędzia}
 
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Struktura komponentów]
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Stos technologiczny frontendu,breakable]
 \begin{itemize}
-    \item \textbf{Layout:}
+    \item \textbf{Rdzeń aplikacji:}
     \begin{itemize}
-        \item \texttt{NavigationSidebar} - nawigacja boczna
-        \item \texttt{Footer} - stopka
-        \item \texttt{Header} - nagłówek
+        \item React 18.x - biblioteka interfejsu użytkownika z API hooków
+        \item TypeScript 5.x - bezpieczeństwo typów i autouzupełnianie
+        \item Vite 5.x - szybkie narzędzie budowania i serwer deweloperski
     \end{itemize}
     
-    \item \textbf{Pages (Routes):}
+    \item \textbf{Framework interfejsu użytkownika:}
     \begin{itemize}
-        \item \texttt{Dashboard} - pulpit główny
-        \item \texttt{Generator} - generator liczb
-        \item \texttt{Tests} - testy statystyczne
-        \item \texttt{Results} - wyniki testów
-        \item \texttt{Wiki} - dokumentacja algorytmów
-        \item \texttt{Settings} - ustawienia
+        \item shadcn/ui - kolekcja komponentów (podejście kopiuj-wklej)
+        \item Radix UI - prymitywy zapewniające dostępność
+        \item Tailwind CSS 3.x - framework CSS oparty na klasach użytkowych
+        \item Lucide React - zestaw ikon
     \end{itemize}
     
-    \item \textbf{UI Components (shadcn/ui):}
+    \item \textbf{Zarządzanie stanem:}
     \begin{itemize}
-        \item Button, Card, Dialog, Select
-        \item Table, Tabs, Progress
-        \item Chart (Recharts)
+        \item Zustand - lekki stan globalny (zarządzanie sesjami testów)
+        \item React Context API - motyw, język, wyniki testów
+        \item React Hook Form - zarządzanie formularzami
     \end{itemize}
     
-    \item \textbf{Context Providers:}
+    \item \textbf{Wizualizacja danych:}
     \begin{itemize}
-        \item \texttt{ThemeProvider} - motyw (dark/light)
-        \item \texttt{LanguageProvider} - internacjonalizacja
-        \item \texttt{TestResultsProvider} - stan wyników testów
+        \item Recharts - wykresy i wizualizacje danych
+        \item React PDF - generowanie raportów PDF
+    \end{itemize}
+    
+    \item \textbf{Routing i powiadomienia:}
+    \begin{itemize}
+        \item React Router v6 - routing po stronie klienta
+        \item Sonner - powiadomienia typu toast
     \end{itemize}
 \end{itemize}
 \end{tcolorbox}
 
-\subsection{Wzorce frontendowe}
+Taki stos technologiczny pozwolił na łatwiejszą implementację złożonych interfejsów użytkownika w krótkim czasie.
 
-\subsubsection{Context API dla globalnego stanu}
+\subsection{Struktura projektu}
 
-\begin{lstlisting}[language=Python, caption=Test Results Context]
-export const TestResultsProvider = ({ children }) => {
-  const [results, setResults] = useState<TestResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  
-  const fetchResults = async () => {
-    setLoading(true);
-    const data = await api.getTestResults();
-    setResults(data);
-    setLoading(false);
-  };
-  
-  return (
-    <TestResultsContext.Provider value={{ 
-      results, loading, fetchResults 
-    }}>
-      {children}
-    </TestResultsContext.Provider>
-  );
-};
-\end{lstlisting}
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=Drzewo katalogów frontendu,breakable]
+\small
+\begin{verbatim}
+frontend/
+  src/
+    components/                 # Komponenty React
+      About/                    # Strona "O aplikacji"
+      Dashboard/                # Panel główny z analizami
+        DailyActivityChart.tsx  # Komponenty wykresów Recharts
+        ...              
+        reports/                # Generator raportów PDF
+      Generator/                # Generatory liczb/bitów
+      Results/                  # Historia wyników testów
+      Settings/                 # Ustawienia aplikacji
+      Tests/                    # Moduł testowania RNG
+      Wiki/                    
+        AlgorithmsWiki/         # Dokumentacja algorytmów
+        MethodologyWiki/        # Dokumentacja testów
+      ui/                       # Komponenty shadcn/ui
+        card.tsx
+        dialog.tsx
+        ...
+    contexts/                # Provider kontekstu React
+      language-context.tsx    # Internacjonalizacja (PL/EN)
+      test-results-context.tsx # Stan wyników testów
+    stores/                  # Magazyny Zustand
+      test-store.ts          # Stan sesji testowych wielozakładkowych
+    lib/                     # Funkcje narzędziowe
+      utils.ts               # Funkcje pomocnicze (cn, formattery)
+    assets/                  # Pliki statyczne
+      algorithms/            # Markdown - dokumentacja algorytmów
+        LCG.md
+        LCG_eng.md
+        ChaCha20.md
+        ...
+      tests/                 # Markdown - dokumentacja testów
+        NIST_Monobit.md
+        NIST_Monobit_eng.md
+        ...
+      IO_RNG.pdf      # Dokumentacja do pobrania
+    
+    theme-provider.tsx       # Provider motywu i akcentu aplikacji
+    App.tsx                  # Główny komponent aplikacji
+    main.tsx                 # Punkt wejścia
+    index.css                # Style globalne (Tailwind)
+    vite.config.ts           # Konfiguracja Vite
+    tailwind.config.js       # Konfiguracja Tailwind
+    tsconfig.json            # Konfiguracja TypeScript
+\end{verbatim}
+\end{tcolorbox}
 
-\subsubsection{Custom Hooks}
+\newpage
 
-System używa custom hooks dla logiki wielokrotnego użytku:
+\subsection{Routing i nawigacja}
+
+Aplikacja używa React Router v6 do zarządzania routingiem po stronie klienta. System routingu zbudowany jest hierarchicznie z wyraźnym podziałem na główne sekcje aplikacji.
+
+\subsubsection{Struktura routingu}
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=yellow!75!black,title=Hierarchia tras]
+\begin{itemize}
+    \item \texttt{/} - Główny układ z nawigacją
+    \begin{itemize}
+        \item \texttt{/dashboard} - Panel główny z analizami
+        \item \texttt{/generator} - Generator liczb i bitów
+        \item \texttt{/tests} - Moduł testowania RNG
+        \item \texttt{/results} - Historia wyników testów
+        \item \texttt{/settings} - Ustawienia personalizacji
+        \item \texttt{/about} - Informacje o aplikacji
+        \item \texttt{/wiki} - Baza wiedzy
+        \begin{itemize}
+            \item \texttt{/wiki/algorithms/:algoId?} - Dokumentacja algorytmów
+            \item \texttt{/wiki/methodology/:testId?} - Dokumentacja testów
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Komponent układu} stanowi opakowanie dla wszystkich stron, zawierając:
+\begin{itemize}
+    \item Responsywną nawigację boczną (pasek boczny na komputerze, menu hamburger na urządzeniach mobilnych)
+    \item Główny obszar treści z punktem wyjścia React Router
+    \item Globalny stan dostępny przez dostawców kontekstu
+\end{itemize}
+
+\textbf{Pasek nawigacji bocznej} implementuje:
+\begin{itemize}
+    \item Automatyczne podświetlanie aktywnej strony
+    \item Ikony dla każdej sekcji (Lucide React)
+    \item Projekt responsywny - wysuwany panel na urządzeniach mobilnych
+    \item Możliwość zwijania i rozwijania na komputerze
+\end{itemize}
+
+\subsection{Zarządzanie stanem globalnym}
+
+System wykorzystuje kombinację magazynu Zustand dla złożonego stanu sesji testowych oraz API kontekstu React dla globalnych ustawień aplikacji.
+
+\subsubsection{Magazyn Zustand - wielozakładkowe sesje testowe}
+
+Zustand został wybrany jako rozwiązanie do zarządzania stanem niezależnych sesji testowych w zakładkach. Jest to kluczowa funkcjonalność pozwalająca użytkownikom na jednoczesne prowadzenie wielu testów z różnymi konfiguracjami.
+
+\textbf{Struktura sesji testowej:}
+\begin{itemize}
+    \item \texttt{id} - unikalny identyfikator sesji (UUID)
+    \item \texttt{name} - edytowalna nazwa zakładki
+    \item \texttt{config} - pełna konfiguracja testu (formularz)
+    \item \texttt{status} - stan sesji: bezczynny | wykonywany | zakończony | błąd | anulowany
+    \item \texttt{results} - tablica zgromadzonych wyników testów
+    \item \texttt{startTime / endTime} - znaczniki czasu wykonania
+    \item \texttt{currentTest / totalTests} - postęp wykonywania
+    \item \texttt{resultsSeen} - czy użytkownik widział okno wyników
+    \item \texttt{abortController} - mechanizm anulowania trwających testów
+\end{itemize}
+
+\textbf{Funkcjonalność magazynu:}
+\begin{itemize}
+    \item \textbf{Middleware trwałości} - automatyczne zapisywanie do magazynu lokalnego
+    \item \textbf{Selektywna serializacja} - zapisywanie tylko pól możliwych do serializacji
+    \item \textbf{Cykl życia sesji} - zarządzanie cyklem życia sesji testowej
+    \item \textbf{Śledzenie aktywnej zakładki} - śledzenie aktywnej zakładki
+\end{itemize}
+
+\textbf{Kluczowe akcje:}
+\begin{itemize}
+    \item Dodawanie i usuwanie sesji testowych
+    \item Aktualizacja konfiguracji sesji
+    \item Zarządzanie statusem wykonywania testów
+    \item Dodawanie wyników w czasie rzeczywistym
+    \item Anulowanie trwających testów
+    \item Oznaczanie wyników jako przeczytanych
+\end{itemize}
+
+\subsubsection{API kontekstu React}
+
+\textbf{Kontekst motywu} - zarządzanie wyglądem aplikacji:
+\begin{itemize}
+    \item Wybór motywu: jasny | ciemny | systemowy
+    \item Konfiguracja koloru wiodącego
+    \item Konfiguracja koloru akcentów
+    \item Automatyczna synchronizacja z systemem
+    \item Aplikacja zmiennych CSS do elementu dokumentu
+    \item Zapis preferencji w magazynie lokalnym
+\end{itemize}
+
+\textbf{Kontekst języka} - internacjonalizacja:
+\begin{itemize}
+    \item Obsługa języków: polski i angielski
+    \item Dynamiczne ładowanie Wiki w wybranym języku
+    \item Zapis preferencji językowych
+\end{itemize}
+
+\textbf{Kontekst wyników testów} - stan wyników testów:
+\begin{itemize}
+    \item Globalna lista wszystkich wykonanych testów
+    \item Funkcje do pobierania i odświeżania wyników z API
+    \item Filtrowanie wyników (po algorytmie, teście, dacie)
+    \item Usuwanie pojedynczych wyników lub czyszczenie historii
+    \item Stan ładowania i obsługa błędów
+\end{itemize}
+
+\subsection{Komponenty interfejsu użytkownika - shadcn/ui}
+
+System używa shadcn/ui - innowacyjnej biblioteki komponentów interfejsu użytkownika, która zamiast tradycyjnej instalacji jako zależność, oferuje podejście "kopiuj-wklej" - komponenty są kopiowane bezpośrednio do projektu.
+
+\begin{tcolorbox}[colback=yellow!5!white,colframe=yellow!75!black,title=Filozofia shadcn/ui]
+\textit{"To nie jest biblioteka komponentów. To kolekcja komponentów wielokrotnego użytku, które możesz skopiować i wkleić do swoich aplikacji."}
+
+\textbf{Zalety tego podejścia:}
+\begin{itemize}
+    \item Pełna kontrola nad kodem - możliwość dostosowania każdego szczegółu
+    \item Brak uzależnienia od dostawcy - komponenty należą do projektu
+    \item Wytrząsanie drzewa - tylko używane komponenty w paczce
+    \item Bezpieczeństwo typów - wszystko w TypeScript z pełnymi definicjami typów
+    \item Wbudowana dostępność - oparte na prymitywach Radix UI
+    \item Dostosowywanie - łatwa modyfikacja bez nadpisywania stylów
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Wykorzystane komponenty interfejsu użytkownika w projekcie:}
 
 \begin{itemize}
-    \item \texttt{useRNGList()} - pobieranie listy generatorów
-    \item \texttt{useTestExecution()} - uruchamianie testów
-    \item \texttt{useLanguage()} - zarządzanie językiem interfejsu
-    \item \texttt{useTheme()} - zarządzanie motywem
+    \item \textbf{Komponenty układu:}
+    \begin{itemize}
+        \item \texttt{Card} - karty z nagłówkiem, treścią, stopką
+        \item \texttt{Separator} - separatory sekcji
+        \item \texttt{ScrollArea} - obszary przewijalne z niestandardowym paskiem przewijania
+    \end{itemize}
+    
+    \item \textbf{Komponenty formularza:}
+    \begin{itemize}
+        \item \texttt{Button} - przyciski z wariantami (domyślny, obrys, ukryty, destrukcyjny)
+        \item \texttt{Input} - pola tekstowe z walidacją
+        \item \texttt{Textarea} - wieloliniowe pola tekstowe
+        \item \texttt{Select} - rozwijane listy wyboru
+        \item \texttt{Checkbox} - pola wyboru dla list testów
+        \item \texttt{RadioGroup} - grupy przycisków radio
+        \item \texttt{Switch} - przełączniki (MSB/LSB, jasny/ciemny)
+        \item \texttt{Label} - etykiety pól formularza
+    \end{itemize}
+    
+    \item \textbf{Komponenty informacji zwrotnej:}
+    \begin{itemize}
+        \item \texttt{Dialog} - modalne okna dialogowe (wyniki testów, potwierdzenia)
+        \item \texttt{Progress} - pasek postępu wykonywania testów
+        \item \texttt{Badge} - etykiety statusu (zaliczony/niezaliczony, wykonywany)
+        \item \texttt{Tooltip} - podpowiedzi po najechaniu
+        \item \texttt{Alert} - komunikaty informacyjne i ostrzeżenia
+    \end{itemize}
+    
+    \item \textbf{Komponenty nawigacji:}
+    \begin{itemize}
+        \item \texttt{Tabs} - zakładki (wielozakładkowe sesje testowe, generator)
+        \item \texttt{Sheet} - wysuwane panele boczne (nawigacja mobilna)
+    \end{itemize}
+    
+    \item \textbf{Wyświetlanie danych:}
+    \begin{itemize}
+        \item \texttt{Table} - tabele z sortowaniem (wyniki testów, historia)
+        \item \texttt{Accordion} - rozwijane sekcje (FAQ, dokumentacja)
+    \end{itemize}
 \end{itemize}
+
+\textbf{Integracja z React Hook Form:}
+
+Komponenty shadcn/ui są zaprojektowane do bezproblemowej współpracy z React Hook Form, oferując:
+\begin{itemize}
+    \item Komponent opakowania formularza z automatyczną walidacją
+    \item Kontroler pola z integracją stanu formularza
+    \item Komponenty struktury układu formularza
+    \item Automatyczne wyświetlanie komunikatów błędów walidacji
+    \item Walidacja schematu Zod - silna walidacja typów
+\end{itemize}
+
+\subsection{Kluczowe moduły aplikacji}
+
+\subsubsection{Panel główny - analiza i wizualizacja}
+
+Panel główny stanowi centrum analityczne aplikacji, prezentujące zagregowane dane i umożliwiające głęboką analizę porównawczą algorytmów RNG.
+
+\textbf{Karty statystyk podsumowujących:}
+\begin{itemize}
+    \item Całkowita liczba przeprowadzonych testów
+    \item Liczba unikalnych testowanych algorytmów
+    \item Globalny wskaźnik zaliczalności
+    \item Średni czas wykonania testów
+\end{itemize}
+
+Karty statystyczne prezentują kluczowe metryki w przejrzystej formie wizualnej z kolorowymi ikonami i animacjami po najechaniu.
+
+\textbf{Analiza wydajności:}
+
+Moduł wykorzystuje bibliotekę Recharts do tworzenia interaktywnych wykresów wydajności:
+\begin{itemize}
+    \item \textbf{Wykres punktowy} - porównanie czasów wykonania różnych algorytmów
+    \item \textbf{Dynamiczna transformacja} - automatyczna zmiana na wykres liniowy po wybraniu konkretnego algorytmu i testu
+    \item \textbf{Skala logarytmiczna} - skala logarytmiczna dla osi X (liczba próbek)
+    \item \textbf{Interaktywne podpowiedzi} - szczegółowe informacje po najechaniu kursorem
+    \item \textbf{Legenda} - automatyczna legenda dla wielu serii danych
+\end{itemize}
+
+Wykres pozwala na:
+\begin{itemize}
+    \item Filtrowanie po algorytmie RNG
+    \item Filtrowanie po typie testu
+    \item Porównywanie wydajności różnych implementacji
+    \item Identyfikację trendów dla różnych rozmiarów próbek
+\end{itemize}
+
+\textbf{Analiza jakości testów:}
+
+Wykres słupkowy prezentujący wskaźniki zaliczalności testów:
+\begin{itemize}
+    \item Procentowy wskaźnik zaliczalności dla każdego typu testu
+    \item Grupowanie po algorytmach
+    \item Kolorowe kodowanie (zielony = dobry, czerwony = słaby)
+    \item Możliwość filtrowania i sortowania
+\end{itemize}
+
+\textbf{Generator raportów PDF:}
+
+System oferuje zaawansowany mechanizm generowania profesjonalnych raportów używając biblioteki @react-pdf/renderer:
+
+\textbf{Zawartość raportu PDF:}
+\begin{itemize}
+    \item \textbf{Strona tytułowa:} Tytuł, data generowania, okres testowy
+    \item \textbf{Podsumowanie wykonawcze:} Karty z kluczowymi statystykami
+    \item \textbf{Wykresy wydajności:} Wykresy wydajności eksportowane jako obrazy
+    \item \textbf{Wykresy jakości:} Wykresy jakości testów
+    \item \textbf{Tabela szczegółowych wyników:} Pełna tabela wszystkich wyników testów
+    \item \textbf{Stylizacja:} Spersonalizowany motyw zgodny z kolorami aplikacji
+\end{itemize}
+
+\textbf{Proces generowania:}
+\begin{enumerate}
+    \item Użytkownik klika "Generuj raport PDF"
+    \item System zbiera wszystkie dane testów z wybranego okresu
+    \item Wykresy Recharts są konwertowane do obrazów base64 (html2canvas)
+    \item Kolory motywu (wiodący, akcent) są przekazywane do stylów PDF
+    \item React PDF renderuje dokument w pamięci jako obiekt binarny
+    \item Automatyczne pobranie pliku z nazwą zawierającą datę
+\end{enumerate}
+
+\subsubsection{Generator - generowanie liczb i bitów}
+
+Moduł generatora oferuje dwie zakładki z wspólną konfiguracją algorytmu:
+
+\textbf{Zakładka "Generator bitów":}
+\begin{itemize}
+    \item Pole liczbowe: liczba bitów do wygenerowania
+    \item Wizualizacja strumienia bitów jako tekst (zera i jedynki)
+    \item Metryki: czas wykonania, liczba wygenerowanych bitów
+    \item Możliwość kopiowania bitów do schowka
+    \item Kompresja bitów do Base64 dla optymalizacji transferu
+\end{itemize}
+
+\textbf{Zakładka "Generator liczb":}
+\begin{itemize}
+    \item Liczba liczb do wygenerowania
+    \item Zakres wartości: minimum i maksimum
+    \item Animacja procesu generowania (opcjonalna)
+    \item Interaktywny wykres słupkowy dystrybucji (Recharts)
+    \item Statystyki: średnia arytmetyczna, odchylenie standardowe
+\end{itemize}
+
+\textbf{Wspólna konfiguracja:}
+\begin{itemize}
+    \item \textbf{Wybór algorytmu RNG} - rozwijana lista z dostępnymi generatorami
+    \item \textbf{Ziarno} - pole numeryczne do inicjalizacji generatora
+    \item \textbf{Parametry algorytmu} - dynamiczne pola dla parametrów specyficznych dla wybranego algorytmu (np. LCG: a, c, m)
+    \item \textbf{Parametry zaawansowane:}
+    \begin{itemize}
+        \item \texttt{bits\_per\_value} - pole wejściowe z walidacją (min=1, max=zależny od algorytmu)
+        \item \texttt{msb\_first} - przełącznik dla kierunku ekstrakcji bitów (MSB first / LSB first)
+    \end{itemize}
+    \item \textbf{Pole wyboru "Użyj domyślnych"} - automatyczne wypełnienie parametrami domyślnymi dla algorytmu
+\end{itemize}
+
+\textbf{Walidacja formularza:}
+\begin{itemize}
+    \item React Hook Form z walidacją schematu Zod
+    \item Walidacja w czasie rzeczywistym z komunikatami błędów
+    \item Blokada przycisku ''Generuj'' dla nieprawidłowych danych
+    \item Podpowiedzi z opisami parametrów
+\end{itemize}
+
+\subsubsection{Testy - wielozakładkowe wykonywanie testów}
+
+Moduł testów wykorzystuje magazyn Zustand do zarządzania wieloma niezależnymi sesjami testowymi, co pozwala na jednoczesne prowadzenie różnych testów bez utraty postępu.
+
+\textbf{System zakładek:}
+
+\begin{itemize}
+    \item \textbf{Przewijana lista zakładek} - obszar przewijania z automatycznym przewijaniem do aktywnej
+    \item \textbf{Edytowalne nazwy} - podwójne kliknięcie na zakładce otwiera pole edycji w linii
+    \item \textbf{Przyciski nawigacji} - przyciski poprzednia/następna zakładka z ikonami
+    \item \textbf{Przycisk "Nowa zakładka"} - ikona plus do dodawania nowych sesji
+    \item \textbf{Znaczki statusu} na zakładkach:
+    \begin{itemize}
+        \item Wykonywany - animowany spinner
+        \item Zakończony - zielona ikona zaznaczenia
+        \item Błąd - czerwona ikona krzyżyka
+        \item Anulowany - żółta ikona ostrzeżenia
+    \end{itemize}
+    \item \textbf{Przycisk zamknięcia} - ikona X (widoczna po najechaniu, ukryta na urządzeniach mobilnych)
+    \item \textbf{Ochrona} - niemożność zamknięcia ostatniej sesji
+\end{itemize}
+
+\textbf{Konfiguracja testu:}
+
+Formularz podzielony na sekcje kart:
+
+\begin{enumerate}
+    \item \textbf{Wybór typu wejścia:}
+    \begin{itemize}
+        \item Grupa przycisków radio: "Algorytm z listy" | "Własne bity"
+        \item Warunkowe renderowanie - pokazuje odpowiednie pola
+    \end{itemize}
+    
+    \item \textbf{Wybór algorytmu} (gdy "Algorytm z listy"):
+    \begin{itemize}
+        \item Rozwijana lista z dostępnymi RNG
+        \item Parametry algorytmu (dynamiczne)
+        \item Parametry zaawansowane (bits\_per\_value, msb\_first)
+    \end{itemize}
+    
+    \item \textbf{Wejście własnych bitów} (gdy "Własne bity"):
+    \begin{itemize}
+        \item Pole tekstowe do wklejenia sekwencji bitów
+        \item Walidacja: tylko zera i jedynki, separatory dozwolone
+        \item Licznik znaków i bitów
+    \end{itemize}
+    
+    \item \textbf{Wybór typu testu:}
+    \begin{itemize}
+        \item Grupa przycisków radio: "Pojedynczy test" | "Pakiet NIST" | "Pakiet Diehard"
+        \item Warunkowe renderowanie testów:
+        \begin{itemize}
+            \item Pojedynczy: rozwijana lista z pojedynczymi testami
+            \item NIST: lista pól wyboru 15 testów NIST
+            \item Diehard: lista pól wyboru 15 testów Diehard
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Parametry wykonania:}
+    \begin{itemize}
+        \item Liczba próbek - pole wejściowe z walidacją (min=100) lub minimum określone dla testu
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Widok wykonywania testów:}
+
+Podczas wykonywania testów formularz jest zastępowany widokiem postępu:
+\begin{itemize}
+    \item \textbf{Nagłówek} - ikona spinnera z animacją, tytuł "Wykonywanie testów"
+    \item \textbf{Przycisk anulowania} - przycisk destrukcyjny do przerwania testów
+    \item \textbf{Wskaźniki postępu:}
+    \begin{itemize}
+        \item "Test X z Y" - aktualny test vs całkowita liczba
+        \item Pasek postępu - wizualny pasek postępu (0-100\%)
+        \item Upłynięty czas - licznik czasu od rozpoczęcia (aktualizowany co sekundę)
+    \end{itemize}
+    \item \textbf{Wyniki na żywo} - obszar przewijania z wynikami zakończonych testów:
+    \begin{itemize}
+        \item Nazwa testu z formatowaniem
+        \item Ikona zaliczony/niezaliczony
+        \item Czas wykonania w sekundach
+    \end{itemize}
+\end{itemize}
+
+\textbf{Okno podsumowania wyników:}
+
+Po zakończeniu testów automatycznie wyświetla się okno z podsumowaniem:
+\begin{itemize}
+    \item \textbf{Nagłówek:} ikona statusu + tytuł (zakończony / niepowodzenie / anulowany)
+    \item \textbf{Statystyki podsumowujące} - siatka 3 kart:
+    \begin{itemize}
+        \item Liczba zaliczonych testów (zielony)
+        \item Liczba niezaliczonych testów (czerwony)
+        \item Całkowity czas wykonania
+    \end{itemize}
+    \item \textbf{Lista szczegółowych wyników} - obszar przewijania z pełną tabelą wyników
+    \item \textbf{Przyciski stopki:}
+    \begin{itemize}
+        \item "OK" - zamyka okno i oznacza wyniki jako przeczytane
+        \item "Zobacz wyniki" - przekierowanie do strony wyników
+    \end{itemize}
+\end{itemize}
+
+\textbf{Kluczowe wzorce implementacyjne:}
+
+\begin{itemize}
+    \item \textbf{Synchronizacja formularza} - automatyczne zapisywanie stanu formularza do magazynu przed przełączeniem zakładek
+    \item \textbf{Warunkowe renderowanie formularza} - tylko aktywna zakładka renderuje formularz (unika konfliktów React Hook Form)
+    \item \textbf{requestAnimationFrame} - używane do resetowania formularza aby uniknąć konfliktów z cyklem renderowania React
+    \item \textbf{Opóźnione automatyczne zapisywanie} - zapisywanie zmian w formularzu co 500ms bez konieczności klikania "Zapisz"
+    \item \textbf{Kontroler przerwania} - możliwość anulowania wykonywanych testów poprzez przerwanie żądań HTTP
+    \item \textbf{Zarządzanie oknami dialogowymi} - śledzenie pokazanych okien aby uniknąć duplikatów przy przełączaniu zakładek
+    \item \textbf{Automatyczne przewijanie aktywnej zakładki} - automatyczne przewinięcie do aktywnej zakładki przy zmianie
+\end{itemize}
+
+\subsubsection{Wiki - dynamiczne renderowanie Markdown}
+
+Wiki stanowi wbudowaną bazę wiedzy z dokumentacją algorytmów RNG i metodologii testowania.
+
+\textbf{Struktura Wiki:}
+
+\begin{itemize}
+    \item \textbf{Algorytmy} - dokumentacja wszystkich dostępnych algorytmów
+    \item \textbf{Metodologia} - szczegółowe opisy testów statystycznych
+\end{itemize}
+
+\textbf{Nawigacja w Wiki:}
+\begin{itemize}
+    \item Lista algorytmów i testów w pasku bocznym
+    \item Routing z parametrem w ścieżce URL
+    \item Automatyczne przekierowanie na pierwszy element jeśli brak parametru
+    \item Przyciski poprzedni/następny do nawigacji między dokumentami
+\end{itemize}
+
+\textbf{Dynamiczne ładowanie Markdown:}
+\begin{itemize}
+    \item Pliki .md przechowywane w folderze zasobów
+    \item Wersje językowe: wersja polska i angielska
+    \item Dynamiczny import z Vite
+    \item Automatyczne przełączanie języka zgodnie z kontekstem języka
+    \item Spinner ładowania podczas ładowania pliku
+    \item Obsługa błędów - wyświetlanie komunikatu błędu jeśli plik nie istnieje
+\end{itemize}
+
+\textbf{Renderer Markdown - niestandardowy komponent:}
+
+Wykorzystuje react-markdown z wtyczkami:
+\begin{itemize}
+    \item \textbf{remark-math} - parsowanie matematycznych wyrażeń (inline, blokowe)
+    \item \textbf{rehype-katex} - renderowanie LaTeX do HTML
+    \item \textbf{Import CSS KaTeX} - style dla matematycznych symboli
+\end{itemize}
+
+\textbf{Niestandardowe renderery dla elementów Markdown:}
+\begin{itemize}
+    \item \textbf{Bloki kodu} - podświetlanie składni
+    \item \textbf{Nagłówki} - automatyczne generowanie identyfikatorów i kotwic dla spisu treści
+    \item \textbf{Tabele} - stylowanie Tailwind CSS z responsywnym opakowaniem
+    \item \textbf{Linki} - otwieranie zewnętrznych linków w nowej karcie
+    \item \textbf{Obrazy} - leniwe ładowanie i responsywne rozmiary
+\end{itemize}
+
+\textbf{Przykład dokumentacji algorytmu:}
+
+Każdy dokument zawiera:
+\begin{enumerate}
+    \item Nagłówek z nazwą algorytmu
+    \item Podstawowe informacje i historia
+    \item Matematyczny opis działania (z LaTeX)
+    \item Fragmenty implementacji (bloki kodu)
+    \item Analiza złożoności obliczeniowej
+    \item Przykłady praktyczne
+    \item Zastosowania i ograniczenia
+    \item Referencias i linki
+\end{enumerate}
+
+\textbf{Przełącznik języka:}
+\begin{itemize}
+    \item Przycisk PL/EN w nagłówku dokumentacji
+    \item Natychmiastowa zmiana języka bez przeładowania strony
+    \item Zachowanie pozycji przewijania po zmianie języka
+\end{itemize}
+
+\subsection{Komunikacja z API backendu}
+
+Frontend komunikuje się z backendem Django REST Framework przez dedykowany klient API.
+
+\textbf{Struktura klienta API:}
+
+Klasa klienta API enkapsuluje wszystkie wywołania fetch:
+\begin{itemize}
+    \item Konfiguracja bazowego adresu URL
+    \item Scentralizowana obsługa błędów
+    \item Automatyczne dodawanie nagłówków
+    \item Bezpieczne typowo odpowiedzi (interfejsy TypeScript)
+\end{itemize}
+
+\textbf{Główne punkty końcowe API:}
+
+\begin{table}[H]
+\centering
+\caption{Punkty końcowe REST API - integracja frontendu}
+\begin{tabular}{|l|l|p{5cm}|}
+\hline
+\textbf{Metoda} & \textbf{Punkt końcowy} & \textbf{Wykorzystanie w interfejsie} \\ \hline
+GET & /api/rngs & Lista algorytmów (generator, testy) \\ \hline
+POST & /api/rngs/\{id\}/generate & Generator - generowanie bitów \\ \hline
+POST & /api/rngs/\{id\}/generate\_numbers & Generator - generowanie liczb \\ \hline
+POST & /api/rngs/\{id\}/run\_test & Testy - uruchomienie testu \\ \hline
+GET & /api/test-results & Wyniki, panel główny - historia \\ \hline
+DELETE & /api/test-results/\{id\} & Wyniki - usuwanie wyniku \\ \hline
+POST & /api/test-results/clear & Wyniki - czyszczenie historii \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{Strategia obsługi błędów:}
+\begin{itemize}
+    \item Try-catch w każdej funkcji API
+    \item Powiadomienia typu toast dla komunikatów błędów
+    \item Opisowe komunikaty błędów z backendu
+    \item Zapasowe stany interfejsu dla błędów sieciowych
+    \item Logika ponownych prób dla błędów przekroczenia czasu
+\end{itemize}
+
+\textbf{Stany ładowania:}
+\begin{itemize}
+    \item Stan lokalny dla operacji komponentowych
+    \item Globalne ładowanie dla długotrwałych operacji
+    \item Loadery szkieletowe dla lepszego doświadczenia użytkownika
+    \item Wyłączanie przycisków podczas wykonywania operacji
+\end{itemize}
+
+\textbf{Buforowanie danych:}
+\begin{itemize}
+    \item Dostawcy kontekstu buforują często używane dane
+    \item Automatyczne odświeżanie po modyfikacji danych
+    \item Ręczne przyciski odświeżania w kluczowych miejscach
+\end{itemize}
+
+\subsection{Podsumowanie architektury frontendowej}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,title=Kluczowe zalety architektury]
+\begin{enumerate}
+    \item \textbf{Bezpieczeństwo typów} - TypeScript w całym projekcie eliminuje błędy w czasie wykonywania
+    \item \textbf{Wielokrotne wykorzystanie komponentów} - shadcn/ui + własne komponenty wielokrotnego użytku
+    \item \textbf{Zarządzanie stanem} - Zustand dla złożonego stanu (wielozakładkowe sesje), API kontekstu dla globalnych ustawień
+    \item \textbf{Dostępność} - prymitywy Radix UI zapewniają zgodność z WCAG 2.1 AA
+    \item \textbf{Doświadczenie programisty} - Vite HMR (~200ms), autouzupełnianie TypeScript, IntelliSense Tailwind
+    \item \textbf{Projekt responsywny} - podejście mobile-first z dedykowanymi układami dla różnych punktów przerwania
+    \item \textbf{Dostosowywanie} - system motywów ze zmiennymi CSS, synchronizacja kolorów aplikacji z PDF
+    \item \textbf{Dokumentacja} - dynamiczne renderowanie Markdown z pełną obsługą LaTeX (KaTeX)
+    \item \textbf{Wydajność} - dzielenie kodu przez React.lazy, zoptymalizowany rozmiar paczki
+    \item \textbf{Doświadczenie użytkownika} - intuicyjna nawigacja, informacje zwrotne w czasie rzeczywistym, płynne animacje
+\end{enumerate}
+\end{tcolorbox}
 
 \section{Komunikacja Backend-Frontend}
 
