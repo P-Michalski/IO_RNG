@@ -172,13 +172,10 @@ Dodano przyciski grupowe w UI testowania: "Select All NIST", "Select All Diehard
 \begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=Błąd funkcjonalny - Priorytet: KRYTYCZNY]
 \textbf{Opis problemu:}
 
-Testy statystyczne wykazały, że implementacja algorytmu Xoshiro256 nie przechodzi testów NIST z oczekiwaną jakością. Analiza kodu ujawniła błąd w funkcji aktualizacji stanu - nieprawidłowa kolejność operacji rotacji.
+Testy statystyczne wykazały, że implementacja algorytmu Xoshiro256 została niepoprawnie przeprowadzona.
 
 \textbf{Scenariusz testowy:}
 \begin{enumerate}
-    \item Wygenerowano 1,000,000 bitów używając Xoshiro256
-    \item Wykonano pełny zestaw testów NIST
-    \item Tylko 7/15 testów przeszło pomyślnie (oczekiwano 14/15)
     \item Porównanie z referencyjna implementacją pokazało rozbieżności
 \end{enumerate}
 
@@ -190,11 +187,11 @@ Generator Xoshiro256 powinien generować sekwencje bitów zgodne ze specyfikacj�
 
 \textbf{Przyczyna:}
 
-Błąd w implementacji funkcji \texttt{rotl()} w wersji Python - użyto nieprawidłowego operatora przesunięcia dla rotacji 64-bitowej.
+Błąd w wykorzystaniu wbudowanej funkcji generowania liczb losowych.
 
 \textbf{Naprawa:}
 
-Poprawiono funkcję rotacji oraz zweryfikowano zgodność z algorytmem referencyjnym. Po naprawie generator przechodzi 14/15 testów NIST.
+Poprawiono implementację, zweryfikowano zgodność z algorytmem referencyjnym. Po naprawie generator działa poprawnie.
 \end{tcolorbox}
 
 \subsection{Problem \#4: Brak walidacji parametrów MSB i bits\_per\_value}
