@@ -70,11 +70,12 @@ Aplikacja IO\_RNG odpowiada na tę potrzebę, oferując zunifikowane środowisko
 
 \subsubsection{Zakres funkcjonalny}
 
-Aplikacja koncentruje się na trzech głównych aspektach:
+Aplikacja koncentruje się na czterech głównych aspektach:
 
 \begin{itemize}
+    \item \textbf{Katalog algorytmów} - obsługa szerokiej gamy algorytmów PRNG i CSPRNG (LCG, PCG32, Xoshiro256, ChaCha20, Blum-Blum-Shub, SplitMix64, AWCG, Park-Miller, System RNG) zaimplementowanych w Python, Rust, C\# i innych językach
     \item \textbf{Generowanie} - produkcja sekwencji bitów lub liczb z zadanego zakresu z wykorzystaniem wybranego algorytmu PRNG wraz z konfigurowalnymi parametrami
-    \item \textbf{Testowanie} - wykonywanie baterii testów statystycznych (NIST, Diehard, testy częstości i jednostajności) na wygenerowanych danych lub ciągach dostarczonych przez użytkownika
+    \item \textbf{Testowanie} - wykonywanie wielu różnych testów statystycznych (NIST, Diehard, testy częstości i jednostajności) na wygenerowanych danych lub ciągach dostarczonych przez użytkownika
     \item \textbf{Analiza} - wizualizacja wyników, porównywanie algorytmów pod względem jakości i wydajności, generowanie raportów z pełną dokumentacją testów
 \end{itemize}
 
@@ -84,30 +85,23 @@ Aplikacja została zaprojektowana z myślą o intuicyjności i elastyczności. P
 
 \subsubsection{Generator}
 
-Moduł generatora stanowi centralny punkt interakcji z algorytmami PRNG. Podzielony jest na dwa tryby pracy:
-
-\paragraph{Generator bitów}
-Umożliwia wygenerowanie określonej liczby bitów (0 lub 1) przy użyciu wybranego algorytmu. Użytkownik może:
+Moduł generatora stanowi centralny punkt interakcji z algorytmami PRNG i udostępnia wspólny zestaw funkcji dla obu zakładek (bity i liczby). Użytkownik może:
 \begin{itemize}
     \item Wybrać algorytm PRNG z dostępnej listy (LCG, Park-Miller, PCG32, Mersenne Twister, Xoshiro256, ChaCha20, Blum-Blum-Shub, etc.)
-    \item Określić liczbę bitów do wygenerowania
-    \item Podać parametry startowe algorytmu (seed, parametry specyficzne dla danego generatora)
+    \item Określić ilość danych do wygenerowania: liczbę bitów lub liczb oraz zakres liczb całkowitych
+    \item Podać parametry startowe algorytmu (seed oraz parametry specyficzne dla danego generatora)
     \item Skonfigurować zaawansowane parametry:
     \begin{itemize}
         \item \texttt{bits\_per\_value} - liczba bitów wyodrębnianych z każdej wygenerowanej wartości
         \item \texttt{msb\_first} - kierunek ekstrakcji bitów (od najbardziej lub najmniej znaczącego bitu)
     \end{itemize}
-\end{itemize}
-
-Po wygenerowaniu, aplikacja prezentuje wizualizację strumienia bitów wraz z czasem wykonania operacji.
-
-\paragraph{Generator liczb}
-Pozwala na generowanie liczb całkowitych z wybranego zakresu. Dodatkowo oferuje:
-\begin{itemize}
-    \item Interaktywny wykres słupkowy dystrybucji wygenerowanych liczb
-    \item Obliczanie i wyświetlanie średniej arytmetycznej
-    \item Opcjonalną animację procesu generowania z efektami wizualnymi
-    \item Wszystkie funkcje konfiguracji dostępne w generatorze bitów
+    \item Przeglądać wyniki i metryki:
+    \begin{itemize}
+        \item Wizualizacja strumienia bitów wraz z czasem wykonania operacji
+        \item Interaktywny wykres słupkowy dystrybucji wygenerowanych liczb
+        \item Obliczanie i wyświetlanie średniej arytmetycznej
+    \end{itemize}
+    \item Dodatkowo dla generatora liczb: opcjonalna animacja procesu generowania z efektami wizualnymi
 \end{itemize}
 
 \subsubsection{Testowanie algorytmów}
@@ -129,23 +123,22 @@ Dostępne pakiety testów:
 
 Po wyborze testów i liczby próbek, system wyświetla pasek postępu wykonywanych testów w czasie rzeczywistym. Po zakończeniu prezentowane są:
 \begin{itemize}
-    \item Całkowity czas wykonania baterii testów
+    \item Całkowity czas wykonania testów
     \item Liczba testów zaliczonych i niezaliczonych
     \item Szczegółowa lista wyników z czasem wykonania każdego testu
-    \item Wizualizacja wyników w formie wykresów
+    \item Możliwość przejścia do szczegółowego widoku wyników testów
 \end{itemize}
 
 \subsubsection{Historia wyników}
 
 Komponent historii przechowuje i zarządza wszystkimi wykonanymi testami. Funkcjonalności:
 \begin{itemize}
-    \item Lista wszystkich przeprowadzonych testów z podstawowymi informacjami (data, algorytm, typ testu, wynik)
-    \item Podgląd szczegółów konkretnego testu (pełne statystyki, parametry użyte podczas testowania)
+    \item Lista wszystkich przeprowadzonych testów z podstawowymi informacjami (wynik, rozmiar próbki, czas wykonania, algorytm PRNG)
+    \item Podgląd szczegółów konkretnego testu (pełne statystyki, parametry użyte podczas testowania, data wykonania)
     \item Zaawansowane filtrowanie:
     \begin{itemize}
         \item Po algorytmie PRNG
         \item Po typie testu (NIST, Diehard, pojedyncze testy)
-        \item Po dacie wykonania
         \item Po wyniku (zaliczone/niezaliczone)
     \end{itemize}
     \item Usuwanie pojedynczych wyników lub czyszczenie całej historii
@@ -158,8 +151,9 @@ Strona główna (Dashboard) stanowi centrum analityczne aplikacji, prezentujące
 \paragraph{Statystyki ogólne}
 \begin{itemize}
     \item Liczba przetestowanych algorytmów
-    \item Łączna liczba przeprowadzonych testów
-    \item Interaktywne wykresy podsumowujące
+    \item Łączna liczba przeprowadzonych typów testów
+    \item Średni wskaźnik sukcesu dla wszystkich algorytmów
+    \item Aktywność w czasie wykonywanych testów
 \end{itemize}
 
 \paragraph{Analiza wydajności}
@@ -176,7 +170,6 @@ Umożliwia ocenę jakości algorytmów pod kątem testów statystycznych:
 \begin{itemize}
     \item Wizualizacja wskaźników zaliczalności poszczególnych testów
     \item Porównanie wyników różnych algorytmów na tym samym teście
-    \item Identyfikacja słabych punktów algorytmów
 \end{itemize}
 
 \paragraph{Generator raportów PDF}
@@ -200,10 +193,10 @@ Każdy dostępny w systemie algorytm PRNG posiada dedykowaną stronę dokumentac
     \item Matematyczny opis działania ze wzorami
     \item Kluczowe fragmenty implementacji w różnych językach programowania
     \item Kontekst historyczny i autorstwo
-    \item Analiza złożoności obliczeniowej (czasowej i pamięciowej)
+    \item Analiza złożoności obliczeniowej
     \item Praktyczne przykłady obliczeniowe
     \item Zastosowania i ograniczenia
-    \item Rekomendacje dotyczące parametrów
+    \item Ewentualne rekomendacje dotyczące parametrów
 \end{itemize}
 
 \paragraph{Methodology - Dokumentacja testów}
@@ -214,7 +207,6 @@ Szczegółowe opisy wszystkich dostępnych testów statystycznych:
     \item Szczegóły implementacji w systemie
     \item Interpretacja wyników (wartości p-value, poziomy istotności)
     \item Parametry konfiguracyjne testu
-    \item Bibliografia i źródła
 \end{itemize}
 
 \subsubsection{Ustawienia i personalizacja}
@@ -253,10 +245,264 @@ Aplikacja IO\_RNG przekroczyła pierwotne założenia projektowe, oferując szer
     \item Animacje i efekty wizualne poprawiające doświadczenie użytkownika
 \end{itemize}
 
+\newpage
+\section{Katalog Algorytmów}
+
+Aplikacja IO\_RNG obsługuje szeroką gamę algorytmów generowania liczb pseudolosowych (PRNG i CSPRNG), implementowanych w różnych językach programowania dla maksymalnej wydajności i elastyczności.
+
+\subsection{Algorytmy dostępne}
+
+\subsubsection{LCG (Linear Congruential Generator)}
+
+LCG to klasyczny generator pseudolosowy oparty na prostej relacji rekurencyjnej:
+$$x_{n+1} = (a \cdot x_n + c) \bmod m$$
+
+gdzie $x_n$ jest bieżącym stanem, $x_0$ (seed) determinuje całą sekwencję, $a$ jest mnożnikiem, $c$ przyrostem, a $m$ modułem definiującym maksymalny okres i zakres wartości.
+
+\textbf{Warunki pełnego okresu (twierdzenie Hull-Dobell):}
+Generator osiąga maksymalny okres równy $m$ gdy:
+\begin{itemize}
+    \item $\gcd(c, m) = 1$ – $c$ i $m$ są względnie pierwsze
+    \item $a - 1$ jest podzielne przez wszystkie dzielniki pierwsze $m$
+    \item Jeśli $m$ podzielne przez 4, to $a - 1$ także musi być podzielne przez 4
+\end{itemize}
+
+Bity wyjściowe ekstrahuje się zazwyczaj z najbardziej znaczących bitów (MSB-first), ponieważ młodsze bity wykazują słabsze własności statystyczne. Popularne zestawy parametrów to GLIBC ($a=1103515245, c=12345, m=2^{31}$) i Numerical Recipes ($a=1664525, c=1013904223, m=2^{32}$).
+
+\textbf{Zastosowania:} Materiały edukacyjne, proste symulacje Monte Carlo, generowanie danych testowych, biblioteki standardowe (np. rand() w C).
+
+\textbf{Ograniczenia:} Podatny na korelacje statystyczne, wrażliwy na dobór parametrów, artefakty w niskowymiarowych projekcjach, liniowa struktura czyni go przewidywalnym dla kryptografii.
+
+\textbf{Implementacja:} Python
+
+\subsubsection{Park-Miller MINSTD}
+
+Park–Miller, znany również jako \textbf{MINSTD} (Minimal Standard), to multiplikatywny generator liniowy kongruencyjny bez składowej addytywnej. Zaproponowany w 1988 roku, stał się punktem odniesienia dla oceny jakości prostych generatorów pseudolosowych:
+$$x_{n+1} = (a \cdot x_n) \bmod m$$
+
+gdzie $a = 16807 = 7^5$ jest pierwiastkiem pierwotnym modulo $m$, a $m = 2^{31} - 1 = 2{,}147{,}483{,}647$ jest liczbą pierwszą Mersenne'a. Mnożnik zapewnia pełny okres $m-1 = 2{,}147{,}483{,}646$ (wszystkie wartości z wyjątkiem zera).
+
+\textbf{Arytmetyka Schrage'a:} Bezpośrednie obliczenie $(a \cdot x_n) \bmod m$ może prowadzić do przepełnienia. Problem rozwiązuje \textbf{arytmetyka Schrage'a}, która dekompozuje obliczenia:
+\begin{itemize}
+    \item $q = \lfloor m / a \rfloor = 127{,}773$
+    \item $r = m \bmod a = 2{,}836$
+    \item Algorytm: hi = x / q; lo = x \% q; t = a*lo - r*hi; wynik = (t > 0) ? t : t + m
+\end{itemize}
+
+Zapewnia to, że wszystkie pośrednie obliczenia mieszczą się w 32 bitach na architekturach 32-bitowych.
+
+\textbf{Zastosowania:} Szkolenia, benchmarki, dane testowe, systemy gdzie wymagana jest powtarzalność i prostota.
+
+\textbf{Przewaga nad LCG:} Lepsze własności statystyczne dzięki starannie dobranym parametrom, matematycznie uzasadniony dobór, długi okres.
+
+\textbf{Implementacja:} Python
+
+\subsubsection{PCG32 (Permuted Congruential Generator)}
+
+PCG32 (Permuted Congruential Generator), zaprojektowany przez Melissę O'Neill (~2014), to nowoczesny generator łączący prostotę i szybkość klasycznego LCG z zaawansowaną funkcją permutacji wyjścia. Składa się z dwóch komponentów:
+
+\textbf{1. Aktualizacja stanu (LCG):}
+$$\text{state}_{n+1} = (a \cdot \text{state}_n + c) \bmod 2^{64}$$
+
+gdzie $a = 6364136223846793005$ – mnożnik zapewniający maksymalny okres, $c = \text{inc}$ – increment obliczany ze sparametryzowanej sekwencji: $\text{inc} = (\text{seq} << 1) | 1$. Różne sekwencje generują niezależne strumienie pseudolosowe.
+
+\textbf{2. Permutacja wyjścia (XSH RR – xorshift high, random rotate):}
+$$\text{output} = \text{rotl}((\text{xorshifted} >> \text{rot}) | (\text{xorshifted} << (32 - \text{rot})))$$
+gdzie $\text{xorshifted} = ((\text{state} >> 18) \oplus \text{state}) >> 27$ i $\text{rot} = \text{state} >> 59$.
+
+\textbf{Dlaczego ta permutacja działa?}
+\begin{itemize}
+    \item Xorshift miesza skorelowane bity z LCG, redukując liniowe zależności
+    \item Rotacja zależna od stanu dodaje nieliniowość
+    \item Wybór górnych bitów – górne bity LCG mają lepsze własności statystyczne
+    \item 32-bitowe wyjście z 64-bitowego stanu zapewnia dodatkową ochronę
+\end{itemize}
+
+\textbf{Warianty:} PCG32 (stan 64b, wyjście 32b), PCG64 (stan 128b, wyjście 64b), PCG32-fast (uproszczona permutacja, szybsza).
+
+\textbf{Zastosowania:} Gry komputerowe, symulacje Monte Carlo, generowanie treści proceduralnych, testy statystyczne wymagające dobrych własności losowych.
+
+\textbf{Przewaga:} Zdaje testy statystyczne (TestU01, PractRand) znacznie lepiej niż Mersenne Twister, mniejsze zużycie pamięci, wyższa wydajność.
+
+\textbf{Implementacja:} Python
+
+\subsubsection{Xoshiro256}
+
+Rodzina Xorshift/Xoshiro reprezentuje nowoczesne podejście do projektowania generatorów pseudolosowych, łącząc ekstremalną szybkość z doskonałą jakością statystyczną. \textbf{Xoshiro256\*\*} (xor-shift-rotate), zaprojektowany przez Davida Blackmana i Sebastiano Vigné, oferuje praktycznie najlepszy stosunek jakości do wydajności spośród wszystkich niekryptograficznych generatorów.
+
+\textbf{Stan generatora:} Cztery 64-bitowe słowa: $\text{state} = (s_0, s_1, s_2, s_3)$, łącznie 256 bitów.
+
+\textbf{Funkcja wyjścia (scrambler "\*\*"):}
+$$\text{output} = \text{rotl}(s_1 \times 5, 7) \times 9$$
+
+gdzie $\text{rotl}(x, k)$ oznacza rotację bitową w lewo. Mnożenie $\times 5$: propaguje zmiany przez całe słowo; rotacja o 7: miesza pozycje bitów; mnożenie $\times 9$: druga warstwa dyfuzji. Stałe (5, 7, 9) dobrane empirycznie dla maksymalnej avalanche.
+
+\textbf{Aktualizacja stanu:} Szereg operacji XOR i rotacji:
+\begin{itemize}
+    \item $t \leftarrow s_1 << 17$ (przesunięcie pomocnicze)
+    \item $s_2 \leftarrow s_2 \oplus s_0; s_3 \leftarrow s_3 \oplus s_1$ (mieszanie)
+    \item $s_1 \leftarrow s_1 \oplus s_2; s_0 \leftarrow s_0 \oplus s_3$ (mieszanie)
+    \item $s_2 \leftarrow s_2 \oplus t; s_3 \leftarrow \text{rotl}(s_3, 45)$ (finalizacja)
+\end{itemize}
+
+Każde słowo stanu jest funkcją co najmniej dwóch poprzednich słów. XOR zapewnia odwracalność (pełny okres). Okres: $2^{256} - 1$ – praktycznie niewyczerpany.
+
+\textbf{Historia:} Oryginalny Xorshift (Marsaglia, 2003) był niezwykle prosty ale niedoskonały. Vigna i Blackman dodali scrambler (2014-2015), a następnie wprowadzili rotacje zamiast przesunięć w rodzinie Xoshiro/Xoroshiro (2016-2018).
+
+\textbf{Warianty:} Xoshiro256\*\* (ogólny użytek), Xoshiro256+ (zmiennoprzecinkowe liczby), Xoshiro512\*\* (dla najdłuższych symulacji).
+
+\textbf{Zastosowania:} Symulacje naukowe, przetwarzanie danych, gry, benchmarki wymagające najwyższej jakości.
+
+\textbf{Przewaga:} Rekomendowany jako następca Mersenne Twister, lepsze własności statystyczne, wyższa wydajność, mniejsza pamięć.
+
+\textbf{Implementacja:} Python, C\#
+
+\subsubsection{SplitMix64}
+
+SplitMix64 to szybki generator 64-bitowy bazujący na funkcji mieszającej z operacjami bitowymi. Zaprojektowany przez Sebastiano Vigné, charakteryzuje się niezwykle szybką aktualizacją stanu i dobrymi właściwościami statystycznymi w krótkim okresie.
+
+\textbf{Struktura:} Generator utrzymuje 64-bitowy stan, aktualizowany każdej iteracji poprzez dodanie stałej (splitter):
+\begin{itemize}
+    \item $\text{state} \leftarrow \text{state} + 0x9e3779b97f4a7c15$
+    \item Wyjście powstaje z mieszania wyższych i niższych bitów stanu za pomocą XOR i rotacji
+\end{itemize}
+
+\textbf{Charakterystyka:} Ekstrakcja 64 bitów na iterację, szybkie mieszanie stanu, dobra dyfuzja dla krótkich sekwencji.
+
+\textbf{Typowe użycie:} Inicjalizator dla bardziej zaawansowanych generatorów (np. Xoshiro256), seeding dla tablic look-up, gdy szybkość jest krytyczna.
+
+\textbf{Ograniczenia:} Niższy okres w porównaniu z Xoshiro256, nie zalecany dla bardzo długich symulacji.
+
+\textbf{Zalety:} Niezwykła szybkość (~1.8 cykli na słowo), proste do zaimplementowania, dobre własności dla inicjalizacji.
+
+\textbf{Implementacja:} Python
+
+\subsubsection{AWCG (Additive Weyl Congruential Generator)}
+
+AWCG to wariant LCG rozszerzony o dodatkową sekwencję Weyla. Sekwencja Weyla to deterministyczna sekwencja całkowitych wielokrotności liczby niewymiernej (np. $\sqrt{2}$), która wykazuje bardzo dobre własności równomiernego rozkładu.
+
+\textbf{Struktura:} Generator kombinuje klasyczne LCG:
+$$x_{n+1} = (a \cdot x_n + c) \bmod m$$
+
+z addytywną sekwencją Weyla:
+$$w_n = (w_{n-1} + \text{increment}) \bmod m$$
+
+Wyjście powstaje poprzez kombinację: output = $(x_n + w_n) \bmod m$ lub $(x_n \oplus w_n)$.
+
+\textbf{Zalety tej kombinacji:}
+\begin{itemize}
+    \item Sekwencja Weyla eliminuje korelacje i równomiernie wypełnia przestrzeń
+    \item LCG zapewnia szybkość i prostość
+    \item Kombinacja daje lepsze własności dystrybucji niż sama LCG
+\end{itemize}
+
+\textbf{Zastosowania:} Symulacje naukowe, testowanie algorytmów, scenariusze gdzie wymagana jest zarówno szybkość jak i dobra jakość.
+
+\textbf{Charakterystyka:} Lepsze własności statystyczne niż LCG, podobna wydajność, średnia złożoność obliczeniowa.
+
+\textbf{Implementacja:} Python
+
+\subsubsection{BlumBlumShub}
+
+Blum–Blum–Shub (BBS) to kryptograficznie bezpieczny generator liczb pseudolosowych (CSPRNG) oparty na teorii liczb i trudności problemu faktoryzacji. Jeden z pierwszych generatorów z teoretycznie udowodnionym bezpieczeństwem, będący "złotym standardem" w kryptografii teoretycznej.
+
+\textbf{Parametry i inicjalizacja:} Wybieramy dwie duże liczby pierwsze $p$ i $q$ spełniające warunek:
+$$p \equiv q \equiv 3 \pmod{4}$$
+
+Liczby spełniające ten warunek są \textbf{liczbami pierwszymi Bluma}. Moduł generatora: $M = p \cdot q$. Dla zastosowań kryptograficznych $p$ i $q$ powinny być liczbami rzędu co najmniej $2^{512}$ (co daje $M \approx 2^{1024}$).
+
+\textbf{Aktualizacja stanu (sekwencja kwadratów):}
+$$x_{n+1} = x_n^2 \bmod M$$
+
+Ekstrahujemy $k$ najmniej znaczących bitów (LSB): $\text{output}_n = x_n \bmod 2^k$. Najczęściej $k=1$, gwarantując najwyższe bezpieczeństwo teoretyczne.
+
+\textbf{Podstawa teoretyczna (Problem Reszty Kwadratowej):} Jeśli problem QRP jest trudny obliczeniowo, to przewidywanie następnego bitu BBS jest również trudne obliczeniowo. Bezpieczeństwo równoważne trudności faktoryzacji dużych liczb (podstawa kryptografii RSA).
+
+\textbf{Własności:}
+\begin{itemize}
+    \item \textbf{Forward security:} Z $x_n$ można łatwo obliczyć $x_{n+1}$ (jedno kwadratowanie)
+    \item \textbf{Backward security:} Z $x_n$ obliczenie $x_{n-1}$ wymaga faktoryzacji $M$ – praktycznie niemożliwe
+    \item \textbf{Okres:} $\geq 2^{1022}$ dla $M \approx 2^{1024}$ – praktycznie niewyczerpany
+\end{itemize}
+
+\textbf{Zastosowania:} Szkolenia akademickie, dowody teoretyczne, standardy wymagające mathematycznego dowodu bezpieczeństwa.
+
+\textbf{Ograniczenia:} Bardzo wolny (każdy bit wymaga podniesienia do kwadratu modulo), niemożliwy do praktycznego użytku dla dużych ilości bitów.
+
+\textbf{Implementacja:} Python
+
+\subsubsection{ChaCha20 (CSPRNG)}
+
+ChaCha20, zaprojektowany przez Daniela J. Bernsteina w 2008 roku, to szyfr strumieniowy powszechnie stosowany w TLS 1.3, WireGuard VPN i SSH. Strumień klucza generowany przez ChaCha20 może służyć jako źródło wysokiej jakości bitów pseudolosowych z gwarancjami kryptograficznymi.
+
+\textbf{Stan wewnętrzny:} Macierz $4 \times 4$ słów 32-bitowych (512 bitów):
+\begin{itemize}
+    \item 4 słowa stałych ChaCha
+    \item 8 słów 256-bitowego klucza
+    \item 1 słowo 32-bitowego licznika bloku
+    \item 3 słowa 96-bitowego nonce
+\end{itemize}
+
+\textbf{Operacja quarter-round:} Podstawowa funkcja mieszająca działająca na 4 słowach 32-bitowych:
+\begin{itemize}
+    \item $a \mathrel{+}= b$; $d \mathrel{\wedge}= a$; $d \text{ rotl } 16$
+    \item $c \mathrel{+}= d$; $b \mathrel{\wedge}= c$; $b \text{ rotl } 12$
+    \item $a \mathrel{+}= b$; $d \mathrel{\wedge}= a$; $d \text{ rotl } 8$
+    \item $c \mathrel{+}= d$; $b \mathrel{\wedge}= c$; $b \text{ rotl } 7$
+\end{itemize}
+
+Rotacje (16, 12, 8, 7) dobrane dla maksymalnej dyfuzji. \textbf{ChaCha20 wykonuje 10 double-rounds (20 quarter-rounds)} – stąd nazwa.
+
+\textbf{Generacja bloku (512 bitów):}
+\begin{enumerate}
+    \item Inicjalizacja stanu (stałe, klucz, licznik, nonce)
+    \item 20 rund mieszania
+    \item Dodaj stan początkowy do wyniku (modulo $2^{32}$ per słowo)
+    \item Inkrementuj licznik
+\end{enumerate}
+
+Dodanie stanu początkowego zapobiega atakom typu "backward tracing".
+
+\textbf{Jako CSPRNG:} Jeden seed (klucz 256b + nonce 96b) może wygenerować $2^{32} \times 512 = 2{,}199{,}023{,}255{,}552$ bitów (~2 terabity) przed wyczerpaniem licznika.
+
+\textbf{Zalety:}
+\begin{itemize}
+    \item Jedyna ze wspieranych CSPRNG zaimplementowana dedykowanym subprojektem w Rust
+    \item Szybkość: ~488 Mbits/s w implementacji testowej
+    \item Preferowany na urządzeniach mobilnych bez akceleracji AES-NI (ARM)
+    \item Szeroka akceptacja w standardach i protokołach sieciowych
+\end{itemize}
+
+\textbf{Zastosowania:} Bezpieczeństwo sieci, TLS, SSH, VPN, kryptograficzne klucze, IV (Initialization Vectors).
+
+\textbf{Implementacja:} Rust (dedykowany subprojekt z wbudowanymi testami)
+
+\subsubsection{Python Random (System RNG)}
+
+Systemowy generator random z biblioteki standardowej Python. Zbudowany na podstawie Mersenne Twister. Oferuje dobre własności ogólne i jest szybki dla większości zastosowań. Wykorzystuje `/dev/urandom` dla operacji losujących wymagających entropii systemowej.
+
+\textbf{Implementacja:} Python (wbudowany)
+
+\subsubsection{System RNG (OS Level)}
+
+Bezpośredni dostęp do systemowego generatora liczb losowych (/dev/urandom na systemach Unix, CryptGenRandom na Windows). Gwarantuje dostęp do entropii systemowej i procedur bezpieczeństwa na poziomie systemu operacyjnego. Zastosowanie: kryptografia systemowa, początkowa inicjalizacja otros generatorów.
+
+\textbf{Implementacja:} cross-platform (Python interfacing OS APIs)
+
+\subsection{Wdrożenia w różnych językach}
+
+System IO\_RNG obsługuje implementacje algorytmów w następujących językach:
+
+\begin{itemize}
+    \item \textbf{Python} - główna platforma dla większości algorytmów, zapewniająca łatwość testowania i integracji
+    \item \textbf{Rust} - dedykowana implementacja ChaCha20 z optymalizacją wydajności i bezpieczeństwa
+    \item \textbf{C\#} - implementacja Xoshiro256 w ramach ekosystemu .NET
+\end{itemize}
+
 \section{Wprowadzenie techniczne}
 
 \subsection{Cel dokumentu}
-Dokument przedstawia architekturę techniczną systemu IO\_RNG, zastosowane wzorce projektowe, zasady programowania obiektowego oraz wykorzystane struktury danych. Przeznaczony jest dla deweloperów i architektów oprogramowania zainteresowanych szczegółami implementacyjnymi systemu.
+Dokument przedstawia architekturę techniczną systemu IO\_RNG, zastosowane wzorce projektowe, zasady programowania obiektowego oraz wykorzystane struktury danych. Przeznaczony jest dla deweloperów i architektów oprogramowania zainteresowanych szczegółami implementacyjnymi systemu oraz możliwościami i algorytmami obsługiwanymi przez platformę.
 
 \subsection{Technologie}
 \begin{itemize}
@@ -329,122 +575,6 @@ System IO\_RNG implementuje \textbf{Clean Architecture} (Czystą Architekturę) 
 
 \end{tikzpicture}
 \caption{Architektura warstwowa systemu IO\_RNG}
-\end{figure}
-
-\newpage
-
-\subsection{Diagram klas - Core Layer}
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[
-    class/.style={rectangle split, rectangle split parts=3, draw=black!80, fill=blue!10, thick, minimum width=4cm, align=center},
-    interface/.style={rectangle split, rectangle split parts=3, draw=black!80, fill=yellow!20, thick, minimum width=4cm, align=center},
-    arrow/.style={thick,->,>=stealth},
-    implements/.style={thick,dashed,->,>=stealth}
-]
-
-% Entities
-\node[class] (rng) at (0,0) {
-    \textbf{RNG (Entity)}
-    \nodepart{second}
-    \small
-    - name: str\\
-    - language: Language\\
-    - algorithm: Algorithm\\
-    - code path: str\\
-    - parameters: Dict\\
-    - is active: bool
-    \nodepart{third}
-    + validate for execution()\\
-    + get parameter(key)
-};
-
-\node[class, right=2cm of rng] (testresult) {
-    \textbf{TestResult (Entity)}
-    \nodepart{second}
-    \small
-    - rng id: int\\
-    - test name: str\\
-    - passed: bool\\
-    - score: float\\
-    - execution time ms: float\\
-    - statistics: Dict
-    \nodepart{third}
-    + post init()
-};
-
-% Enums
-\node[class, below=2cm of rng] (language) {
-    \textbf{Language (Enum)}
-    \nodepart{second}
-    \small
-    PYTHON\\
-    CPP\\
-    RUST\\
-    JAVA\\
-    EXECUTABLE
-    \nodepart{third}
-};
-
-\node[class, right=1cm of language] (algorithm) {
-    \textbf{Algorithm (Enum)}
-    \nodepart{second}
-    \small
-    LINEAR CONGRUENTIAL\\
-    MERSENNE TWISTER\\
-    XORSHIFT\\
-    PCG\\
-    SYSTEM\\
-    CUSTOM
-    \nodepart{third}
-};
-
-% Interfaces
-\node[interface, below=5cm of rng, xshift=-2cm] (irngrepo) {
-    \textbf{<<Interface>>}\\
-    IRNGRepository
-    \nodepart{second}
-    \nodepart{third}
-    \small
-    + save(rng)\\
-    + get by id(id)\\
-    + get all()\\
-    + delete(id)\\
-    + update(rng)
-};
-
-\node[interface, right=1cm of irngrepo] (iresultrepo) {
-    \textbf{<<Interface>>}\\
-    ITestResultRepository
-    \nodepart{second}
-    \nodepart{third}
-    \small
-    + save(result)\\
-    + get by id(id)\\
-    + get by rng(rng id)\\
-    + get all()\\
-    + delete(id)
-};
-
-\node[interface, right=1cm of iresultrepo] (irunner) {
-    \textbf{<<Interface>>}\\
-    IRNGRunner
-    \nodepart{second}
-    \nodepart{third}
-    \small
-    + can run(rng)\\
-    + generate numbers()\\
-    + generate raw()\\
-    + validate setup()
-};
-
-% Relationships
-\draw[arrow] (rng) -- (language);
-\draw[arrow] (rng) -- (algorithm);
-
-\end{tikzpicture}
-\caption{Diagram klas warstwy Core}
 \end{figure}
 
 \newpage
@@ -1020,19 +1150,15 @@ class TestResultModel(models.Model):
     \item Composite index: \texttt{(test\_name, created\_at)} - filtrowanie po typie testu
 \end{itemize}
 
-\newpage
-
-\section{Diagram Przepływu Danych}
-
-\subsection{Proces uruchomienia testu RNG}
+\subsection{Diagram Przepływu Danych - Proces uruchomienia testu RNG}
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=1.2cm,
-    process/.style={rectangle, rounded corners, draw=black!80, fill=blue!20, thick, minimum width=3cm, minimum height=1cm, align=center},
-    decision/.style={diamond, draw=black!80, fill=yellow!20, thick, minimum width=2.5cm, minimum height=1cm, align=center, aspect=2},
-    data/.style={trapezium, trapezium left angle=70, trapezium right angle=110, draw=black!80, fill=green!20, thick, minimum width=2.5cm, minimum height=0.8cm, align=center},
+    node distance=0.6cm,
+    process/.style={rectangle, rounded corners, draw=black!80, fill=blue!20, thick, minimum width=2.8cm, minimum height=0.7cm, align=center, font=\small},
+    decision/.style={diamond, draw=black!80, fill=yellow!20, thick, minimum width=2.2cm, minimum height=0.7cm, align=center, aspect=2, font=\small},
+    data/.style={trapezium, trapezium left angle=70, trapezium right angle=110, draw=black!80, fill=green!20, thick, minimum width=1.8cm, minimum height=0.5cm, align=center, font=\small},
     arrow/.style={thick,->,>=stealth}
 ]
 
@@ -1075,7 +1201,7 @@ class TestResultModel(models.Model):
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=1.2cm,
+    node distance=1.4cm,
     process/.style={rectangle, rounded corners, draw=black!80, fill=blue!20, thick, minimum width=3.5cm, minimum height=0.9cm, align=center},
     decision/.style={diamond, draw=black!80, fill=yellow!20, thick, minimum width=2.2cm, minimum height=0.9cm, align=center, aspect=2},
     arrow/.style={thick,->,>=stealth}
@@ -1107,6 +1233,7 @@ class TestResultModel(models.Model):
 \caption{Proces generowania liczb w Python Runner}
 \end{figure}
 
+\newpage
 \section{Szczegóły Implementacji}
 
 \subsection{Kompresja danych - Base64}
@@ -1185,7 +1312,7 @@ Backend systemu IO\_RNG zbudowany jest w oparciu o framework Django REST Framewo
 \small
 \begin{verbatim}
 backend/
-  io_rng/                      # Glowna aplikacja Django
+  io_rng/                      # Główna aplikacja Django
     core/                      # Warstwa domeny (Core Layer)
       entities/                # Encje domenowe
         rng.py                 # RNG (Generator)
@@ -1196,15 +1323,15 @@ backend/
         runner.py              # IRNGRunner
       use_cases/               # Logika biznesowa
         run_rng_test.py        # Uruchomienie testu
-        compare_rngs.py        # Porownanie generatorow
-        get_test_results.py    # Pobieranie wynikow
-        test_custom_bits.py    # Test wlasnych bitow
+        compare_rngs.py        # Porównanie generatorów
+        get_test_results.py    # Pobieranie wyników
+        test_custom_bits.py    # Test własnych bitów
     
     infrastructure/            # Warstwa infrastruktury
       models.py                # Django ORM Models
-      repositories/            # Implementacje repozytoriow
+      repositories/            # Implementacje repozytoriów
         django_repositories.py
-      runners/                 # Implementacje runnerow
+      runners/                 # Implementacje runnerów
         python_runner.py       # Python RNG Runner
         exe_runner.py          # Executable Runner
         universal_adapter.py   # Uniwersalny adapter
@@ -1215,12 +1342,12 @@ backend/
       urls.py                  # Routing API
     
     settings.py                # Konfiguracja Django
-    urls.py                    # Glowny routing
+    urls.py                    # Główny routing
     wsgi.py                    # WSGI application
   
   db.sqlite3                   # Baza danych SQLite
   manage.py                    # Django CLI
-  requirements.txt             # Zaleznosci Python
+  requirements.txt             # Zależności Python
 \end{verbatim}
 \end{tcolorbox}
 

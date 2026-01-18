@@ -4,98 +4,107 @@
 \contentsline {subsubsection}{\numberline {1.1.1}Motywacja}{4}{subsubsection.1.1.1}%
 \contentsline {subsubsection}{\numberline {1.1.2}Zakres funkcjonalny}{4}{subsubsection.1.1.2}%
 \contentsline {subsection}{\numberline {1.2}Przewodnik użytkownika}{4}{subsection.1.2}%
-\contentsline {subsubsection}{\numberline {1.2.1}Generator}{4}{subsubsection.1.2.1}%
-\contentsline {paragraph}{Generator bitów}{5}{section*.2}%
-\contentsline {paragraph}{Generator liczb}{5}{section*.3}%
+\contentsline {subsubsection}{\numberline {1.2.1}Generator}{5}{subsubsection.1.2.1}%
 \contentsline {subsubsection}{\numberline {1.2.2}Testowanie algorytmów}{5}{subsubsection.1.2.2}%
 \contentsline {subsubsection}{\numberline {1.2.3}Historia wyników}{6}{subsubsection.1.2.3}%
 \contentsline {subsubsection}{\numberline {1.2.4}Dashboard i analiza}{6}{subsubsection.1.2.4}%
-\contentsline {paragraph}{Statystyki ogólne}{6}{section*.4}%
-\contentsline {paragraph}{Analiza wydajności}{6}{section*.5}%
-\contentsline {paragraph}{Analiza jakości testów}{7}{section*.6}%
-\contentsline {paragraph}{Generator raportów PDF}{7}{section*.7}%
+\contentsline {paragraph}{Statystyki ogólne}{6}{section*.2}%
+\contentsline {paragraph}{Analiza wydajności}{6}{section*.3}%
+\contentsline {paragraph}{Analiza jakości testów}{7}{section*.4}%
+\contentsline {paragraph}{Generator raportów PDF}{7}{section*.5}%
 \contentsline {subsubsection}{\numberline {1.2.5}Wiki - baza wiedzy}{7}{subsubsection.1.2.5}%
-\contentsline {paragraph}{Algorithms - Dokumentacja algorytmów}{7}{section*.8}%
-\contentsline {paragraph}{Methodology - Dokumentacja testów}{8}{section*.9}%
+\contentsline {paragraph}{Algorithms - Dokumentacja algorytmów}{7}{section*.6}%
+\contentsline {paragraph}{Methodology - Dokumentacja testów}{7}{section*.7}%
 \contentsline {subsubsection}{\numberline {1.2.6}Ustawienia i personalizacja}{8}{subsubsection.1.2.6}%
 \contentsline {subsubsection}{\numberline {1.2.7}O aplikacji}{8}{subsubsection.1.2.7}%
 \contentsline {subsection}{\numberline {1.3}Rozszerzenia względem założeń projektowych}{8}{subsection.1.3}%
-\contentsline {section}{\numberline {2}Wprowadzenie techniczne}{9}{section.2}%
-\contentsline {subsection}{\numberline {2.1}Cel dokumentu}{9}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}Technologie}{9}{subsection.2.2}%
-\contentsline {section}{\numberline {3}Architektura Systemu}{9}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Przegląd architektury}{9}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Schemat struktury systemu}{10}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Diagram klas - Core Layer}{11}{subsection.3.3}%
-\contentsline {section}{\numberline {4}Wzorce Projektowe}{12}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Clean Architecture (Hexagonal Architecture)}{12}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Repository Pattern}{12}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Adapter Pattern}{14}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Strategy Pattern}{14}{subsection.4.4}%
-\contentsline {subsection}{\numberline {4.5}Use Case Pattern}{16}{subsection.4.5}%
-\contentsline {subsection}{\numberline {4.6}Dependency Injection}{16}{subsection.4.6}%
-\contentsline {subsection}{\numberline {4.7}Factory Pattern (Implicit)}{18}{subsection.4.7}%
-\contentsline {section}{\numberline {5}Zasady Programowania Obiektowego}{18}{section.5}%
-\contentsline {subsection}{\numberline {5.1}SOLID Principles}{18}{subsection.5.1}%
-\contentsline {subsubsection}{\numberline {5.1.1}Single Responsibility Principle (SRP)}{18}{subsubsection.5.1.1}%
-\contentsline {subsubsection}{\numberline {5.1.2}Open/Closed Principle (OCP)}{18}{subsubsection.5.1.2}%
-\contentsline {subsubsection}{\numberline {5.1.3}Liskov Substitution Principle (LSP)}{19}{subsubsection.5.1.3}%
-\contentsline {subsubsection}{\numberline {5.1.4}Interface Segregation Principle (ISP)}{19}{subsubsection.5.1.4}%
-\contentsline {subsubsection}{\numberline {5.1.5}Dependency Inversion Principle (DIP)}{19}{subsubsection.5.1.5}%
-\contentsline {subsection}{\numberline {5.2}Enkapsulacja}{20}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Polimorfizm}{20}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Abstrakcja}{20}{subsection.5.4}%
-\contentsline {section}{\numberline {6}Struktury Danych}{21}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Encje Domenowe (Dataclasses)}{21}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Enumy (Typy wyliczeniowe)}{21}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Słowniki (Dict) jako Parametry}{22}{subsection.6.3}%
-\contentsline {subsection}{\numberline {6.4}Listy typowane}{22}{subsection.6.4}%
-\contentsline {subsection}{\numberline {6.5}Tuple dla zwracania wielu wartości}{22}{subsection.6.5}%
-\contentsline {subsection}{\numberline {6.6}Optional dla wartości nullable}{22}{subsection.6.6}%
-\contentsline {subsection}{\numberline {6.7}Struktury danych w bazie}{23}{subsection.6.7}%
-\contentsline {subsubsection}{\numberline {6.7.1}Model RNG (Tabela rngs)}{23}{subsubsection.6.7.1}%
-\contentsline {subsubsection}{\numberline {6.7.2}Model TestResult (Tabela test\_results)}{23}{subsubsection.6.7.2}%
-\contentsline {section}{\numberline {7}Diagram Przepływu Danych}{25}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Proces uruchomienia testu RNG}{25}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}Proces generowania liczb - Python Runner}{26}{subsection.7.2}%
-\contentsline {section}{\numberline {8}Szczegóły Implementacji}{26}{section.8}%
-\contentsline {subsection}{\numberline {8.1}Kompresja danych - Base64}{26}{subsection.8.1}%
-\contentsline {subsection}{\numberline {8.2}Testy Statystyczne}{27}{subsection.8.2}%
-\contentsline {subsection}{\numberline {8.3}Obsługa różnych języków programowania}{27}{subsection.8.3}%
-\contentsline {subsubsection}{\numberline {8.3.1}Python Runner}{27}{subsubsection.8.3.1}%
-\contentsline {subsubsection}{\numberline {8.3.2}Executable Runner}{28}{subsubsection.8.3.2}%
-\contentsline {section}{\numberline {9}Architektura Backendowa}{29}{section.9}%
-\contentsline {subsection}{\numberline {9.1}Przegląd struktury projektu Django}{29}{subsection.9.1}%
-\contentsline {subsection}{\numberline {9.2}Core Layer - Warstwa Domeny}{30}{subsection.9.2}%
-\contentsline {subsubsection}{\numberline {9.2.1}Encje Domenowe}{30}{subsubsection.9.2.1}%
-\contentsline {subsubsection}{\numberline {9.2.2}Interfejsy (Porty)}{31}{subsubsection.9.2.2}%
-\contentsline {subsubsection}{\numberline {9.2.3}Use Cases - Logika Biznesowa}{32}{subsubsection.9.2.3}%
-\contentsline {subsection}{\numberline {9.3}Infrastructure Layer - Warstwa Infrastruktury}{34}{subsection.9.3}%
-\contentsline {subsubsection}{\numberline {9.3.1}Django Models}{34}{subsubsection.9.3.1}%
-\contentsline {subsubsection}{\numberline {9.3.2}Repository Implementations}{35}{subsubsection.9.3.2}%
-\contentsline {subsubsection}{\numberline {9.3.3}System Runnerów}{36}{subsubsection.9.3.3}%
-\contentsline {subsection}{\numberline {9.4}API Layer - Warstwa Prezentacji}{40}{subsection.9.4}%
-\contentsline {subsubsection}{\numberline {9.4.1}ViewSets}{40}{subsubsection.9.4.1}%
-\contentsline {subsubsection}{\numberline {9.4.2}Serializers}{42}{subsubsection.9.4.2}%
-\contentsline {subsection}{\numberline {9.5}Testy Statystyczne}{43}{subsection.9.5}%
-\contentsline {subsubsection}{\numberline {9.5.1}NIST Statistical Test Suite}{43}{subsubsection.9.5.1}%
-\contentsline {subsubsection}{\numberline {9.5.2}Diehard Battery of Tests}{43}{subsubsection.9.5.2}%
-\contentsline {subsubsection}{\numberline {9.5.3}Implementacja testów}{44}{subsubsection.9.5.3}%
-\contentsline {subsection}{\numberline {9.6}Konfiguracja Django}{45}{subsection.9.6}%
-\contentsline {subsubsection}{\numberline {9.6.1}Settings.py}{45}{subsubsection.9.6.1}%
-\contentsline {subsubsection}{\numberline {9.6.2}URL Routing}{46}{subsubsection.9.6.2}%
-\contentsline {subsection}{\numberline {9.7}System Migracji Bazy Danych}{46}{subsection.9.7}%
-\contentsline {subsection}{\numberline {9.8}Zalety architektury backendowej}{47}{subsection.9.8}%
-\contentsline {section}{\numberline {10}Architektura Frontendowa}{48}{section.10}%
-\contentsline {subsection}{\numberline {10.1}Struktura komponentów React}{48}{subsection.10.1}%
-\contentsline {subsection}{\numberline {10.2}Wzorce frontendowe}{48}{subsection.10.2}%
-\contentsline {subsubsection}{\numberline {10.2.1}Context API dla globalnego stanu}{48}{subsubsection.10.2.1}%
-\contentsline {subsubsection}{\numberline {10.2.2}Custom Hooks}{49}{subsubsection.10.2.2}%
-\contentsline {section}{\numberline {11}Komunikacja Backend-Frontend}{49}{section.11}%
-\contentsline {subsection}{\numberline {11.1}REST API Endpoints}{49}{subsection.11.1}%
-\contentsline {subsection}{\numberline {11.2}Przykładowe zapytanie i odpowiedź}{49}{subsection.11.2}%
-\contentsline {section}{\numberline {12}Podsumowanie}{50}{section.12}%
-\contentsline {subsection}{\numberline {12.1}Zastosowane wzorce architektoniczne}{50}{subsection.12.1}%
-\contentsline {subsection}{\numberline {12.2}Zasady OOP}{50}{subsection.12.2}%
-\contentsline {subsection}{\numberline {12.3}Struktury danych}{51}{subsection.12.3}%
-\contentsline {subsection}{\numberline {12.4}Zalety architektury}{51}{subsection.12.4}%
+\contentsline {section}{\numberline {2}Katalog Algorytmów}{9}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Algorytmy dostępne}{9}{subsection.2.1}%
+\contentsline {subsubsection}{\numberline {2.1.1}LCG (Linear Congruential Generator)}{9}{subsubsection.2.1.1}%
+\contentsline {subsubsection}{\numberline {2.1.2}Park-Miller MINSTD}{9}{subsubsection.2.1.2}%
+\contentsline {subsubsection}{\numberline {2.1.3}PCG32 (Permuted Congruential Generator)}{10}{subsubsection.2.1.3}%
+\contentsline {subsubsection}{\numberline {2.1.4}Xoshiro256}{11}{subsubsection.2.1.4}%
+\contentsline {subsubsection}{\numberline {2.1.5}SplitMix64}{11}{subsubsection.2.1.5}%
+\contentsline {subsubsection}{\numberline {2.1.6}AWCG (Additive Weyl Congruential Generator)}{12}{subsubsection.2.1.6}%
+\contentsline {subsubsection}{\numberline {2.1.7}BlumBlumShub}{12}{subsubsection.2.1.7}%
+\contentsline {subsubsection}{\numberline {2.1.8}ChaCha20 (CSPRNG)}{13}{subsubsection.2.1.8}%
+\contentsline {subsubsection}{\numberline {2.1.9}Python Random (System RNG)}{14}{subsubsection.2.1.9}%
+\contentsline {subsubsection}{\numberline {2.1.10}System RNG (OS Level)}{14}{subsubsection.2.1.10}%
+\contentsline {subsection}{\numberline {2.2}Wdrożenia w różnych językach}{14}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Wprowadzenie techniczne}{15}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Cel dokumentu}{15}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Technologie}{15}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Architektura Systemu}{15}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Przegląd architektury}{15}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Schemat struktury systemu}{16}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Wzorce Projektowe}{17}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Clean Architecture (Hexagonal Architecture)}{17}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Repository Pattern}{17}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Adapter Pattern}{19}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Strategy Pattern}{19}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}Use Case Pattern}{21}{subsection.5.5}%
+\contentsline {subsection}{\numberline {5.6}Dependency Injection}{21}{subsection.5.6}%
+\contentsline {subsection}{\numberline {5.7}Factory Pattern (Implicit)}{23}{subsection.5.7}%
+\contentsline {section}{\numberline {6}Zasady Programowania Obiektowego}{23}{section.6}%
+\contentsline {subsection}{\numberline {6.1}SOLID Principles}{23}{subsection.6.1}%
+\contentsline {subsubsection}{\numberline {6.1.1}Single Responsibility Principle (SRP)}{23}{subsubsection.6.1.1}%
+\contentsline {subsubsection}{\numberline {6.1.2}Open/Closed Principle (OCP)}{23}{subsubsection.6.1.2}%
+\contentsline {subsubsection}{\numberline {6.1.3}Liskov Substitution Principle (LSP)}{24}{subsubsection.6.1.3}%
+\contentsline {subsubsection}{\numberline {6.1.4}Interface Segregation Principle (ISP)}{24}{subsubsection.6.1.4}%
+\contentsline {subsubsection}{\numberline {6.1.5}Dependency Inversion Principle (DIP)}{24}{subsubsection.6.1.5}%
+\contentsline {subsection}{\numberline {6.2}Enkapsulacja}{25}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Polimorfizm}{25}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Abstrakcja}{25}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Struktury Danych}{26}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Encje Domenowe (Dataclasses)}{26}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Enumy (Typy wyliczeniowe)}{26}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Słowniki (Dict) jako Parametry}{27}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Listy typowane}{27}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}Tuple dla zwracania wielu wartości}{27}{subsection.7.5}%
+\contentsline {subsection}{\numberline {7.6}Optional dla wartości nullable}{27}{subsection.7.6}%
+\contentsline {subsection}{\numberline {7.7}Struktury danych w bazie}{28}{subsection.7.7}%
+\contentsline {subsubsection}{\numberline {7.7.1}Model RNG (Tabela rngs)}{28}{subsubsection.7.7.1}%
+\contentsline {subsubsection}{\numberline {7.7.2}Model TestResult (Tabela test\_results)}{28}{subsubsection.7.7.2}%
+\contentsline {subsection}{\numberline {7.8}Diagram Przepływu Danych - Proces uruchomienia testu RNG}{29}{subsection.7.8}%
+\contentsline {subsection}{\numberline {7.9}Proces generowania liczb - Python Runner}{30}{subsection.7.9}%
+\contentsline {section}{\numberline {8}Szczegóły Implementacji}{31}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Kompresja danych - Base64}{31}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Testy Statystyczne}{31}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Obsługa różnych języków programowania}{32}{subsection.8.3}%
+\contentsline {subsubsection}{\numberline {8.3.1}Python Runner}{32}{subsubsection.8.3.1}%
+\contentsline {subsubsection}{\numberline {8.3.2}Executable Runner}{32}{subsubsection.8.3.2}%
+\contentsline {section}{\numberline {9}Architektura Backendowa}{33}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Przegląd struktury projektu Django}{33}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Core Layer - Warstwa Domeny}{34}{subsection.9.2}%
+\contentsline {subsubsection}{\numberline {9.2.1}Encje Domenowe}{34}{subsubsection.9.2.1}%
+\contentsline {subsubsection}{\numberline {9.2.2}Interfejsy (Porty)}{35}{subsubsection.9.2.2}%
+\contentsline {subsubsection}{\numberline {9.2.3}Use Cases - Logika Biznesowa}{36}{subsubsection.9.2.3}%
+\contentsline {subsection}{\numberline {9.3}Infrastructure Layer - Warstwa Infrastruktury}{38}{subsection.9.3}%
+\contentsline {subsubsection}{\numberline {9.3.1}Django Models}{38}{subsubsection.9.3.1}%
+\contentsline {subsubsection}{\numberline {9.3.2}Repository Implementations}{39}{subsubsection.9.3.2}%
+\contentsline {subsubsection}{\numberline {9.3.3}System Runnerów}{40}{subsubsection.9.3.3}%
+\contentsline {subsection}{\numberline {9.4}API Layer - Warstwa Prezentacji}{44}{subsection.9.4}%
+\contentsline {subsubsection}{\numberline {9.4.1}ViewSets}{44}{subsubsection.9.4.1}%
+\contentsline {subsubsection}{\numberline {9.4.2}Serializers}{46}{subsubsection.9.4.2}%
+\contentsline {subsection}{\numberline {9.5}Testy Statystyczne}{47}{subsection.9.5}%
+\contentsline {subsubsection}{\numberline {9.5.1}NIST Statistical Test Suite}{47}{subsubsection.9.5.1}%
+\contentsline {subsubsection}{\numberline {9.5.2}Diehard Battery of Tests}{47}{subsubsection.9.5.2}%
+\contentsline {subsubsection}{\numberline {9.5.3}Implementacja testów}{48}{subsubsection.9.5.3}%
+\contentsline {subsection}{\numberline {9.6}Konfiguracja Django}{49}{subsection.9.6}%
+\contentsline {subsubsection}{\numberline {9.6.1}Settings.py}{49}{subsubsection.9.6.1}%
+\contentsline {subsubsection}{\numberline {9.6.2}URL Routing}{50}{subsubsection.9.6.2}%
+\contentsline {subsection}{\numberline {9.7}System Migracji Bazy Danych}{50}{subsection.9.7}%
+\contentsline {subsection}{\numberline {9.8}Zalety architektury backendowej}{51}{subsection.9.8}%
+\contentsline {section}{\numberline {10}Architektura Frontendowa}{52}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Struktura komponentów React}{52}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Wzorce frontendowe}{52}{subsection.10.2}%
+\contentsline {subsubsection}{\numberline {10.2.1}Context API dla globalnego stanu}{52}{subsubsection.10.2.1}%
+\contentsline {subsubsection}{\numberline {10.2.2}Custom Hooks}{53}{subsubsection.10.2.2}%
+\contentsline {section}{\numberline {11}Komunikacja Backend-Frontend}{53}{section.11}%
+\contentsline {subsection}{\numberline {11.1}REST API Endpoints}{53}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Przykładowe zapytanie i odpowiedź}{53}{subsection.11.2}%
+\contentsline {section}{\numberline {12}Podsumowanie}{54}{section.12}%
+\contentsline {subsection}{\numberline {12.1}Zastosowane wzorce architektoniczne}{54}{subsection.12.1}%
+\contentsline {subsection}{\numberline {12.2}Zasady OOP}{54}{subsection.12.2}%
+\contentsline {subsection}{\numberline {12.3}Struktury danych}{55}{subsection.12.3}%
+\contentsline {subsection}{\numberline {12.4}Zalety architektury}{55}{subsection.12.4}%
