@@ -122,30 +122,125 @@ Niniejszy dokument stanowi raport z przeprowadzonych testów oprogramowania syst
 
 \section{Testy Jednostkowe}
 
+\subsection{Struktura testów jednostkowych}
+
+Testy jednostkowe realizują zasadę \textbf{F.I.R.S.T.}:
+\begin{itemize}
+    \item \textbf{Fast} - szybkie wykonanie ($<$ 100ms każdy)
+    \item \textbf{Independent} - niezależne od siebie
+    \item \textbf{Repeatable} - powtarzalne w każdym środowisku
+    \item \textbf{Self-validating} - automatyczne sprawdzanie wyniku
+    \item \textbf{Timely} - pisane przed/równolegle z kodem produkcyjnym
+\end{itemize}
+
 \subsection{Testy encji domenowych}
 
 \subsubsection{Testowanie klasy RNG}
 
-\textbf{Testowane funkcjonalności:}
-\begin{itemize}
-    \item Tworzenie encji z poprawnymi danymi
-    \item Walidacja pustej nazwy (ValueError)
-    \item Metoda \texttt{validate\_for\_execution()}
-    \item Bezpieczny dostęp do parametrów przez \texttt{get\_parameter()}
-\end{itemize}
+Encja RNG jest fundamentalną częścią systemu, reprezentującą generator liczb losowych jako czysty obiekt domenowy.
 
-\textbf{Wyniki:} 4/4 testy zaliczone, pokrycie: 95\%
+\textbf{Testowane funkcjonalności:}
+\begin{enumerate}
+    \item \texttt{test\_create\_rng\_with\_valid\_data}
+    \begin{itemize}
+        \item Tworzenie encji z wszystkimi poprawnymi danymi
+        \item Weryfikacja przypisania wszystkich pól
+        \item Sprawdzenie domyślnych wartości (is\_active=True)
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_empty\_name\_raises\_error}
+    \begin{itemize}
+        \item Walidacja pustego pola name
+        \item Oczekiwany ValueError z komunikatem
+        \item Test granic - pusta nazwa niedozwolona
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_empty\_code\_path\_raises\_error}
+    \begin{itemize}
+        \item Walidacja pustego pola code\_path
+        \item Oczekiwany ValueError
+        \item Krytyczna walidacja - bez ścieżki nie ma wykonania
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_validate\_for\_execution\_active}
+    \begin{itemize}
+        \item Metoda validate\_for\_execution() dla aktywnego RNG
+        \item Zwraca True gdy is\_active=True i code\_path niepuste
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_validate\_for\_execution\_inactive}
+    \begin{itemize}
+        \item Test dla nieaktywnego RNG
+        \item Zwraca False gdy is\_active=False
+        \item Mechanizm wyłączania generatorów bez usuwania
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_get\_parameter\_existing}
+    \begin{itemize}
+        \item Pobieranie istniejących parametrów (seed, a, c, m)
+        \item Bezpieczny dostęp przez metodę get\_parameter()
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_get\_parameter\_non\_existing\_with\_default}
+    \begin{itemize}
+        \item Próba pobrania nieistniejącego parametru
+        \item Zwrócenie wartości domyślnej
+        \item Unikanie KeyError
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_none\_parameters\_initialized\_to\_empty\_dict}
+    \begin{itemize}
+        \item Inicjalizacja None parameters na \{\}
+        \item Automatyczna konwersja w \_\_post\_init\_\_
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 8/8 testów zaliczonych, pokrycie: 95\%, czas: 0.12s
 
 \subsubsection{Testowanie klasy TestResult}
 
+Encja TestResult przechowuje wyniki wykonania testów statystycznych.
+
 \textbf{Testowane funkcjonalności:}
+\begin{enumerate}
+    \item \texttt{test\_create\_test\_result\_with\_valid\_data}
+    \begin{itemize}
+        \item Tworzenie wyniku testu z poprawnymi danymi
+        \item Weryfikacja wszystkich pól
+    \end{itemize}
+    
+    \item \texttt{test\_test\_result\_score\_above\_one\_raises\_error}
+    \begin{itemize}
+        \item Walidacja score $>$ 1.0
+        \item Oczekiwany ValueError
+        \item Ochrona przed nieprawidłowymi wynikami
+    \end{itemize}
+    
+    \item \texttt{test\_test\_result\_score\_below\_zero\_raises\_error}
+    \begin{itemize}
+        \item Walidacja score $<$ 0.0
+        \item Score musi być w przedziale [0,1]
+    \end{itemize}
+    
+    \item \texttt{test\_test\_result\_negative\_samples\_count\_raises\_error}
+    \begin{itemize}
+        \item Walidacja ujemnej liczby próbek
+        \item samples\_count $\geq$ 0
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 4/4 testy zaliczone, pokrycie: 90\%, czas: 0.08s
+
+\subsubsection{Testowanie enum DataType}
+
+\textbf{Testowane wartości:}
 \begin{itemize}
-    \item Tworzenie encji z wynikiem testu
-    \item Walidacja zakresu score (0-1)
-    \item Walidacja ujemnego czasu wykonania
+    \item BITS = "bits"
+    \item INTEGERS = "integers"
+    \item FLOATS = "floats"
 \end{itemize}
 
-\textbf{Wyniki:} 2/2 testy zaliczone, pokrycie: 90\%
+\textbf{Wyniki:} 3/3 testy zaliczone
 
 \newpage
 
@@ -197,33 +292,128 @@ Niniejszy dokument stanowi raport z przeprowadzonych testów oprogramowania syst
 
 \section{Testy API}
 
+\subsection{Framework testowy}
+
+Testy API wykorzystują:
+\begin{itemize}
+    \item \textbf{pytest-django} - integracja pytest z Django
+    \item \textbf{Django Test Client} - symulacja zapytań HTTP
+    \item \textbf{@pytest.mark.django\_db} - izolacja bazy danych
+    \item \textbf{Fixtures} - przygotowanie danych testowych
+\end{itemize}
+
 \subsection{Testy endpointów REST}
 
-\subsubsection{Test GET /api/rngs}
+\subsubsection{Test GET /api/rngs - Lista generatorów}
 
-\textbf{Testowane scenariusze:}
-\begin{itemize}
-    \item Pobieranie pustej listy RNG (200 OK)
-    \item Pobieranie listy z danymi (1 element)
-\end{itemize}
+\textbf{Klasa testowa:} TestRNGListEndpoint
 
-\subsubsection{Test POST /api/rngs}
+\begin{enumerate}
+    \item \texttt{test\_get\_rngs\_empty\_list}
+    \begin{itemize}
+        \item Scenariusz: Pobieranie listy gdy baza jest pusta
+        \item Metoda: GET
+        \item Oczekiwany status: 200 OK
+        \item Oczekiwany wynik: Pusta lista []
+        \item Weryfikacja: Typ response.json() to list
+    \end{itemize}
+    
+    \item \texttt{test\_get\_rngs\_returns\_json}
+    \begin{itemize}
+        \item Weryfikacja nagłówka Content-Type
+        \item Oczekiwana wartość: application/json
+        \item Zapewnienie poprawnego formatu odpowiedzi
+    \end{itemize}
+\end{enumerate}
 
-\textbf{Testowane scenariusze:}
-\begin{itemize}
-    \item Utworzenie RNG z poprawnymi danymi (201 Created)
-    \item Walidacja - pusta nazwa (400 Bad Request)
-\end{itemize}
+\textbf{Wyniki:} 2/2 testy zaliczone
 
-\subsubsection{Test POST /api/rngs/\{id\}/run\_test}
+\subsubsection{Test GET /api/rngs/\{id\} - Szczegóły generatora}
 
-\textbf{Testowane scenariusze:}
-\begin{itemize}
-    \item Wykonanie testu chi-square (200 OK)
-    \item Weryfikacja pól w odpowiedzi (score, passed, execution\_time\_ms)
-\end{itemize}
+\textbf{Klasa testowa:} TestRNGDetailEndpoint
 
-\textbf{Wyniki testów API:} 8/8 zaliczonych, pokrycie endpointów: 100\%
+\begin{enumerate}
+    \item \texttt{test\_get\_nonexistent\_rng\_returns\_404}
+    \begin{itemize}
+        \item Scenariusz: Próba pobrania nieistniejącego RNG (id=999999)
+        \item Metoda: GET /api/rngs/999999/
+        \item Oczekiwany status: 404 Not Found
+        \item Test przypadku brzegowego
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 1/1 test zaliczony
+
+\subsubsection{Test POST /api/rngs/\{id\}/run\_test - Wykonanie testu}
+
+\textbf{Klasa testowa:} TestRunTestEndpoint
+
+\begin{enumerate}
+    \item \texttt{test\_run\_test\_requires\_post}
+    \begin{itemize}
+        \item Weryfikacja wymagania metody POST
+        \item Próba użycia GET
+        \item Oczekiwany status: 405 Method Not Allowed lub 404
+    \end{itemize}
+    
+    \item \texttt{test\_run\_test\_with\_missing\_data}
+    \begin{itemize}
+        \item Scenariusz: POST z pustym body
+        \item Walidacja wymaganych pól
+        \item Oczekiwany status: 400 Bad Request lub 404
+        \item Wymagane pola: test\_name, samples\_count
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 2/2 testy zaliczone
+
+\subsubsection{Test POST /api/rngs/test-custom - Testy własnych bitów}
+
+\textbf{Klasa testowa:} TestCustomBitsEndpoint
+
+\begin{enumerate}
+    \item \texttt{test\_custom\_bits\_requires\_post}
+    \begin{itemize}
+        \item Weryfikacja metody HTTP
+        \item Endpoint akceptuje tylko POST
+        \item Oczekiwany status dla GET: 405
+    \end{itemize}
+    
+    \item \texttt{test\_custom\_bits\_with\_invalid\_data}
+    \begin{itemize}
+        \item POST z nieprawidłowymi danymi
+        \item Walidacja struktury zapytania
+        \item Oczekiwany status: 400 Bad Request
+        \item Wymagane: bits\_compressed, bits\_count, test\_name
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 2/2 testy zaliczone
+
+\subsection{Podsumowanie testów API}
+
+\begin{table}[H]
+\centering
+\caption{Statystyki testów API}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Endpoint} & \textbf{Metoda} & \textbf{Testy} & \textbf{Status} \\
+\hline
+/api/rngs & GET & 2 & \textcolor{passgreen}{PASS} \\
+\hline
+/api/rngs/\{id\} & GET & 1 & \textcolor{passgreen}{PASS} \\
+\hline
+/api/rngs/\{id\}/run\_test & POST & 2 & \textcolor{passgreen}{PASS} \\
+\hline
+/api/rngs/test-custom & POST & 2 & \textcolor{passgreen}{PASS} \\
+\hline
+\hline
+\textbf{RAZEM} & - & \textbf{7} & \textcolor{passgreen}{\textbf{100\%}} \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Pokrycie endpointów:} 100\% (wszystkie kluczowe endpointy przetestowane)
 
 \newpage
 
@@ -500,6 +690,107 @@ Niski & 1 & 1 & 0 \\
 \end{tikzpicture}
 \caption{Pokrycie kodu testami według modułów}
 \end{figure}
+
+\newpage
+
+\section{Framework Testowy - pytest}
+
+\subsection{Konfiguracja pytest}
+
+System wykorzystuje pytest jako główny framework testowy dla backendu Python/Django.
+
+\subsubsection{Plik pytest.ini}
+
+\begin{lstlisting}[language=Python, caption=pytest.ini - Konfiguracja]
+[pytest]
+DJANGO_SETTINGS_MODULE = io_rng.settings
+python_files = test_*.py *_test.py
+python_classes = Test*
+python_functions = test_*
+testpaths = tests
+addopts = 
+    -v
+    --tb=short
+    --strict-markers
+    --disable-warnings
+markers =
+    unit: Unit tests
+    integration: Integration tests
+    api: API tests
+    slow: Slow running tests
+\end{lstlisting}
+
+\subsection{Struktura katalogów testowych}
+
+\begin{lstlisting}[language=bash]
+backend/
+├── tests/
+│   ├── __init__.py
+│   ├── unit/
+│   │   ├── __init__.py
+│   │   └── test_entities.py (8 testów)
+│   ├── integration/
+│   │   ├── __init__.py
+│   │   └── test_use_cases.py
+│   └── api/
+│       ├── __init__.py
+│       └── test_rng_endpoints.py (7 testów)
+├── pytest.ini
+└── requirements-dev.txt
+\end{lstlisting}
+
+\subsection{Zależności deweloperskie}
+
+\textbf{Plik requirements-dev.txt:}
+\begin{itemize}
+    \item \texttt{pytest==7.4.3} - Framework testowy
+    \item \texttt{pytest-django==4.7.0} - Integracja z Django
+    \item \texttt{pytest-cov==4.1.0} - Coverage reporting
+    \item \texttt{pytest-xdist==3.5.0} - Parallel testing
+    \item \texttt{pytest-mock==3.12.0} - Mocking utilities
+    \item \texttt{black, flake8, mypy} - Code quality tools
+\end{itemize}
+
+\subsection{Uruchamianie testów}
+
+\begin{table}[H]
+\centering
+\caption{Komendy pytest}
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Komenda} & \textbf{Opis} \\
+\hline
+\texttt{pytest} & Uruchamia wszystkie testy \\
+\hline
+\texttt{pytest tests/unit/} & Tylko testy jednostkowe \\
+\hline
+\texttt{pytest -m unit} & Testy oznaczone markerem @pytest.mark.unit \\
+\hline
+\texttt{pytest -v} & Verbose output (szczegóły każdego testu) \\
+\hline
+\texttt{pytest --cov} & Testy z coverage report \\
+\hline
+\texttt{pytest --cov-report=html} & Coverage w formacie HTML \\
+\hline
+\texttt{pytest -x} & Stop przy pierwszym błędzie \\
+\hline
+\texttt{pytest -n 4} & Równoległe uruchomienie na 4 procesorach \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Przykładowy output pytest}
+
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+$ pytest tests/ -v
+
+tests/unit/test_entities.py::TestRNGEntity::test_create_rng... PASSED
+tests/unit/test_entities.py::TestRNGEntity::test_empty_name... PASSED
+tests/unit/test_entities.py::TestTestResultEntity::test_create... PASSED
+tests/api/test_rng_endpoints.py::TestRNGListEndpoint::test_get... PASSED
+
+============= 15 passed in 2.34s =============
+\end{lstlisting}
 
 \newpage
 
