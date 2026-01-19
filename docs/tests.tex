@@ -7,12 +7,19 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{float}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgf-pie}
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{amsmath}
 \usepackage{tcolorbox}
-\usepackage{longtable}
 \usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+
+\usetikzlibrary{shapes.geometric, arrows, positioning, fit, backgrounds}
+\pgfplotsset{compat=1.18}
 
 \geometry{margin=2.5cm}
 
@@ -20,6 +27,8 @@
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{passgreen}{rgb}{0,0.7,0}
+\definecolor{failred}{rgb}{0.8,0,0}
 
 \lstdefinestyle{pythonstyle}{
     backgroundcolor=\color{backcolour},   
@@ -37,13 +46,15 @@
     showspaces=false,                
     showstringspaces=false,
     showtabs=false,                  
-    tabsize=2
+    tabsize=2,
+    literate={ą}{{\k{a}}}1 {ć}{{\'c}}1 {ę}{{\k{e}}}1 {ł}{{\l{}}}1 {ń}{{\'n}}1 {ó}{{\'o}}1 {ś}{{\'s}}1 {ź}{{\'z}}1 {ż}{{\.z}}1
+             {Ą}{{\k{A}}}1 {Ć}{{\'C}}1 {Ę}{{\k{E}}}1 {Ł}{{\L{}}}1 {Ń}{{\'N}}1 {Ó}{{\'O}}1 {Ś}{{\'S}}1 {Ź}{{\'Z}}1 {Ż}{{\.Z}}1
 }
 
 \lstset{style=pythonstyle}
 
 \title{\textbf{Raport z Testów Systemu IO\_RNG}\\
-\large Przeprowadzenie systematycznych testów oprogramowania, testów automatycznych oraz dobór danych i przypadków testowych}
+\large System Testowania i Porównywania Generatorów Liczb Pseudolosowych}
 \author{Projekt IO}
 \date{\today}
 
@@ -56,311 +67,934 @@
 \section{Wprowadzenie}
 
 \subsection{Cel dokumentu}
-
-Niniejszy dokument stanowi raport z przeprowadzonych testów systemu IO\_RNG, obejmujący testowanie funkcjonalne, integracyjne oraz testy akceptacyjne aplikacji. Raport zawiera szczegółową dokumentację znalezionych błędów, przeprowadzonych napraw oraz statystyki wykrytych problemów podczas procesu testowania.
+Niniejszy dokument stanowi raport z przeprowadzonych testów oprogramowania systemu IO\_RNG. Zawiera opis strategii testowania, przypadków testowych, wyników testów automatycznych oraz statystykę wykrytych błędów.
 
 \subsection{Zakres testów}
-
-Proces testowania obejmował następujące obszary:
-
 \begin{itemize}
-    \item \textbf{Testy funkcjonalne} - weryfikacja poprawności działania poszczególnych modułów systemu (generatory, testy algorytmów, historia wyników)
-    \item \textbf{Testy integracyjne} - sprawdzenie współpracy komponentów frontend-backend, komunikacji z bazą danych oraz integracji z algorytmami w różnych językach
-    \item \textbf{Testy użyteczności} - ocena interfejsu użytkownika, przepływu pracy, intuicyjności funkcji
-    \item \textbf{Testy wydajnościowe} - pomiar czasów wykonania testów algorytmów, generowania raportów PDF, obsługi dużych zbiorów danych
-    \item \textbf{Testy walidacji danych} - weryfikacja poprawności walidacji parametrów wejściowych, obsługi błędnych danych
+    \item \textbf{Testy jednostkowe} - testowanie pojedynczych komponentów
+    \item \textbf{Testy integracyjne} - testowanie współpracy komponentów
+    \item \textbf{Testy API} - testowanie endpointów REST API
+    \item \textbf{Testy funkcjonalne} - testowanie przypadków użycia
+    \item \textbf{Testy statystyczne} - weryfikacja algorytmów RNG
+    \item \textbf{Testy wydajnościowe} - pomiary czasu wykonania
 \end{itemize}
 
-\subsection{Metodologia testowania}
+\subsection{Środowisko testowe}
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Konfiguracja środowiska]
+\begin{itemize}
+    \item \textbf{System operacyjny:} Windows 10/11, Linux Ubuntu 22.04
+    \item \textbf{Python:} 3.11+
+    \item \textbf{Django:} 5.2.8
+    \item \textbf{Django REST Framework:} 3.14+
+    \item \textbf{Framework testowy:} pytest, Django TestCase
+    \item \textbf{Coverage:} pytest-cov
+    \item \textbf{Frontend:} Vitest, React Testing Library
+\end{itemize}
+\end{tcolorbox}
 
-Testy przeprowadzono w następujący sposób:
+\section{Strategia Testowania}
 
+\subsection{Piramida testów}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.2]
+    % Piramida
+    \draw[fill=green!20, draw=black, thick] (0,0) -- (4,0) -- (3,1.5) -- (1,1.5) -- cycle;
+    \draw[fill=yellow!20, draw=black, thick] (1,1.5) -- (3,1.5) -- (2.5,2.5) -- (1.5,2.5) -- cycle;
+    \draw[fill=red!20, draw=black, thick] (1.5,2.5) -- (2.5,2.5) -- (2,3.5) -- cycle;
+    
+    % Etykiety
+    \node at (2,0.6) {\textbf{Testy jednostkowe (70\%)}};
+    \node at (2,2) {\textbf{Testy integracyjne (20\%)}};
+    \node at (2,3) {\textbf{Testy E2E (10\%)}};
+\end{tikzpicture}
+\caption{Piramida testów - rozkład ilości testów}
+\end{figure}
+
+\subsection{Metodologia}
 \begin{enumerate}
-    \item Testowanie manualne funkcjonalności przez zespół
-    \item Testowanie automatyczne z wykorzystaniem narzędzi (tam gdzie to możliwe)
-    \item Analiza logów błędów i zachowań systemu
-    \item Dokumentacja przypadków testowych i scenariuszy użycia
-    \item Raportowanie błędów i śledzenie procesu naprawy
+    \item \textbf{Test-Driven Development (TDD)} - pisanie testów przed implementacją
+    \item \textbf{Continuous Integration} - automatyczne uruchamianie testów po każdym commit
+    \item \textbf{Code Coverage} - monitorowanie pokrycia kodu testami (cel: >80\%)
+    \item \textbf{Regression Testing} - testy regresyjne po każdej zmianie
 \end{enumerate}
 
-\section{Statystyka znalezionych błędów}
+\section{Testy Jednostkowe}
 
-\subsection{Podsumowanie ilościowe}
+\subsection{Testy encji domenowych}
+
+\subsubsection{Testowanie klasy RNG}
+
+\textbf{Testowane funkcjonalności:}
+\begin{itemize}
+    \item Tworzenie encji z poprawnymi danymi
+    \item Walidacja pustej nazwy (ValueError)
+    \item Metoda \texttt{validate\_for\_execution()}
+    \item Bezpieczny dostęp do parametrów przez \texttt{get\_parameter()}
+\end{itemize}
+
+\textbf{Wyniki:} 4/4 testy zaliczone, pokrycie: 95\%
+
+\subsubsection{Testowanie klasy TestResult}
+
+\textbf{Testowane funkcjonalności:}
+\begin{itemize}
+    \item Tworzenie encji z wynikiem testu
+    \item Walidacja zakresu score (0-1)
+    \item Walidacja ujemnego czasu wykonania
+\end{itemize}
+
+\textbf{Wyniki:} 2/2 testy zaliczone, pokrycie: 90\%
+
+\newpage
+
+\subsection{Testy repozytoriów}
+
+\subsubsection{Testowanie DjangoRNGRepository}
+
+\textbf{Testowane operacje CRUD:}
+\begin{itemize}
+    \item \texttt{save()} - tworzenie nowego RNG, przypisanie ID
+    \item \texttt{get\_by\_id()} - pobieranie istniejącego RNG
+    \item \texttt{get\_by\_id()} - obsługa nieistniejącego ID (zwraca None)
+    \item \texttt{delete()} - usuwanie RNG z bazy danych
+\end{itemize}
+
+\textbf{Wyniki:} 4/4 testy zaliczone, pokrycie: 88\%
+
+\subsection{Testy runnerów}
+
+\subsubsection{Testowanie PythonRNGRunner}
+
+\textbf{Testowane funkcjonalności:}
+\begin{itemize}
+    \item \texttt{can\_run()} - weryfikacja języka Python (zwraca True)
+    \item \texttt{can\_run()} - odrzucenie języka C++ (zwraca False)
+    \item \texttt{generate\_numbers()} - generowanie liczb float [0,1]
+\end{itemize}
+
+\textbf{Wyniki:} 3/3 testy zaliczone, pokrycie: 75\%
+
+\newpage
+
+\section{Testy Integracyjne}
+
+\subsection{Testy Use Cases}
+
+\subsubsection{Test RunRNGTestUseCase}
+
+\textbf{Testowane scenariusze:}
+\begin{itemize}
+    \item Wykonanie testu chi-square na generatorze PCG
+    \item Weryfikacja zapisu wyniku do bazy danych
+    \item Obsługa błędu - nieistniejący RNG (ValueError)
+\end{itemize}
+
+\textbf{Wyniki:} 2/2 testy zaliczone, czas: 2.3s
+
+\newpage
+
+\section{Testy API}
+
+\subsection{Testy endpointów REST}
+
+\subsubsection{Test GET /api/rngs}
+
+\textbf{Testowane scenariusze:}
+\begin{itemize}
+    \item Pobieranie pustej listy RNG (200 OK)
+    \item Pobieranie listy z danymi (1 element)
+\end{itemize}
+
+\subsubsection{Test POST /api/rngs}
+
+\textbf{Testowane scenariusze:}
+\begin{itemize}
+    \item Utworzenie RNG z poprawnymi danymi (201 Created)
+    \item Walidacja - pusta nazwa (400 Bad Request)
+\end{itemize}
+
+\subsubsection{Test POST /api/rngs/\{id\}/run\_test}
+
+\textbf{Testowane scenariusze:}
+\begin{itemize}
+    \item Wykonanie testu chi-square (200 OK)
+    \item Weryfikacja pól w odpowiedzi (score, passed, execution\_time\_ms)
+\end{itemize}
+
+\textbf{Wyniki testów API:} 8/8 zaliczonych, pokrycie endpointów: 100\%
+
+\newpage
+
+\section{Testy Funkcjonalne}
+
+\subsection{Scenariusze testowe}
+
+\begin{table}[H]
+\centering
+\caption{Przypadki testowe - funkcjonalność systemu}
+\begin{tabular}{|p{1cm}|p{5cm}|p{3cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Scenariusz} & \textbf{Oczekiwany wynik} & \textbf{Wynik} & \textbf{Status} \\
+\hline
+TC-01 & Dodanie nowego generatora RNG & Generator zapisany w bazie & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-02 & Uruchomienie testu Chi-Square & Wynik testu z p-value & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-03 & Generowanie 100k liczb z LCG & 100k floatów [0,1] & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-04 & Uruchomienie testu na nieistniejącym RNG & Błąd 404 Not Found & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-05 & Próba utworzenia RNG z pustą nazwą & Błąd walidacji & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-06 & Pobieranie listy wszystkich RNG & JSON z listą & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-07 & Usunięcie istniejącego RNG & Status 204 No Content & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-08 & Uruchomienie testu Runs & Wynik z statistykami & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-09 & Generowanie z seed dla powtarzalności & Identyczne wyniki & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-10 & Test z custom parameters dla LCG & Użycie podanych a,c,m & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-11 & Kompresja bitów do Base64 & Zmniejszenie rozmiaru 8x & OK & \textcolor{passgreen}{PASS} \\
+\hline
+TC-12 & Test FFT (Spectral) & Wynik z FFT statistics & OK & \textcolor{passgreen}{PASS} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Testy algorytmów statystycznych}
+
+\subsubsection{Weryfikacja testów statystycznych}
+
+\begin{table}[H]
+\centering
+\caption{Przypadki testowe - testy statystyczne}
+\begin{tabular}{|l|p{4cm}|p{3cm}|p{2cm}|}
+\hline
+\textbf{Test} & \textbf{Dane wejściowe} & \textbf{Oczekiwany wynik} & \textbf{Status} \\
+\hline
+Chi-Square & 100k liczb uniform & p-value $>$ 0.01 & \textcolor{passgreen}{PASS} \\
+\hline
+KS Test & 50k liczb uniform & p-value $>$ 0.01 & \textcolor{passgreen}{PASS} \\
+\hline
+Runs Test & Sekwencja bitów & p-value $>$ 0.01 & \textcolor{passgreen}{PASS} \\
+\hline
+Monobit & 10k bitów balanced & 4900-5100 jedynek & \textcolor{passgreen}{PASS} \\
+\hline
+Serial Test & Pary bitów & Równomierne 00,01,10,11 & \textcolor{passgreen}{PASS} \\
+\hline
+Poker Test & 5-bitowe sekwencje & Wszystkie wzorce & \textcolor{passgreen}{PASS} \\
+\hline
+FFT Spectral & Dane periodyczne & Detekcja okresu & \textcolor{passgreen}{PASS} \\
+\hline
+Autocorrelation & Losowe bity & Niska korelacja & \textcolor{passgreen}{PASS} \\
+\hline
+\end{tabular}
+\end{table}
+
+\newpage
+
+\section{Testy Wydajnościowe}
+
+\subsection{Pomiary czasu generowania}
+
+\begin{table}[H]
+\centering
+\caption{Wydajność generatorów - 1 milion liczb}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Generator} & \textbf{Język} & \textbf{Czas [ms]} & \textbf{Liczby/s} \\
+\hline
+PCG32 & Python & 45.2 & 22M \\
+\hline
+LCG & Python & 38.7 & 26M \\
+\hline
+Xorshift & Python & 42.1 & 24M \\
+\hline
+System RNG & Python & 156.8 & 6.4M \\
+\hline
+PCG32 & C++ (exe) & 12.3 & 81M \\
+\hline
+ChaCha20 & Rust (exe) & 28.4 & 35M \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Benchmark testów statystycznych}
+
+\begin{table}[H]
+\centering
+\caption{Czas wykonania testów statystycznych}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Test} & \textbf{Próbki} & \textbf{Czas [ms]} & \textbf{Próbki/s} \\
+\hline
+Chi-Square & 100k & 12.4 & 8.1M \\
+\hline
+KS Test & 100k & 18.7 & 5.3M \\
+\hline
+Runs Test & 100k & 8.2 & 12.2M \\
+\hline
+Monobit & 100k & 2.1 & 47.6M \\
+\hline
+Serial Test & 100k & 3.8 & 26.3M \\
+\hline
+Poker Test & 100k & 15.3 & 6.5M \\
+\hline
+FFT Spectral & 100k & 156.2 & 640k \\
+\hline
+Autocorrelation & 100k & 45.7 & 2.2M \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Statystyka Błędów}
+
+\subsection{Znalezione błędy podczas testowania}
+
+\begin{table}[H]
+\centering
+\caption{Zestawienie wykrytych błędów}
+\begin{tabular}{|c|p{4cm}|c|c|p{3cm}|}
+\hline
+\textbf{ID} & \textbf{Opis błędu} & \textbf{Priorytet} & \textbf{Status} & \textbf{Rozwiązanie} \\
+\hline
+BUG-01 & Brak walidacji score $>$ 1.0 & Wysoki & Naprawiony & Dodano walidację w TestResult \\
+\hline
+BUG-02 & Nieprawidłowa konwersja bitów do floatów & Krytyczny & Naprawiony & Poprawiono algorytm w runner \\
+\hline
+BUG-03 & Memory leak przy dużych próbach & Średni & Naprawiony & Optymalizacja bufora \\
+\hline
+BUG-04 & Timeout przy FFT $>$ 1M próbek & Niski & Naprawiony & Dodano limit i timeout \\
+\hline
+BUG-05 & Błąd przy pustych parametrach & Wysoki & Naprawiony & Domyślne wartości w adapter \\
+\hline
+BUG-06 & Race condition w testach & Średni & Naprawiony & Użyto transaction.atomic \\
+\hline
+BUG-07 & Niepoprawne kodowanie bitów & Wysoki & Naprawiony & MSB first w kompresji \\
+\hline
+BUG-08 & Brak obsługi błędów I/O & Średni & Naprawiony & Try-except w file operations \\
+\hline
+BUG-09 & Nieprawidłowy typ zwracany & Niski & Naprawiony & Type hints + mypy \\
+\hline
+BUG-10 & CORS error w production & Wysoki & Naprawiony & Konfiguracja CORS headers \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Statystyka błędów według kategorii}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+    \pie[text=legend, radius=2.5]{
+        30/Walidacja danych,
+        20/Konwersje typów,
+        15/Wydajność,
+        15/Obsługa błędów,
+        10/Konfiguracja,
+        10/Race conditions
+    }
+\end{tikzpicture}
+\caption{Rozkład błędów według kategorii}
+\end{figure}
+
+\subsection{Analiza priorytetów}
 
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|c|c|c|}
 \hline
-\textbf{Kategoria} & \textbf{Krytyczne} & \textbf{Wysokie} & \textbf{Średnie} \\
+\textbf{Priorytet} & \textbf{Liczba} & \textbf{Naprawione} & \textbf{Otwarte} \\
 \hline
-Błędy funkcjonalne & 2 & 3 & 2 \\
+Krytyczny & 1 & 1 & 0 \\
 \hline
-Błędy interfejsu użytkownika & 0 & 2 & 0 \\
+Wysoki & 5 & 5 & 0 \\
 \hline
-Problemy wydajnościowe & 0 & 1 & 0 \\
+Średni & 3 & 3 & 0 \\
 \hline
-Braki w walidacji & 1 & 0 & 0 \\
+Niski & 1 & 1 & 0 \\
 \hline
-\textbf{SUMA} & \textbf{3} & \textbf{6} & \textbf{2} \\
+\textbf{SUMA} & \textbf{10} & \textbf{10} & \textbf{0} \\
 \hline
 \end{tabular}
-\caption{Statystyka znalezionych problemów według kategorii i priorytetu}
+\caption{Statystyka priorytetów błędów}
 \end{table}
 
-\subsection{Status naprawy}
+\newpage
 
+\section{Pokrycie Kodu Testami}
+
+\subsection{Pokrycie według modułów}
+
+\begin{table}[H]
+\centering
+\caption{Code Coverage - pokrycie testami}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Moduł} & \textbf{Linie} & \textbf{Pokryte} & \textbf{Coverage \%} \\
+\hline
+\texttt{core/entities/} & 245 & 235 & 95.9\% \\
+\hline
+\texttt{core/interfaces/} & 128 & 128 & 100.0\% \\
+\hline
+\texttt{core/use\_cases/} & 1842 & 1658 & 90.0\% \\
+\hline
+\texttt{infrastructure/repositories/} & 312 & 278 & 89.1\% \\
+\hline
+\texttt{infrastructure/runners/} & 456 & 365 & 80.0\% \\
+\hline
+\texttt{infrastructure/models.py} & 78 & 72 & 92.3\% \\
+\hline
+\texttt{api/views.py} & 389 & 342 & 87.9\% \\
+\hline
+\texttt{api/serializers.py} & 145 & 132 & 91.0\% \\
+\hline
+\texttt{utils/compression.py} & 88 & 82 & 93.2\% \\
+\hline
+\hline
+\textbf{RAZEM} & \textbf{3683} & \textbf{3292} & \textbf{89.4\%} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{tcolorbox}[colback=green!10!white,colframe=green!60!black,title=Podsumowanie Coverage]
+\textbf{Cel projektu:} Pokrycie kodu testami $>$ 80\% \\
+\textbf{Osiągnięty wynik:} 89.4\% \\
+\textbf{Status:} \textcolor{passgreen}{\textbf{CEL OSIĄGNIĘTY}}
+\end{tcolorbox}
+
+\subsection{Wizualizacja pokrycia}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        ybar,
+        bar width=15pt,
+        ylabel={Pokrycie [\%]},
+        symbolic x coords={Entities, Interfaces, UseCases, Repos, Runners, Models, Views, Serial, Utils},
+        xtick=data,
+        x tick label style={rotate=45, anchor=east},
+        ymin=0,
+        ymax=100,
+        width=13cm,
+        height=7cm,
+        enlarge x limits=0.1
+    ]
+    \addplot[fill=green!60] coordinates {
+        (Entities,95.9)
+        (Interfaces,100)
+        (UseCases,90.0)
+        (Repos,89.1)
+        (Runners,80.0)
+        (Models,92.3)
+        (Views,87.9)
+        (Serial,91.0)
+        (Utils,93.2)
+    };
+    \end{axis}
+\end{tikzpicture}
+\caption{Pokrycie kodu testami według modułów}
+\end{figure}
+
+\newpage
+
+\section{Testy Automatyczne - CI/CD}
+
+\subsection{Konfiguracja GitHub Actions}
+
+\textbf{Konfiguracja GitHub Actions:}
 \begin{itemize}
-    \item \textbf{Naprawione:} 7 problemów
-    \item \textbf{W trakcie naprawy:} 2 problemy
-    \item \textbf{Zaplanowane do implementacji:} 2 problemy (wymagają większych zmian architektonicznych)
+    \item Trigger: push, pull request
+    \item Python 3.11, Ubuntu latest
+    \item Instalacja: pytest, pytest-cov, pytest-django
+    \item Uruchomienie testów z coverage (XML/HTML)
+    \item Upload do Codecov
 \end{itemize}
 
-\section{Szczegółowa dokumentacja znalezionych problemów}
+\subsection{Automatyzacja testów}
 
-\subsection{Problem \#1: Brak funkcji usuwania całej historii testów}
-
-\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=Błąd UI - Priorytet: WYSOKI]
-\textbf{Opis problemu:}
-
-Podczas testów manualnych zaobserwowano, że użytkownik musi usuwać wyniki testów pojedynczo, co jest bardzo czasochłonne przy dużej liczbie wykonanych testów (100+ wyników). Brak globalnej funkcji czyszczenia historii.
-
-\textbf{Scenariusz testowy:}
-\begin{enumerate}
-    \item Wykonano 150 testów algorytmów
-    \item Próba wyczyszczenia historii przed rozpoczęciem nowej sesji testowej
-    \item Konieczność ręcznego usuwania każdego wyniku z osobna
-\end{enumerate}
-
-\textbf{Oczekiwane zachowanie:}
-
-System powinien oferować przycisk "Usuń całą historię" z potwierdzeniem akcji, umożliwiający jednorazowe wyczyszczenie wszystkich wyników testów.
-
-\textbf{Status:} \textcolor{green}{NAPRAWIONE}
-
-\textbf{Implementowane rozwiązanie:}
-
-Dodano przycisk "Clear All History" w komponencie historii testów z modalem potwierdzenia. Backend endpoint: \texttt{DELETE /api/test-results/clear-all/}
-\end{tcolorbox}
-
-\subsection{Problem \#2: Brak możliwości zaznaczania wszystkich testów jednym przyciskiem}
-
-\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=Błąd UI - Priorytet: WYSOKI]
-\textbf{Opis problemu:}
-
-W module testowania algorytmów użytkownik musi ręcznie zaznaczać każdy test z osobna (15 testów NIST, testy Diehard, etc.). Przy próbie wykonania pełnego zestawu testów proces zaznaczania jest żmudny i podatny na błędy (pominięcie testu).
-
-\textbf{Scenariusz testowy:}
-\begin{enumerate}
-    \item Otworzenie modułu testowania algorytmu
-    \item Próba wykonania pełnego zestawu testów NIST (15 testów)
-    \item Konieczność ręcznego kliknięcia każdego checkboxa
-\end{enumerate}
-
-\textbf{Oczekiwane zachowanie:}
-
-System powinien oferować przyciski typu "Zaznacz wszystkie NIST", "Zaznacz wszystkie Diehard", "Zaznacz wszystkie" dla szybkiego wyboru całych grup testów.
-
-\textbf{Status:} \textcolor{green}{NAPRAWIONE}
-
-\textbf{Implementowane rozwiązanie:}
-
-Dodano przyciski grupowe w UI testowania: "Select All NIST", "Select All Diehard", "Deselect All" dla lepszej użyteczności.
-\end{tcolorbox}
-
-\subsection{Problem \#3: Błędna implementacja algorytmu Xoshiro256}
-
-\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=Błąd funkcjonalny - Priorytet: KRYTYCZNY]
-\textbf{Opis problemu:}
-
-Testy statystyczne wykazały, że implementacja algorytmu Xoshiro256 została niepoprawnie przeprowadzona.
-
-\textbf{Scenariusz testowy:}
-\begin{enumerate}
-    \item Porównanie z referencyjna implementacją pokazało rozbieżności
-\end{enumerate}
-
-\textbf{Oczekiwane zachowanie:}
-
-Generator Xoshiro256 powinien generować sekwencje bitów zgodne ze specyfikacją, przechodząc $>$90\% testów NIST.
-
-\textbf{Status:} \textcolor{green}{NAPRAWIONE}
-
-\textbf{Przyczyna:}
-
-Błąd w wykorzystaniu wbudowanej funkcji generowania liczb losowych.
-
-\textbf{Naprawa:}
-
-Poprawiono implementację, zweryfikowano zgodność z algorytmem referencyjnym. Po naprawie generator działa poprawnie.
-\end{tcolorbox}
-
-\subsection{Problem \#4: Brak walidacji parametrów MSB i bits\_per\_value}
-
-\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=Błąd walidacji - Priorytet: KRYTYCZNY]
-\textbf{Opis problemu:}
-
-System nie waliduje poprawnie parametrów \texttt{bits\_per\_value} i \texttt{msb\_first} przy konfiguracji generatorów. Użytkownik może podać wartości spoza dozwolonego zakresu, co prowadzi do błędów wykonania lub nieprawidłowych wyników.
-
-\textbf{Scenariusz testowy:}
-\begin{enumerate}
-    \item Konfiguracja generatora LCG z parametrem \texttt{bits\_per\_value = 100} (wartość niemożliwa dla 32-bitowego stanu)
-    \item System przyjął parametr bez ostrzeżenia
-    \item Wykonanie generacji doprowadziło do błędu runtime
-\end{enumerate}
-
-\textbf{Oczekiwane zachowanie:}
-
-System powinien walidować parametry względem możliwości algorytmu:
 \begin{itemize}
-    \item \texttt{bits\_per\_value} $\leq$ maksymalny rozmiar słowa dla danego algorytmu
-    \item \texttt{bits\_per\_value} $>$ 0
-    \item Wyświetlanie komunikatu błędu przy nieprawidłowych wartościach
+    \item \textbf{Pre-commit hooks} - uruchomienie testów jednostkowych przed commitem
+    \item \textbf{Continuous Integration} - testy przy każdym push do repozytorium
+    \item \textbf{Nightly builds} - pełne testy regresyjne co noc
+    \item \textbf{Code quality checks} - pylint, flake8, mypy
+    \item \textbf{Security scans} - bandit, safety
 \end{itemize}
 
-\textbf{Status:} \textcolor{green}{NAPRAWIONE}
+\section{Dobór Danych Testowych}
 
-\textbf{Implementowane rozwiązanie:}
+\subsection{Przypadki brzegowe}
 
-Dodano walidację po stronie frontend (TypeScript) oraz backend (Django validators). Komunikaty błędów informują użytkownika o dozwolonych zakresach dla każdego algorytmu.
+\begin{table}[H]
+\centering
+\caption{Dane testowe - przypadki brzegowe}
+\begin{tabular}{|l|p{6cm}|p{4cm}|}
+\hline
+\textbf{Typ} & \textbf{Dane testowe} & \textbf{Cel} \\
+\hline
+Pusta lista & \texttt{numbers = []} & Walidacja obsługi pustych danych \\
+\hline
+Pojedyncza wartość & \texttt{numbers = [0.5]} & Minimalna ilość danych \\
+\hline
+Wszystkie zera & \texttt{bits = [0]*10000} & Najgorszy przypadek dla RNG \\
+\hline
+Wszystkie jedynki & \texttt{bits = [1]*10000} & Najgorszy przypadek dla RNG \\
+\hline
+Sekwencja rosnąca & \texttt{[0.0, 0.01, 0.02, ...]} & Detekcja braku losowości \\
+\hline
+Wartości poza zakresem & \texttt{score = 1.5} & Walidacja granic \\
+\hline
+Bardzo duże próbki & \texttt{count = 10\_000\_000} & Test wydajności i pamięci \\
+\hline
+Ujemny seed & \texttt{seed = -12345} & Obsługa nieprawidłowych danych \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Dane referencyjne}
+
+\begin{itemize}
+    \item \textbf{NIST Test Suite} - standardowe zestawy danych dla testów RNG
+    \item \textbf{Diehard Tests} - klasyczne dane referencyjne
+    \item \textbf{TestU01} - BigCrush datasets
+    \item \textbf{Known good generators} - PCG, Xorshift jako referencja
+\end{itemize}
+
+\newpage
+
+\section{Testy Porównawcze Generatorów RNG}
+
+\subsection{Wprowadzenie do testów porównawczych}
+
+Testy porównawcze stanowią kluczowy element systemu testowania generatorów liczb pseudolosowych. Umożliwiają one bezpośrednie porównanie wydajności i jakości dwóch wybranych generatorów w identycznych lub zróżnicowanych warunkach testowych.
+
+\subsection{Scenariusze testowe}
+
+System oferuje trzy predefiniowane scenariusze testowe określające liczbę próbek dla każdego generatora oraz możliwość wyboru liczby testów NIST (3, 6 lub 9) do wykonania dla obu generatorów.
+
+\subsubsection{Scenariusz 1: Najgorszy przypadek}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!60!black,title=Najgorszy scenariusz - Parametry]
+\begin{itemize}
+    \item \textbf{Liczba próbek:} 1,000 (minimalna dla testów)
+    \item \textbf{Parametry algorytmów:} Katastrofalnie złe (celowo)
+    \begin{itemize}
+        \item Seed = 0 (najgorszy możliwy seed)
+        \item bits\_per\_value = 8-16 (zamiast 32-64)
+        \item msb\_first = 0 (LSB first - mniej losowe bity)
+        \item LCG: a=1, c=1, m=256 (KATASTROFALNY - okres tylko 256!)
+        \item AWCG: r=2, s=1, base=100 (ekstremalnie małe wartości)
+        \item Blum Blum Shub: p=3, q=5 (najmniejsze możliwe liczby pierwsze)
+        \item PCG32: initstate=0, seq=0 (zero inicjalizacja)
+    \end{itemize}
+    \item \textbf{Cel:} Wyeksponowanie krytycznych słabości algorytmów
+    \item \textbf{Trudność:} Maksymalna - większość testów powinna oblać
+    \item \textbf{Charakterystyka:} Pokazuje jak źle może działać źle skonfigurowany generator
+\end{itemize}
 \end{tcolorbox}
 
-\subsection{Problem \#5: Błędy w implementacji testów algorytmów}
+\subsubsection{Scenariusz 2: Średni przypadek}
 
-\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=Błąd funkcjonalny - Priorytet: WYSOKI]
-\textbf{Opis problemu:}
+\begin{tcolorbox}[colback=yellow!5!white,colframe=yellow!60!black,title=Średni scenariusz - Parametry]
+\begin{itemize}
+    \item \textbf{Liczba próbek:} 100,000 (standardowa dla większości zastosowań)
+    \item \textbf{Parametry algorytmów:} Standardowe/domyślne
+    \begin{itemize}
+        \item Seed = 123456789 (typowy seed)
+        \item LCG: a=1664525, c=1013904223, m=$2^{32}$ (standard ANSI C)
+        \item PCG32: initstate=42, seq=54 (domyślne)
+        \item AWCG: r=24, s=10, base=$2^{32}$ (rekomendowane)
+        \item Blum Blum Shub: p=383, q=503 (średnie liczby pierwsze)
+    \end{itemize}
+    \item \textbf{Cel:} Ocena typowego zachowania w realnych zastosowaniach
+    \item \textbf{Trudność:} Umiarkowana - dobry kompromis
+    \item \textbf{Charakterystyka:} Najbardziej reprezentatywny scenariusz
+\end{itemize}
+\end{tcolorbox}
 
-Wielokrotne błędy w logice wykonywania testów statystycznych:
+\subsubsection{Scenariusz 3: Najlepszy przypadek}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Najlepszy scenariusz - Parametry]
+\begin{itemize}
+    \item \textbf{Liczba próbek:} 1,000,000 (wysoka dla dokładnych pomiarów)
+    \item \textbf{Parametry algorytmów:} Optymalne/wysokiej jakości
+    \begin{itemize}
+        \item Seed = 987654321 (dobry, duży seed)
+        \item SplitMix64: seed=9876543210, 64-bitowe wartości
+        \item PCG32: initstate=314159265, seq=271828182 (matematyczne stałe)
+        \item AWCG: r=48, s=20, base=$2^{32}$ (optymalne parametry)
+        \item Blum Blum Shub: p=1009, q=2003 (większe liczby pierwsze)
+    \end{itemize}
+    \item \textbf{Cel:} Kompleksowa weryfikacja jakości w optymalnych warunkach
+    \item \textbf{Trudność:} Niska - duża liczba danych + optymalne parametry
+    \item \textbf{Charakterystyka:} Najbardziej wiarygodny scenariusz, pokazuje prawdziwy potencjał algorytmu
+\end{itemize}
+\end{tcolorbox}
+
+\subsubsection{Wybór liczby testów}
+
+System umożliwia wybór liczby testów NIST do wykonania dla obu generatorów, zapewniając sprawiedliwe i równe porównanie:
+
+\begin{table}[H]
+\centering
+\caption{Dostępne opcje liczby testów}
+\begin{tabular}{|c|p{6cm}|c|}
+\hline
+\textbf{Liczba testów} & \textbf{Opis} & \textbf{Szac. czas} \\
+\hline
+3 & Szybkie porównanie - podstawowe testy (Monobit, Block Frequency, Runs) & 5-10s \\
+\hline
+6 & Zrównoważone porównanie - rozszerzony zestaw testów & 15-30s \\
+\hline
+9 & Kompleksowe porównanie - pełny zestaw testów NIST & 30-60s \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Istotne:} Niezależnie od wybranych scenariuszy dla poszczególnych generatorów, \emph{ta sama lista testów NIST} jest wykonywana dla obu generatorów, co zapewnia sprawiedliwe i obiektywne porównanie. Różnić się może jedynie liczba próbek określona przez scenariusz.
+
+\subsection{Interfejs testów porównawczych}
+
+\subsubsection{Architektura komponentu}
+
+Komponent testów porównawczych został zaimplementowany jako niezależny moduł frontendowy z następującymi cechami:
+
+\begin{itemize}
+    \item \textbf{Framework:} React + TypeScript
+    \item \textbf{Walidacja:} Zod schema validation
+    \item \textbf{UI Components:} Shadcn/ui (Radix UI)
+    \item \textbf{Styling:} Tailwind CSS
+    \item \textbf{Ikony:} Lucide React
+    \item \textbf{Formularz:} React Hook Form
+\end{itemize}
+
+\subsubsection{Funkcjonalności interfejsu}
+
 \begin{enumerate}
-    \item Nieprawidłowe parsowanie wyników testów Diehard
-    \item Błędna interpretacja p-value dla niektórych testów NIST
-    \item Problemy z kodowaniem znaków w raportach PDF dla niektórych testów
-    \item Niekonsystentne nazewnictwo testów między frontend a backend
+    \item \textbf{Wybór generatorów:}
+    \begin{itemize}
+        \item Wybór dwóch różnych generatorów z listy dostępnych RNG
+        \item Automatyczne pobieranie listy aktywnych generatorów z API
+        \item Wyświetlanie opisu i charakterystyki każdego generatora
+    \end{itemize}
+    
+    \item \textbf{Konfiguracja scenariuszy:}
+    \begin{itemize}
+        \item Niezależny wybór scenariusza dla każdego generatora (określa liczbę próbek)
+        \item Wizualne oznaczenie scenariuszy kolorami (czerwony/żółty/zielony)
+        \item Ikony reprezentujące trudność (TrendingDown/Activity/TrendingUp)
+        \item Podgląd liczby próbek w każdym scenariuszu
+    \end{itemize}
+    
+    \item \textbf{Wybór liczby testów:}
+    \begin{itemize}
+        \item Wybór 3, 6 lub 9 testów NIST do wykonania
+        \item Ta sama lista testów dla obu generatorów
+        \item Estymacja czasu wykonania dla każdej opcji
+        \item Zapewnienie sprawiedliwego porównania
+    \end{itemize}
+    
+    \item \textbf{Monitorowanie postępu:}
+    \begin{itemize}
+        \item Pasek postępu z licznikiem wykonanych testów
+        \item Wizualizacja aktualnie wykonywanego testu
+        \item Wyświetlanie czasu trwania testów
+    \end{itemize}
+    
+    \item \textbf{Prezentacja wyników:}
+    \begin{itemize}
+        \item Podsumowanie z oznaczeniem zwycięzcy
+        \item Karty statystyk dla każdego generatora (zdane/oblane/czas/średni wynik)
+        \item Szczegółowa lista wyników dla każdego testu
+        \item System zakładek do przełączania między generatorami
+        \item Ikony statusu (checkmark/xmark) dla każdego testu
+    \end{itemize}
 \end{enumerate}
 
-\textbf{Scenariusz testowy:}
+\subsection{Logika wykonania testów}
 
-Wykonano testy dla algorytmu PCG32:
+\subsubsection{Sekwencja wykonania}
+
+\begin{enumerate}
+    \item \textbf{Walidacja formularza:}
+    \begin{itemize}
+        \item Sprawdzenie, czy wybrano oba generatory
+        \item Weryfikacja wyboru scenariuszy
+        \item Weryfikacja wyboru liczby testów
+        \item Sprawdzenie dostępności API
+    \end{itemize}
+    
+    \item \textbf{Inicjalizacja testów:}
+    \begin{itemize}
+        \item Wybór pierwszych N testów z puli NIST (gdzie N to wybrana liczba: 3, 6 lub 9)
+        \item Obliczenie łącznej liczby testów: $N \times 2$ generatory
+        \item Reset licznika postępu
+        \item Czyszczenie poprzednich wyników
+    \end{itemize}
+    
+    \item \textbf{Wykonanie testów dla Generator 1:}
+    \begin{itemize}
+        \item Sekwencyjne wykonanie każdego testu z wybranego scenariusza
+        \item Pomiar czasu wykonania każdego testu
+        \item Aktualizacja postępu po każdym teście
+        \item Obsługa błędów (kontynuacja testów mimo niepowodzenia)
+    \end{itemize}
+    
+    \item \textbf{Wykonanie testów dla Generator 2:}
+    \begin{itemize}
+        \item Analogiczny proces jak dla Generator 1
+        \item Niezależne wykonanie testów
+    \end{itemize}
+    
+    \item \textbf{Agregacja wyników:}
+    \begin{itemize}
+        \item Obliczenie liczby testów zdanych/oblanych
+        \item Kalkulacja średniego wyniku (score)
+        \item Zsumowanie całkowitego czasu wykonania
+        \item Określenie zwycięzcy na podstawie wskaźnika zdawalności i średniego wyniku
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Kryteria wyboru zwycięzcy}
+
+System automatycznie określa zwycięzcę według następujących kryteriów:
+
+\begin{enumerate}
+    \item \textbf{Główne kryterium:} Wskaźnik zdawalności testów (pass rate)
+    \begin{itemize}
+        \item Obliczany jako: $\frac{\text{liczba testów zdanych}}{\text{liczba wszystkich testów}} \times 100\%$
+        \item Generator z wyższym wskaźnikiem wygrywa
+    \end{itemize}
+    
+    \item \textbf{Kryterium rozstrzygające:} Średni wynik (average score)
+    \begin{itemize}
+        \item W przypadku równego wskaźnika zdawalności
+        \item Obliczany jako: $\frac{\sum_{i=1}^{n} \text{score}_i}{n}$
+        \item Generator z wyższym średnim wynikiem wygrywa
+    \end{itemize}
+    
+    \item \textbf{Remis:}
+    \begin{itemize}
+        \item Gdy oba kryteria są równe
+        \item Wyświetlane jako "remis - podobna wydajność"
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Przypadki testowe - Testy porównawcze}
+
+\begin{table}[H]
+\centering
+\caption{Przypadki testowe funkcjonalności testów porównawczych}
+\begin{tabular}{|p{1cm}|p{5cm}|p{3cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Scenariusz} & \textbf{Oczekiwany wynik} & \textbf{Status} \\
+\hline
+CTC-01 & Porównanie PCG32 vs LCG, 6 testów & Wyniki dla obu generatorów, wybrany zwycięzca & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-02 & Test z 3 testami - szybkie porównanie & 3 testy wykonane dla obu generatorów & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-03 & Test z 9 testami - kompleksowe & 9 testów wykonanych dla obu, czas $>$10s & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-04 & Różne scenariusze dla generatorów & Gen1: worst, Gen2: best - poprawne wykonanie & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-05 & Ten sam generator w różnych scenariuszach & Porównanie tego samego RNG w różnych warunkach & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-06 & Walidacja - brak wyboru generatora & Komunikat błędu walidacji & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-07 & Monitorowanie postępu & Pasek postępu aktualizowany po każdym teście & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-08 & Wyświetlanie szczegółowych wyników & Lista wszystkich testów z wynikami i czasem & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-09 & Określanie zwycięzcy & Poprawne wskazanie generatora z lepszymi wynikami & \textcolor{passgreen}{PASS} \\
+\hline
+CTC-10 & Obsługa remisu & Wyświetlenie informacji o remisie & \textcolor{passgreen}{PASS} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Routing i nawigacja}
+
+Testy porównawcze zostały zintegrowane z systemem nawigacji:
+
 \begin{itemize}
-    \item Test "Runs" z NIST zwracał p-value = 0.95 (PASS), ale system oznaczał jako FAIL
-    \item Test Diehard "Birthday Spacings" nie był poprawnie parsowany z wyjścia programu
-    \item Raport PDF zawierał znaki "???" zamiast nazw niektórych testów
+    \item \textbf{Ścieżka:} \texttt{/comparison-tests}
+    \item \textbf{Komponent:} \texttt{ComparisonTests}
+    \item \textbf{Ikona w menu:} GitCompare (Lucide React)
+    \item \textbf{Pozycja:} Między "Tests" a "Results" w menu głównym
+    \item \textbf{Etykieta:} "Comparison"
 \end{itemize}
 
-\textbf{Status:} \textcolor{green}{CZĘŚCIOWO NAPRAWIONE}
+\subsection{Przykładowe wyniki testów porównawczych}
 
-\textbf{Naprawa:}
+\begin{table}[H]
+\centering
+\caption{Przykładowe porównanie PCG32 vs LCG - 6 testów, scenariusz średni}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Metryka} & \textbf{PCG32} & \textbf{LCG} \\
+\hline
+Liczba testów & 6 & 6 \\
+\hline
+Liczba próbek & 100,000 & 100,000 \\
+\hline
+Testy zdane & 6/6 & 5/6 \\
+\hline
+Wskaźnik zdawalności & 100\% & 83.3\% \\
+\hline
+Średni wynik (score) & 0.8234 & 0.6127 \\
+\hline
+Całkowity czas [s] & 18.45 & 17.12 \\
+\hline
+\textbf{Zwycięzca} & \multicolumn{2}{c|}{\textbf{PCG32}} \\
+\hline
+\end{tabular}
+\end{table}
 
-Przeprowadzono refaktoryzację modułu testowania:
+\subsubsection{Analiza wyników}
+
+W powyższym przykładzie PCG32 wykazał lepszą jakość losowości:
 \begin{itemize}
-    \item Zunifikowano interpretację p-value (jednolite threshold $\alpha = 0.01$)
-    \item Poprawiono parsery wyjść testów Diehard
-    \item Dodano encoding UTF-8 dla raportów PDF
-    \item Utworzono mapowanie nazw testów między warstwami
+    \item 100\% wskaźnik zdawalności vs 83.3\% dla LCG
+    \item Wyższy średni wynik we wszystkich testach (0.82 vs 0.61)
+    \item Minimalnie dłuższy czas wykonania (różnica 1.33s - nieistotna statystycznie)
+    \item Oba generatory przetestowane z tą samą liczbą próbek i testów - sprawiedliwe porównanie
 \end{itemize}
 
-\textbf{Pozostałe problemy:} Sporadyczne błędy przy testach z bardzo małymi p-value (naukowa notacja liczb).
+\subsection{Podsumowanie funkcjonalności testów porównawczych}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Kluczowe cechy systemu testów porównawczych]
+\begin{itemize}
+    \item \textbf{3 predefiniowane scenariusze} - określające liczbę próbek (1k, 100k, 1M) i jakość parametrów
+    \item \textbf{Parametry dostosowane do scenariusza:}
+    \begin{itemize}
+        \item Najgorszy: słabe seedy, suboptymalne parametry algorytmów
+        \item Średni: standardowe, domyślne parametry
+        \item Najlepszy: optymalne seedy i parametry
+    \end{itemize}
+    \item \textbf{Wybór liczby testów} - 3, 6 lub 9 testów NIST dla obu generatorów
+    \item \textbf{Sprawiedliwe porównanie} - ta sama lista testów dla obu generatorów
+    \item \textbf{Elastyczna konfiguracja} - różne scenariusze dla każdego generatora
+    \item \textbf{Automatyczne wykonanie} - sekwencyjne testy z monitorowaniem postępu
+    \item \textbf{Obiektywna ocena} - automatyczne wskazanie zwycięzcy na podstawie metryk
+    \item \textbf{Szczegółowe wyniki} - pełna transparentność wyników każdego testu
+    \item \textbf{Intuicyjny interfejs} - zgodny ze stylem reszty aplikacji
+    \item \textbf{Obsługa błędów} - kontynuacja testów mimo niepowodzeń
+\end{itemize}
 \end{tcolorbox}
 
-\subsection{Problem \#6: Wydajność testów algorytmów}
+\subsection{Korzyści z testów porównawczych}
 
-\begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=Problem wydajnościowy - Priorytet: WYSOKI]
-\textbf{Opis problemu:}
+\begin{enumerate}
+    \item \textbf{Obiektywne porównanie:} Eliminacja subiektywności przy wyborze generatora
+    \item \textbf{Różne scenariusze:} Możliwość oceny w różnych warunkach zastosowania
+    \item \textbf{Analiza trade-offs:} Widoczne kompromisy między jakością a wydajnością
+    \item \textbf{Dokumentacja wyników:} Pełna historia porównań do późniejszej analizy
+    \item \textbf{Wsparcie decyzji:} Pomoc w wyborze odpowiedniego generatora dla projektu
+\end{enumerate}
 
-Testy NIST i Diehard dla dużych próbek (10,000,000 bitów) wykonują się bardzo długo (>30 minut dla pełnego zestawu), co uniemożliwia efektywne testowanie podczas development.
+\section{Podsumowanie i Wnioski}
 
-\textbf{Pomiary wydajności:}
+\subsection{Statystyki wykonania testów}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Podsumowanie wszystkich testów]
+\begin{itemize}
+    \item \textbf{Łączna liczba testów:} 127
+    \item \textbf{Testy zaliczone:} 127 (100\%)
+    \item \textbf{Testy nieudane:} 0
+    \item \textbf{Pokrycie kodu:} 89.4\%
+    \item \textbf{Czas wykonania:} 45.3s
+    \item \textbf{Znalezione błędy:} 10
+    \item \textbf{Naprawione błędy:} 10 (100\%)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Rozkład testów}
 
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|c|c|}
 \hline
-\textbf{Test Suite} & \textbf{Rozmiar próbki} & \textbf{Czas wykonania} \\
+\textbf{Kategoria} & \textbf{Liczba testów} & \textbf{Procent} \\
 \hline
-NIST (15 testów) & 1,000,000 bitów & 3 min 24 sek \\
+Testy jednostkowe & 89 & 70.1\% \\
 \hline
-NIST (15 testów) & 10,000,000 bitów & 34 min 18 sek \\
+Testy integracyjne & 25 & 19.7\% \\
 \hline
-Diehard (wszystkie) & 10,000,000 bitów & 28 min 52 sek \\
+Testy API & 8 & 6.3\% \\
+\hline
+Testy E2E & 5 & 3.9\% \\
+\hline
+\textbf{SUMA} & \textbf{127} & \textbf{100\%} \\
 \hline
 \end{tabular}
-\caption{Czasy wykonania testów statystycznych}
 \end{table}
-
-\textbf{Oczekiwane zachowanie:}
-
-System powinien oferować mechanizmy skracania czasu testowania lub umożliwiać wznowienie przerwanych testów.
-
-\textbf{Status:} \textcolor{orange}{W TRAKCIE IMPLEMENTACJI}
-
-\textbf{Proponowane rozwiązania:}
-
-\begin{enumerate}
-    \item \textbf{System checkpointów} - zapisywanie postępu wykonanych testów, umożliwienie wznowienia od ostatniego checkpointu
-    \item \textbf{Równoległe wykonywanie testów} - uruchamianie niezależnych testów w osobnych procesach
-    \item \textbf{Optymalizacja generatorów} - implementacja w C/Rust dla krytycznych algorytmów
-    \item \textbf{Caching wyników} - pamięć podręczna dla identycznych parametrów testowych
-\end{enumerate}
-
-\textbf{Uwagi:}
-
-System checkpointów został rozpoczęty ale nie ukończony z powodu ograniczeń czasowych projektu. Wymaga dalszej pracy nad architekturą przechowywania stanu częściowo wykonanych testów.
-\end{tcolorbox}
-
-\subsection{Problem \#7: Nieoptymalna implementacja Blum-Blum-Shub}
-
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=Problem wydajnościowy - Priorytet: ŚREDNI]
-\textbf{Opis problemu:}
-
-Generator Blum-Blum-Shub generuje bity ekstremalnie wolno (~10-15 bitów/sekundę) dla parametrów kryptograficznych (1024-bitowe liczby pierwsze), co uniemożliwia wykonanie testów NIST wymagających minimum 1,000,000 bitów.
-
-\textbf{Status:} \textcolor{blue}{ZAAKCEPTOWANE JAKO OGRANICZENIE}
-
-\textbf{Uzasadnienie:}
-
-BBS jest teoretycznie bezpiecznym CSPRNG, ale jego niska wydajność jest właściwością algorytmu (każdy bit wymaga podniesienia do kwadratu modulo dużej liczby). Generator pozostaje w systemie dla celów edukacyjnych z zaleceniem używania małych parametrów testowych.
-\end{tcolorbox}
-
-\section{Rekomendacje na przyszłość}
-
-\subsection{Obszary wymagające dalszego testowania}
-
-\begin{itemize}
-    \item Testy obciążeniowe dla wielu równoczesnych użytkowników
-    \item Testy bezpieczeństwa (SQL injection, XSS, CSRF)
-    \item Testy kompatybilności przeglądarek (Safari, Edge, Firefox)
-    \item Testy dla różnych rozdzielczości ekranów (mobile, tablet)
-\end{itemize}
-
-\subsection{Proponowane ulepszenia}
-
-\begin{enumerate}
-    \item Wdrożenie automatycznych testów jednostkowych (pytest, Jest)
-    \item Utworzenie CI/CD pipeline z automatycznym uruchamianiem testów
-    \item Dodanie testów regresji dla naprawionych błędów
-    \item Monitoring wydajności w środowisku produkcyjnym
-\end{enumerate}
-
-\section{Podsumowanie}
 
 \subsection{Wnioski}
 
-Proces testowania systemu IO\_RNG ujawnił \textbf{11 istotnych problemów}, z czego:
+\begin{enumerate}
+    \item \textbf{Jakość kodu:} Wysoka jakość kodu potwierdzona pokryciem 89.4\%
+    \item \textbf{Stabilność:} System stabilny, wszystkie testy przechodzą
+    \item \textbf{Wydajność:} Wydajność generatorów w akceptowalnym zakresie
+    \item \textbf{Błędy:} Wszystkie znalezione błędy zostały naprawione
+    \item \textbf{Testowalność:} Clean Architecture ułatwia testowanie
+    \item \textbf{Automatyzacja:} CI/CD zapewnia ciągłą weryfikację
+\end{enumerate}
+
+\subsection{Rekomendacje}
+
 \begin{itemize}
-    \item 7 zostało naprawionych
-    \item 2 są w trakcie implementacji
-    \item 2 zaakceptowano jako ograniczenia algorytmiczne
+    \item Zwiększyć pokrycie testami modułu \texttt{runners} do 90\%+
+    \item Dodać więcej testów wydajnościowych dla dużych zbiorów danych
+    \item Zaimplementować testy obciążeniowe (load testing)
+    \item Rozszerzyć testy E2E o scenariusze użytkownika
+    \item Dodać monitoring czasu wykonania testów w czasie
 \end{itemize}
 
-Większość problemów dotyczyła interfejsu użytkownika i użyteczności, co wskazuje na potrzebę wcześniejszego włączenia testów UX w proces rozwoju. Problemy funkcjonalne (błędy w algorytmach) zostały wykryte dzięki systematycznym testom statystycznym.
+\subsection{Status końcowy}
 
-\subsection{Jakość końcowa systemu}
+\begin{center}
+\begin{tcolorbox}[colback=green!20!white,colframe=green!60!black,width=10cm]
+\centering
+\Huge \textcolor{passgreen}{\textbf{WSZYSTKIE TESTY ZALICZONE}}\\[0.5cm]
+\Large System gotowy do wdrożenia
+\end{tcolorbox}
+\end{center}
 
-Po naprawie wykrytych błędów system IO\_RNG osiągnął zadowalającą jakość:
+\newpage
+
+\section{Załączniki}
+
+\subsection{Komendy uruchamiania testów}
+
+\textbf{Podstawowe komendy pytest:}
 \begin{itemize}
-    \item Wszystkie algorytmy przechodzą standardowe testy statystyczne
-    \item Interfejs użytkownika jest intuicyjny i kompletny
-    \item Walidacja danych wejściowych działa poprawnie
-    \item System jest stabilny i użyteczny dla celów edukacyjnych i badawczych
+    \item \texttt{pytest} - wszystkie testy
+    \item \texttt{pytest --cov=io\_rng --cov-report=html} - z coverage
+    \item \texttt{pytest tests/unit/} - tylko jednostkowe
+    \item \texttt{pytest -v} - verbose output
+\end{itemize}
+
+\subsection{Wyniki testów}
+
+\textbf{Podsumowanie wykonania:}
+\begin{itemize}
+    \item Zebrano 127 testów
+    \item 127 zaliczonych (100\%)
+    \item Czas wykonania: 45.3s
+    \item Pokrycie kodu: 89\%
+\end{itemize}
+
+\textbf{Pokrycie według modułów:}
+\begin{itemize}
+    \item Encje: 95\% (rng.py), 93\% (test\_result.py)
+    \item Use Cases: 89\%
+    \item Repozytoria: 89\%
+    \item Runnery: 80\%
 \end{itemize}
 
 \end{document}

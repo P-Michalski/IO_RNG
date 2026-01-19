@@ -24,6 +24,7 @@ import {
   Puzzle as AlgorithmsIcon,
   Info as AboutIcon,
   ChevronRight,
+  GitCompare as ComparisonIcon,
 } from "lucide-react";
 import {
   Collapsible,
@@ -86,6 +87,11 @@ export const NavigationSidebar = () => {
       label: "Tests",
       path: "/tests",
       icon: <TestsIcon className="size-6!" />,
+    },
+    {
+      label: "Comparison",
+      path: "/comparison-tests",
+      icon: <ComparisonIcon className="size-6!" />,
     },
     {
       label: "Results",

@@ -13,6 +13,7 @@ import { MethodologyWiki } from "./components/Wiki/MethodologyWiki/methodology-w
 import { Settings } from "./components/Settings/settings";
 import { NotFound } from "./components/NotFound/not-found";
 import { About } from "./components/About/about";
+import { ComparisonTests } from "./components/ComparisonTests/comparison-tests";
 
 export const routes: RouteObject[] = [
   {
@@ -22,6 +23,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Dashboard /> },
       { path: "/generator", element: <Generator /> },
       { path: "/tests", element: <Tests /> },
+      { path: "/comparison-tests", element: <ComparisonTests /> },
       { path: "/results", element: <Results /> },
 
       { path: "/wiki", element: <Navigate to="/wiki/algorithms" replace /> },
