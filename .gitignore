@@ -36,6 +36,7 @@ ENV/
 
 # Django
 *.log
+db.sqlite3
 db.sqlite3-journal
 /media
 /staticfiles
@@ -74,3 +75,9 @@ htmlcov/
 # Claude Code
 .claude/
 .claude.json
+
+# Session files
+session-*.md
+
+# LibreOffice lock files
+.~lock.*#
