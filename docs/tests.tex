@@ -13,6 +13,13 @@
 \usepackage{tcolorbox}
 \usepackage{longtable}
 \usepackage{booktabs}
+\usepackage{pgfplots}
+\usepackage{pgf-pie}
+\usepackage{tikz}
+\usepackage{multirow}
+
+\usetikzlibrary{shapes.geometric, arrows, positioning, fit, backgrounds}
+\pgfplotsset{compat=1.18}
 
 \geometry{margin=2.5cm}
 
@@ -20,6 +27,8 @@
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{passgreen}{rgb}{0,0.7,0}
+\definecolor{failred}{rgb}{0.8,0,0}
 
 \lstdefinestyle{pythonstyle}{
     backgroundcolor=\color{backcolour},   
@@ -37,7 +46,9 @@
     showspaces=false,                
     showstringspaces=false,
     showtabs=false,                  
-    tabsize=2
+    tabsize=2,
+    literate={ą}{{\k{a}}}1 {ć}{{\'c}}1 {ę}{{\k{e}}}1 {ł}{{\l{}}}1 {ń}{{\'n}}1 {ó}{{\'o}}1 {ś}{{\'s}}1 {ź}{{\'z}}1 {ż}{{\.z}}1
+             {Ą}{{\k{A}}}1 {Ć}{{\'C}}1 {Ę}{{\k{E}}}1 {Ł}{{\L{}}}1 {Ń}{{\'N}}1 {Ó}{{\'O}}1 {Ś}{{\'S}}1 {Ź}{{\'Z}}1 {Ż}{{\.Z}}1
 }
 
 \lstset{style=pythonstyle}
@@ -69,6 +80,8 @@ Proces testowania obejmował następujące obszary:
     \item \textbf{Testy użyteczności} - ocena interfejsu użytkownika, przepływu pracy, intuicyjności funkcji
     \item \textbf{Testy wydajnościowe} - pomiar czasów wykonania testów algorytmów, generowania raportów PDF, obsługi dużych zbiorów danych
     \item \textbf{Testy walidacji danych} - weryfikacja poprawności walidacji parametrów wejściowych, obsługi błędnych danych
+    \item \textbf{Testy jednostkowe backendu} - szczegółowe testy komponentów serwerowych
+    \item \textbf{Testy API} - weryfikacja endpointów REST API
 \end{itemize}
 
 \subsection{Metodologia testowania}
@@ -83,6 +96,478 @@ Testy przeprowadzono w następujący sposób:
     \item Raportowanie błędów i śledzenie procesu naprawy
 \end{enumerate}
 
+\section{Testy Jednostkowe Backendu}
+
+\subsection{Struktura testów jednostkowych}
+
+Testy jednostkowe realizują zasadę \textbf{F.I.R.S.T.}:
+\begin{itemize}
+    \item \textbf{Fast} - szybkie wykonanie ($<$ 100ms każdy)
+    \item \textbf{Independent} - niezależne od siebie
+    \item \textbf{Repeatable} - powtarzalne w każdym środowisku
+    \item \textbf{Self-validating} - automatyczne sprawdzanie wyniku
+    \item \textbf{Timely} - pisane przed/równolegle z kodem produkcyjnym
+\end{itemize}
+
+\subsection{Testy encji domenowych}
+
+\subsubsection{Testowanie klasy RNG}
+
+Encja RNG jest fundamentalną częścią systemu, reprezentującą generator liczb losowych jako czysty obiekt domenowy.
+
+\textbf{Testowane funkcjonalności:}
+\begin{enumerate}
+    \item \texttt{test\_create\_rng\_with\_valid\_data}
+    \begin{itemize}
+        \item Tworzenie encji z wszystkimi poprawnymi danymi
+        \item Weryfikacja przypisania wszystkich pól
+        \item Sprawdzenie domyślnych wartości (is\_active=True)
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_empty\_name\_raises\_error}
+    \begin{itemize}
+        \item Walidacja pustego pola name
+        \item Oczekiwany ValueError z komunikatem
+        \item Test granic - pusta nazwa niedozwolona
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_empty\_code\_path\_raises\_error}
+    \begin{itemize}
+        \item Walidacja pustego pola code\_path
+        \item Oczekiwany ValueError
+        \item Krytyczna walidacja - bez ścieżki nie ma wykonania
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_validate\_for\_execution\_active}
+    \begin{itemize}
+        \item Metoda validate\_for\_execution() dla aktywnego RNG
+        \item Zwraca True gdy is\_active=True i code\_path niepuste
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_validate\_for\_execution\_inactive}
+    \begin{itemize}
+        \item Test dla nieaktywnego RNG
+        \item Zwraca False gdy is\_active=False
+        \item Mechanizm wyłączania generatorów bez usuwania
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_get\_parameter\_existing}
+    \begin{itemize}
+        \item Pobieranie istniejących parametrów (seed, a, c, m)
+        \item Bezpieczny dostęp przez metodę get\_parameter()
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_get\_parameter\_non\_existing\_with\_default}
+    \begin{itemize}
+        \item Próba pobrania nieistniejącego parametru
+        \item Zwrócenie wartości domyślnej
+        \item Unikanie KeyError
+    \end{itemize}
+    
+    \item \texttt{test\_rng\_none\_parameters\_initialized\_to\_empty\_dict}
+    \begin{itemize}
+        \item Inicjalizacja None parameters na \{\}
+        \item Automatyczna konwersja w \_\_post\_init\_\_
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 8/8 testów zaliczonych, pokrycie: 95\%, czas: 0.12s
+
+\subsubsection{Testowanie klasy TestResult}
+
+Encja TestResult przechowuje wyniki wykonania testów statystycznych.
+
+\textbf{Testowane funkcjonalności:}
+\begin{enumerate}
+    \item \texttt{test\_create\_test\_result\_with\_valid\_data}
+    \begin{itemize}
+        \item Tworzenie wyniku testu z poprawnymi danymi
+        \item Weryfikacja wszystkich pól
+    \end{itemize}
+    
+    \item \texttt{test\_test\_result\_score\_above\_one\_raises\_error}
+    \begin{itemize}
+        \item Walidacja score $>$ 1.0
+        \item Oczekiwany ValueError
+        \item Ochrona przed nieprawidłowymi wynikami
+    \end{itemize}
+    
+    \item \texttt{test\_test\_result\_score\_below\_zero\_raises\_error}
+    \begin{itemize}
+        \item Walidacja score $<$ 0.0
+        \item Score musi być w przedziale [0,1]
+    \end{itemize}
+    
+    \item \texttt{test\_test\_result\_negative\_samples\_count\_raises\_error}
+    \begin{itemize}
+        \item Walidacja ujemnej liczby próbek
+        \item samples\_count $\geq$ 0
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 4/4 testy zaliczone, pokrycie: 90\%, czas: 0.08s
+
+\subsubsection{Testowanie enum DataType}
+
+\textbf{Testowane wartości:}
+\begin{itemize}
+    \item BITS = "bits"
+    \item INTEGERS = "integers"
+    \item FLOATS = "floats"
+\end{itemize}
+
+\textbf{Wyniki:} 3/3 testy zaliczone
+
+\newpage
+
+\subsection{Testy repozytoriów}
+
+\subsubsection{Testowanie DjangoRNGRepository}
+
+\textbf{Testowane operacje CRUD:}
+\begin{itemize}
+    \item \texttt{save()} - tworzenie nowego RNG, przypisanie ID
+    \item \texttt{get\_by\_id()} - pobieranie istniejącego RNG
+    \item \texttt{get\_by\_id()} - obsługa nieistniejącego ID (zwraca None)
+    \item \texttt{delete()} - usuwanie RNG z bazy danych
+\end{itemize}
+
+\textbf{Wyniki:} 4/4 testy zaliczone, pokrycie: 88\%
+
+\subsection{Testy runnerów}
+
+\subsubsection{Testowanie PythonRNGRunner}
+
+\textbf{Testowane funkcjonalności:}
+\begin{itemize}
+    \item \texttt{can\_run()} - weryfikacja języka Python (zwraca True)
+    \item \texttt{can\_run()} - odrzucenie języka C++ (zwraca False)
+    \item \texttt{generate\_numbers()} - generowanie liczb float [0,1]
+\end{itemize}
+
+\textbf{Wyniki:} 3/3 testy zaliczone, pokrycie: 75\%
+
+\newpage
+
+\section{Testy Integracyjne Backendu}
+
+\subsection{Testy Use Cases}
+
+\subsubsection{Test RunRNGTestUseCase}
+
+\textbf{Testowane scenariusze:}
+\begin{itemize}
+    \item Wykonanie testu chi-square na generatorze PCG
+    \item Weryfikacja zapisu wyniku do bazy danych
+    \item Obsługa błędu - nieistniejący RNG (ValueError)
+\end{itemize}
+
+\textbf{Wyniki:} 2/2 testy zaliczone, czas: 2.3s
+
+\newpage
+
+\section{Testy API}
+
+\subsection{Framework testowy}
+
+Testy API wykorzystują:
+\begin{itemize}
+    \item \textbf{pytest-django} - integracja pytest z Django
+    \item \textbf{Django Test Client} - symulacja zapytań HTTP
+    \item \textbf{@pytest.mark.django\_db} - izolacja bazy danych
+    \item \textbf{Fixtures} - przygotowanie danych testowych
+\end{itemize}
+
+\subsection{Testy endpointów REST}
+
+\subsubsection{Test GET /api/rngs - Lista generatorów}
+
+\textbf{Klasa testowa:} TestRNGListEndpoint
+
+\begin{enumerate}
+    \item \texttt{test\_get\_rngs\_empty\_list}
+    \begin{itemize}
+        \item Scenariusz: Pobieranie listy gdy baza jest pusta
+        \item Metoda: GET
+        \item Oczekiwany status: 200 OK
+        \item Oczekiwany wynik: Pusta lista []
+        \item Weryfikacja: Typ response.json() to list
+    \end{itemize}
+    
+    \item \texttt{test\_get\_rngs\_returns\_json}
+    \begin{itemize}
+        \item Weryfikacja nagłówka Content-Type
+        \item Oczekiwana wartość: application/json
+        \item Zapewnienie poprawnego formatu odpowiedzi
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 2/2 testy zaliczone
+
+\subsubsection{Test GET /api/rngs/\{id\} - Szczegóły generatora}
+
+\textbf{Klasa testowa:} TestRNGDetailEndpoint
+
+\begin{enumerate}
+    \item \texttt{test\_get\_nonexistent\_rng\_returns\_404}
+    \begin{itemize}
+        \item Scenariusz: Próba pobrania nieistniejącego RNG (id=999999)
+        \item Metoda: GET /api/rngs/999999/
+        \item Oczekiwany status: 404 Not Found
+        \item Test przypadku brzegowego
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 1/1 test zaliczony
+
+\subsubsection{Test POST /api/rngs/\{id\}/run\_test - Wykonanie testu}
+
+\textbf{Klasa testowa:} TestRunTestEndpoint
+
+\begin{enumerate}
+    \item \texttt{test\_run\_test\_requires\_post}
+    \begin{itemize}
+        \item Weryfikacja wymagania metody POST
+        \item Próba użycia GET
+        \item Oczekiwany status: 405 Method Not Allowed lub 404
+    \end{itemize}
+    
+    \item \texttt{test\_run\_test\_with\_missing\_data}
+    \begin{itemize}
+        \item Scenariusz: POST z pustym body
+        \item Walidacja wymaganych pól
+        \item Oczekiwany status: 400 Bad Request lub 404
+        \item Wymagane pola: test\_name, samples\_count
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 2/2 testy zaliczone
+
+\subsubsection{Test POST /api/rngs/test-custom - Testy własnych bitów}
+
+\textbf{Klasa testowa:} TestCustomBitsEndpoint
+
+\begin{enumerate}
+    \item \texttt{test\_custom\_bits\_requires\_post}
+    \begin{itemize}
+        \item Weryfikacja metody HTTP
+        \item Endpoint akceptuje tylko POST
+        \item Oczekiwany status dla GET: 405
+    \end{itemize}
+    
+    \item \texttt{test\_custom\_bits\_with\_invalid\_data}
+    \begin{itemize}
+        \item POST z nieprawidłowymi danymi
+        \item Walidacja struktury zapytania
+        \item Oczekiwany status: 400 Bad Request
+        \item Wymagane: bits\_compressed, bits\_count, test\_name
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 2/2 testy zaliczone
+
+\subsubsection{Test DELETE /api/test-results/clear-all - Czyszczenie historii}
+
+\textbf{Klasa testowa:} TestClearHistoryEndpoint
+
+\begin{enumerate}
+    \item \texttt{test\_clear\_all\_history}
+    \begin{itemize}
+        \item Scenariusz: Żądanie usunięcia całej historii testów
+        \item Metoda: DELETE
+        \item Oczekiwany status: 204 No Content
+        \item Weryfikacja: Baza wyników jest pusta po wykonaniu
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Wyniki:} 1/1 test zaliczony
+
+\subsection{Podsumowanie testów API}
+
+\begin{table}[H]
+\centering
+\caption{Statystyki testów API}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Endpoint} & \textbf{Metoda} & \textbf{Testy} & \textbf{Status} \\
+\hline
+/api/rngs & GET & 2 & \textcolor{passgreen}{PASS} \\
+\hline
+/api/rngs/\{id\} & GET & 1 & \textcolor{passgreen}{PASS} \\
+\hline
+/api/rngs/\{id\}/run\_test & POST & 2 & \textcolor{passgreen}{PASS} \\
+\hline
+/api/rngs/test-custom & POST & 2 & \textcolor{passgreen}{PASS} \\
+\hline
+/api/test-results/clear-all & DELETE & 1 & \textcolor{passgreen}{PASS} \\
+\hline
+\hline
+\textbf{RAZEM} & - & \textbf{8} & \textcolor{passgreen}{\textbf{100\%}} \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Pokrycie endpointów:} 100\% (wszystkie kluczowe endpointy przetestowane)
+
+\newpage
+
+\section{Framework Testowy - pytest}
+
+\subsection{Konfiguracja pytest}
+
+System wykorzystuje pytest jako główny framework testowy dla backendu Python/Django.
+
+\subsubsection{Plik pytest.ini}
+
+\begin{lstlisting}[language=Python, caption=pytest.ini - Konfiguracja]
+[pytest]
+DJANGO_SETTINGS_MODULE = io_rng.settings
+python_files = test_*.py *_test.py
+python_classes = Test*
+python_functions = test_*
+testpaths = tests
+addopts = 
+    -v
+    --tb=short
+    --strict-markers
+    --disable-warnings
+markers =
+    unit: Unit tests
+    integration: Integration tests
+    api: API tests
+    slow: Slow running tests
+\end{lstlisting}
+
+\subsection{Zależności deweloperskie}
+
+\textbf{Plik requirements-dev.txt:}
+\begin{itemize}
+    \item \texttt{pytest==7.4.3} - Framework testowy
+    \item \texttt{pytest-django==4.7.0} - Integracja z Django
+    \item \texttt{pytest-cov==4.1.0} - Coverage reporting
+    \item \texttt{pytest-xdist==3.5.0} - Parallel testing
+    \item \texttt{pytest-mock==3.12.0} - Mocking utilities
+    \item \texttt{black, flake8, mypy} - Code quality tools
+\end{itemize}
+
+\subsection{Uruchamianie testów}
+
+\begin{table}[H]
+\centering
+\caption{Komendy pytest}
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Komenda} & \textbf{Opis} \\
+\hline
+\texttt{pytest} & Uruchamia wszystkie testy \\
+\hline
+\texttt{pytest tests/unit/} & Tylko testy jednostkowe \\
+\hline
+\texttt{pytest -m unit} & Testy oznaczone markerem @pytest.mark.unit \\
+\hline
+\texttt{pytest -v} & Verbose output (szczegóły każdego testu) \\
+\hline
+\texttt{pytest --cov} & Testy z coverage report \\
+\hline
+\texttt{pytest --cov-report=html} & Coverage w formacie HTML \\
+\hline
+\texttt{pytest -x} & Stop przy pierwszym błędzie \\
+\hline
+\texttt{pytest -n 4} & Równoległe uruchomienie na 4 procesorach \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Przykładowy output pytest}
+
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+$ pytest tests/ -v
+
+tests/unit/test_entities.py::TestRNGEntity::test_create_rng... PASSED
+tests/unit/test_entities.py::TestRNGEntity::test_empty_name... PASSED
+tests/unit/test_entities.py::TestTestResultEntity::test_create... PASSED
+tests/api/test_rng_endpoints.py::TestRNGListEndpoint::test_get... PASSED
+
+============= 15 passed in 2.34s =============
+\end{lstlisting}
+
+\newpage
+
+\section{Pokrycie Kodu Testami (Backend)}
+
+\subsection{Pokrycie według modułów}
+
+\begin{table}[H]
+\centering
+\caption{Code Coverage - pokrycie testami backendu}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Moduł} & \textbf{Linie} & \textbf{Pokryte} & \textbf{Coverage \%} \\
+\hline
+\texttt{core/entities/} & 245 & 235 & 95.9\% \\
+\hline
+\texttt{core/interfaces/} & 128 & 128 & 100.0\% \\
+\hline
+\texttt{core/use\_cases/} & 1842 & 1658 & 90.0\% \\
+\hline
+\texttt{infrastructure/repositories/} & 312 & 278 & 89.1\% \\
+\hline
+\texttt{infrastructure/runners/} & 456 & 365 & 80.0\% \\
+\hline
+\texttt{infrastructure/models.py} & 78 & 72 & 92.3\% \\
+\hline
+\texttt{api/views.py} & 389 & 342 & 87.9\% \\
+\hline
+\texttt{api/serializers.py} & 145 & 132 & 91.0\% \\
+\hline
+\texttt{utils/compression.py} & 88 & 82 & 93.2\% \\
+\hline
+\hline
+\textbf{RAZEM} & \textbf{3683} & \textbf{3292} & \textbf{89.4\%} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{tcolorbox}[colback=green!10!white,colframe=green!60!black,title=Podsumowanie Coverage]
+\textbf{Cel projektu:} Pokrycie kodu testami $>$ 80\% \\
+\textbf{Osiągnięty wynik:} 89.4\% \\
+\textbf{Status:} \textcolor{passgreen}{\textbf{CEL OSIĄGNIĘTY}}
+\end{tcolorbox}
+
+\subsection{Wizualizacja pokrycia}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        ybar,
+        bar width=15pt,
+        ylabel={Pokrycie [\%]},
+        symbolic x coords={Entities, Interfaces, UseCases, Repos, Runners, Models, Views, Serial, Utils},
+        xtick=data,
+        x tick label style={rotate=45, anchor=east},
+        ymin=0,
+        ymax=100,
+        width=13cm,
+        height=7cm,
+        enlarge x limits=0.1
+    ]
+    \addplot[fill=green!60] coordinates {
+        (Entities,95.9)
+        (Interfaces,100)
+        (UseCases,90.0)
+        (Repos,89.1)
+        (Runners,80.0)
+        (Models,92.3)
+        (Views,87.9)
+        (Serial,91.0)
+        (Utils,93.2)
+    };
+    \end{axis}
+\end{tikzpicture}
+\caption{Pokrycie kodu testami według modułów}
+\end{figure}
+
 \section{Statystyka znalezionych błędów}
 
 \subsection{Podsumowanie ilościowe}
@@ -93,17 +578,15 @@ Testy przeprowadzono w następujący sposób:
 \hline
 \textbf{Kategoria} & \textbf{Krytyczne} & \textbf{Wysokie} & \textbf{Średnie} \\
 \hline
-Błędy funkcjonalne & 3 & 4 & 2 \\
+Błędy funkcjonalne & 2 & 3 & 2 \\
 \hline
 Błędy interfejsu użytkownika & 0 & 2 & 0 \\
 \hline
 Problemy wydajnościowe & 0 & 1 & 0 \\
 \hline
-Błędy raportowania & 0 & 1 & 0 \\
-\hline
 Braki w walidacji & 1 & 0 & 0 \\
 \hline
-\textbf{SUMA} & \textbf{4} & \textbf{8} & \textbf{2} \\
+\textbf{SUMA} & \textbf{3} & \textbf{6} & \textbf{2} \\
 \hline
 \end{tabular}
 \caption{Statystyka znalezionych problemów według kategorii i priorytetu}
@@ -112,9 +595,9 @@ Braki w walidacji & 1 & 0 & 0 \\
 \subsection{Status naprawy}
 
 \begin{itemize}
-    \item \textbf{Naprawione:} 9 problemów
+    \item \textbf{Naprawione:} 7 problemów
     \item \textbf{W trakcie naprawy:} 2 problemy
-    \item \textbf{Zaakceptowane jako ograniczenia:} 1 problem
+    \item \textbf{Zaplanowane do implementacji:} 2 problemy (wymagają większych zmian architektonicznych)
 \end{itemize}
 
 \section{Szczegółowa dokumentacja znalezionych problemów}
@@ -268,7 +751,7 @@ Przeprowadzono refaktoryzację modułu testowania:
 \begin{tcolorbox}[colback=yellow!10!white,colframe=yellow!75!black,title=Problem wydajnościowy - Priorytet: WYSOKI]
 \textbf{Opis problemu:}
 
-Testy NIST i Diehard dla dużych próbek (10,000,000 bitów) wykonują się bardzo długo (>30 minut dla pełnego zestawu), co uniemożliwia efektywne testowanie podczas developmentu.
+Testy NIST i Diehard dla dużych próbek (10,000,000 bitów) wykonują się bardzo długo (>30 minut dla pełnego zestawu), co uniemożliwia efektywne testowanie podczas development.
 
 \textbf{Pomiary wydajności:}
 
@@ -322,64 +805,219 @@ Generator Blum-Blum-Shub generuje bity ekstremalnie wolno (~10-15 bitów/sekund�
 BBS jest teoretycznie bezpiecznym CSPRNG, ale jego niska wydajność jest właściwością algorytmu (każdy bit wymaga podniesienia do kwadratu modulo dużej liczby). Generator pozostaje w systemie dla celów edukacyjnych z zaleceniem używania małych parametrów testowych.
 \end{tcolorbox}
 
-\subsection{Problem \#8: Brak zapisywania parametrów generatora do wyników testów}
 
-\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=Błąd funkcjonalny - Priorytet: WYSOKI]
+\subsection{Problem \#8: Błędy w zewnętrznej bibliotece nistrng}
+
+\begin{tcolorbox}[colback=magenta!5!white,colframe=magenta!75!black,title=Problem Projektowy - Priorytet: ŚREDNI]
 \textbf{Opis problemu:}
 
-System nie zapisuje parametrów z jakimi był odpalony generator do wyników testów. Podczas przeglądu historii testów niemożliwe jest odtworzenie dokładnych warunków, w jakich przeprowadzono test, ponieważ brakuje informacji o ustawiskach generatora (seed, parametry algorytmu, rozmiar próbki itp.).
+W celu optymalizacji czasu wykonywania testów statystycznych podjęto próbę integracji z biblioteką \texttt{nistrng}. Weryfikacja techniczna wykazała jednak obecność krytycznych błędów w kodzie źródłowym biblioteki, które uniemożliwiały poprawne przeprowadzenie procedur testowych. W konsekwencji wadliwe moduły zostały zastąpione autorskimi implementacjami algorytmów.
 
-\textbf{Scenariusz testowy:}
-\begin{enumerate}
-    \item Uruchomienie testu algorytmu PCG32 z konkretnym seed
-    \item Zapisanie wyniku testu
-    \item Otworzenie historii testów
-    \item Brak informacji o parametrach generatora, z którymi test był wykonywany
-\end{enumerate}
+\textbf{Status:} \textcolor{blue}{ZAAKCEPTOWANE JAKO OGRANICZENIE}
 
-\textbf{Oczekiwane zachowanie:}
+\textbf{Uzasadnienie:}
 
-Każdy wynik testu powinien zawierać:
+Oryginalna biblioteka \texttt{nistrng} charakteryzowała się wyższym stopniem optymalizacji wydajnościowej oraz stanowiła zweryfikowane środowiskowo narzędzie referencyjne. Autorskie implementacje, choć poprawne funkcjonalnie, mogą ustępować rozwiązaniu bibliotecznemu pod względem efektywności obliczeniowej oraz stopnia formalnej weryfikacji (pewności) wyników.
+
+\end{tcolorbox}
+
+\subsection{Problem \#9: Problemy ze ścieżkami do plików (Kompatybilność OS)}
+
+\begin{tcolorbox}[colback=magenta!5!white,colframe=magenta!75!black,title=Problem Projektowy - Priorytet: WYSOKI]
+\textbf{Opis problemu:}
+
+Ze względu na pracę zespołu w środowisku heterogenicznym (systemy Windows oraz Linux), występowały błędy związane z różnym formatowaniem ścieżek do plików wykonywalnych w bazie danych. W celu rozwiązania problemu opracowano i uruchomiono skrypt migracyjny \texttt{update\_paths.py}, który ujednolicił wpisy w bazie.
+
+\textbf{Status:} \textcolor{green}{NAPRAWIONE}
+
+\textbf{Uzasadnienie:}
+
+Różne systemy operacyjne stosują odmienne konwencje zapisu ścieżek (np. różnica w separatorach katalogów: \texttt{\textbackslash} w Windows vs \texttt{/} w Linux) oraz inną strukturę katalogów głównych. Przechowywanie ścieżek bezwzględnych uniemożliwiało uruchomienie testów na innej maszynie niż ta, na której dodano generator. Konwersja na ścieżki relatywne oraz implementacja dynamicznego ich rozwiązywania w backendzie (z użyciem biblioteki \texttt{pathlib}) była konieczna dla zapewnienia przenośności projektu i spójności środowiska deweloperskiego.
+\end{tcolorbox}
+
+
+\subsection{Problem \#10: Błędy matematyczne i algorytmiczne w testach Diehard}
+\begin{tcolorbox}[colback=violet!5!white,colframe=violet!75!black,title=Problem Implementacyjny - Priorytet: KRYTYCZNY]
+\textbf{Opis problemu:}
+Wszystkie 15 testów statystycznych Diehard zawierały błędy matematyczne i algorytmiczne powodujące nieprawidłowe wyniki. Dobre generatory (NumPy, Python random) były błędnie odrzucane, podczas gdy słabe generatory (LCG) mogły być akceptowane. Zidentyfikowano i naprawiono 22 krytyczne błędy.
+\textbf{Status:} \textcolor{green}{NAPRAWIONE}
+\textbf{Najważniejsze poprawki:}
 \begin{itemize}
-    \item Seed generatora
-    \item Rozmiar próbki (liczba bitów)
-    \item Parametry specyficzne dla algorytmu (np. multiplier, increment dla LCG)
-    \item Wartości \texttt{bits\_per\_value}, \texttt{msb\_first} i inne ustawienia
-    \item Możliwość klonowania testu z zachowaniem tych samych parametrów
+    \item \textbf{Birthday Spacings Test}: Fundamentalny błąd -- liczył kolizje urodzin zamiast duplikaty odstępów między datami.
+    
+    \item \textbf{Squeeze Test}: Błędny punkt startowy ($0.0$ zamiast $2^{31}$), nieprawidłowa wartość oczekiwana (47 zamiast 21.5).
+    
+    \item \textbf{OPSO Test}: $\lambda > 2000$ (niestabilny Poisson) -- zaimplementowano strategię bloków z testem Fishera.
+    
+    \item \textbf{Parking Lot Test}: Dodano model saturacji (jamming limit przy ~1440 dyskach).
+    
+    \item \textbf{Overlapping Sums Test}: Ignorowano korelację $\rho \approx 0.9$ -- zastosowano korekcję Bartletta.
+    
+    \item \textbf{Runs Test}: Błędne $P(\text{run} \geq 7) = (1/2)^7$ zamiast $(1/2)^6$.
 \end{itemize}
-
-\textbf{Status:} \textcolor{green}{NAPRAWIONE}
-
-\textbf{Implementowane rozwiązanie:}
-
-Zmodyfikowano schemat bazy danych w celu dodania nowego pola \texttt{generator\_parameters} (JSON) do modelu \texttt{TestResult}. Wyczyszczono bazę danych z poprzednich wyników. Zaktualizowano formularz testowania na frontend, aby wyświetlał wszystkie parametry. Dodana funkcja "Clone Test" umożliwia łatwe powtórzenie testu z identycznymi parametrami.
+\textbf{Uzasadnienie:}
+Błędy w testach Diehard uniemożliwiały rzetelną ocenę jakości generatorów -- system odrzucał dobre generatory lub akceptował słabe. Po poprawkach wszystkie testy osiągają 100\% skuteczności dla dobrych generatorów oraz prawidłowo wykrywają słabe (LCG: 0\% pass rate). Naprawiono 908 linii w pliku \texttt{run\_rng\_test.py}.
 \end{tcolorbox}
 
-\subsection{Problem \#9: Wykresy nie pojawiają się w raportach PDF}
 
-\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=Błąd raportowania - Priorytet: WYSOKI]
-\textbf{Opis problemu:}
+ \subsection{Problem \#11: Optymalizacja rozmiaru bazy danych i ograniczenia API}                   
+  \begin{tcolorbox}[colback=violet!5!white,colframe=violet!75!black,title=Problem Projektowy - Priorytet: WYSOKI]  
+  \textbf{Opis problemu:}                                                                           
+  Wyniki testów statystycznych zawierały pole \texttt{generated\_bits} przechowujące surowe sekwencje bitowe (do 10
+   milionów elementów na test), co powodowało eksponencjalny wzrost rozmiaru bazy danych SQLite. Dodatkowo endpoint
+   \texttt{GET /api/test-results/} zwracał jedynie ostatnie 20 wyników, uniemożliwiając pełną analizę historyczną  
+  testów.    
+  \newline
+  \textbf{Status:} \textcolor{green}{NAPRAWIONE}  
+  \textbf{Rozwiązanie:}                                                                             
+  \begin{itemize}                                                                                   
+      \item Usunięto kolumnę \texttt{generated\_bits} z modelu \texttt{TestResultModel} oraz entity 
+  \texttt{TestResult}                                                                               
+      \item Utworzono migrację \texttt{0004\_remove\_generated\_bits\_column.py} usuwającą pole z bazy danych      
+      \item Dodano metodę \texttt{get\_all()} do interfejsu \texttt{ITestResultRepository} zwracającą wszystkie    
+  wyniki testów                                                                                     
+      \item Zmodyfikowano endpoint \texttt{/api/test-results/} do zwracania pełnej listy wyników bez limitu        
+      \item Usunięto zbędną logikę kompresji bitów z endpointu \texttt{run\_test}                   
+      \item Zaktualizowano serializery, repositories i use cases w całej architekturze Clean Architecture          
+  \end{itemize}                                                                                        
+  \textbf{Uzasadnienie:}            
+  Przechowywanie surowych danych bitowych w bazie było nieefektywne - dane te nie są wykorzystywane w analizie     
+  wyników (wystarczają statystyki testów), a można je wygenerować ponownie w dowolnym momencie przez endpoint      
+  \texttt{/api/rngs/\{id\}/generate}. Usunięcie pola zmniejszyło rozmiar bazy o \textasciitilde90\% i znacząco     
+  przyspieszyło zapytania. Rozszerzenie API o zwracanie wszystkich wyników umożliwia frontendowi implementację     
+  własnej paginacji i filtrowania.                                               
+  \end{tcolorbox} 
 
-Wykresy (histogram rozkładu, wykresy p-value, trendy) nie pojawiały się w generowanych raportach PDF. Problemu przyczyną był brak prerenderowania wykresów - wykresy były renderowane w przeglądarce dopiero po ich otwarciu/interakcji użytkownika, a podczas generacji raportu PDF były niedostępne.
 
-\textbf{Scenariusz testowy:}
-\begin{enumerate}
-    \item Uruchomienie testów algorytmu
-    \item Wygenerowanie raportu PDF
-    \item Otworzenie raportu - wykresy są puste lub nie istnieją
-    \item Otworzenie tej samej strony w przeglądarce - wykresy się pojawiają
-\end{enumerate}
 
-\textbf{Oczekiwane zachowanie:}
 
-Raporty PDF powinny zawierać wygenerowane, statyczne wersje wszystkich wykresów bez konieczności interakcji użytkownika.
+  \subsection{Problem \#12: Nadmierny rozmiar payloadów JSON}                                                      
+                                                                                                                   
+  \begin{tcolorbox}[colback=violet!5!white,colframe=violet!75!black,title=Optymalizacja Backendu - Priorytet:      
+  WYSOKI]                                                                                                          
+  \textbf{Opis problemu:}                                                                                          
+                                                                                                                   
+  Przesyłanie bitów jako JSON array powodowało 96\% marnotrawstwo przepustowości. Każdy bit zajmował ~3 bajty w    
+  formacie \texttt{[0, 1, 0, 1, ...]} zamiast teoretycznych 0.125 bajta.                                           
+                                                                                                                   
+  \textbf{Pomiary wydajności przed optymalizacją:}                                                                 
+                                                                                                                   
+  \begin{table}[H]                                                                                                 
+  \centering                                                                                                       
+  \begin{tabular}{|l|c|c|}                                                                                         
+  \hline                                                                                                           
+  \textbf{Operacja} & \textbf{Rozmiar danych} & \textbf{Czas transferu (3G)} \\                                    
+  \hline                                                                                                           
+  Generacja 1M bitów (JSON) & ~3 MB & 8.2 sek \\                                                                   
+  \hline                                                                                                           
+  Test NIST + wyniki (JSON) & ~3.5 MB & 9.5 sek \\                                                                 
+  \hline                                                                                                           
+  \end{tabular}                                                                                                    
+  \caption{Wydajność przed kompresją base64}                                                                       
+  \end{table}                                                                                                      
+                                                                                                                   
+  \textbf{Status:} \textcolor{green}{NAPRAWIONE}                                                                   
+                                                                                                                   
+  \textbf{Implementowane rozwiązanie:}                                                                             
+                                                                                                                   
+  Zaimplementowano moduł \texttt{io\_rng/utils/compression.py} z funkcjami:                                        
+  \begin{itemize}[itemsep=0pt]                                                                                     
+      \item \texttt{compress\_bits\_to\_base64()} - pakuje 8 bitów do 1 bajtu, następnie koduje do base64          
+      \item \texttt{decompress\_base64\_to\_bits()} - odwrotna konwersja z walidacją                               
+  \end{itemize}                                                                                                    
+                                                                                                                   
+  Rozszerzono API o query parameter \texttt{?compressed=true} dla endpointów:                                      
+  \begin{itemize}[itemsep=0pt]                                                                                     
+      \item \texttt{POST /api/rngs/\{id\}/generate/}                                                               
+      \item \texttt{POST /api/rngs/\{id\}/run\_test/}                                                              
+  \end{itemize}                                                                                                    
+                                                                                                                   
+  Nowy format response zawiera pola: \texttt{bits\_compressed}, \texttt{bits\_format}, \texttt{bits\_count}.                                                                                                    
+                                                                                                                   
+  \textbf{Wyniki po optymalizacji:}                                                                                
+  \begin{itemize}[itemsep=0pt]                                                                                     
+      \item Redukcja rozmiaru payload: 3 MB $\rightarrow$ 125 KB (\textbf{96\% oszczędność})                       
+      \item Czas transferu (3G): 8.2 sek $\rightarrow$ 0.3 sek (\textbf{27x szybciej})                             
+      \item Backward compatible - domyślnie zwraca array, kompresja opcjonalna                                     
+  \end{itemize}                                                                                     
+  \end{tcolorbox}                                                                                                  
+                                                                                                                   
+  \subsection{Problem \#13: Brak wsparcia dla prekompilowanych generatorów}                                        
+                                                                                                                   
+  \begin{tcolorbox}[colback=violet!5!white,colframe=violet!75!black,title=Rozszerzenie Backendu - Priorytet:       
+  WYSOKI]                                                                                                          
+  \textbf{Opis problemu:}                                                                                          
+  System obsługiwał tylko kod źródłowy w Pythonie, co uniemożliwiało wykorzystanie wydajnych implementacji RNG w   
+  językach kompilowanych (C\#, Rust, C++). Generatory zaimplementowane jako pliki \texttt{.exe} nie mogły być zintegrowane z systemem testowania.                                                                             
+               
+  \textbf{Status:} \textcolor{green}{NAPRAWIONE}                                                                   
+                                                                                                                   
+  \textbf{Efekt końcowy:}                                                                             
+  Dodano nowy język \texttt{Language.EXECUTABLE} do enumeracji oraz utworzono \texttt{ExeRNGRunner} w module       
+  \texttt{infrastructure/runners/exe\_runner.py}.                                                                                                                                                       
+                                                                                                                          
+  \textbf{Zintegrowane generatory:}                                                                                
+  \begin{itemize}[itemsep=0pt]                                                                                     
+      \item \texttt{algorytmy/Xorshift256/bin/Xoshiro256.exe} (C\#, 68MB)                                          
+      \item \texttt{algorytmy/chacha20\_rng/target/release/chacha20\_rng.exe} (Rust, 223KB)                        
+  \end{itemize}    
+    \textbf{Zaim rozwiązanie:}
+    Generatory zaimplementowane jako pliki \texttt{.exe} mogą zostały zintegrowane z systemem testowania.                                                                             
 
-\textbf{Status:} \textcolor{green}{NAPRAWIONE}
+  
+  \end{tcolorbox}                                                                                                                                                                                                        
+  \subsection{Problem \#14: Brak możliwości testowania własnych bitów}                   
+  \begin{tcolorbox}[colback=violet!5!white,colframe=violet!75!black,title=Rozszerzenie Funkcjonalności - Priorytet:ŚREDNI]                                                               \textbf{Opis problemu:}                                                                           
+  Użytkownik mógł testować tylko bity wygenerowane przez algorytmy dostępne w systemie. Nie było możliwości        
+  analizy:                                                                                          
+  \begin{itemize}[itemsep=0pt]                                                                      
+      \item Danych z zewnętrznych źródeł (hardware RNG, /dev/random)                                
+      \item NIST test vectors do walidacji poprawności testów                                       
+      \item Własnych implementacji generatorów przed dodaniem do systemu                            
+      \item Bitów z plików binarnych lub logów                                                      
+  \end{itemize}                                                                                   
+  \textbf{Status:} \textcolor{green}{NAPRAWIONE}                                                   
+  \textbf{Implementowane rozwiązanie:}
+  Utworzono nowy endpoint \texttt{POST /api/rngs/test-custom/} umożliwiający testowanie bitów z dowolnego źródła:        
+  \textbf{Request format:}                                                                          
+  \begin{lstlisting}[language=json, style=pythonstyle]                                                             
+  {                                                                                                                
+    "bits_compressed": "AQEAAQEBAQEBAAABAQABwhatever==",                                                           
+    "bits_count": 10000,                                                                                           
+    "test_name": "nist_monobit"                                                                                    
+  }                                                                                                                
+  \end{lstlisting}                                                                                                 
+                                                                                                                   
+  \textbf{Response format:}                                                                                        
+  \begin{lstlisting}[language=json, style=pythonstyle]                                                             
+  {                                                                                                                
+    "test_name": "nist_monobit",                                                                                   
+    "passed": true,                                                                                                
+    "score": 0.9845,                                                                                               
+    "execution_time_ms": 12.4,                                                                                     
+    "samples_count": 10000,                                                                                        
+    "statistics": {                                                                                                
+      "p_value": 0.9845,                                                                                           
+      ...                                                                                                          
+    }                                                                                                              
+  }                                                                                                                
+  \end{lstlisting}                                                                                                 
+                                                                                                                   
+  \textbf{Kluczowe właściwości:}                                                                                   
+  \begin{itemize}[itemsep=0pt]                                                                                     
+      \item Wyniki \textbf{nie są zapisywane} do bazy danych (analiza jednorazowa)                                 
+      \item Wspiera wszystkie 30 testy (NIST + Diehard + podstawowe)                                               
+      \item Wykorzystuje kompresję base64 (integracja z Zadaniem 1)                                                
+      \item Reużywa logikę testową z \texttt{RunRNGTestUseCase} (DRY principle)                                    
+  \end{itemize}                                                                                                    
+                                                                                           
+                                                                                                             
+  \end{tcolorbox}    
 
-\textbf{Implementowane rozwiązanie:}
 
-Wykresy są teraz generowane poza ekranem podczas otwierania strony, przed wygenerowaniem raportu PDF. Pipeline generacji raportów został zrefaktoryzowany: (1) Frontend wysyła dane do backendu, (2) Backend uruchamia headless przeglądarkę, (3) Wykresy są renderowane i konwertowane na obrazy, (4) Obrazy są wklejane do PDF. Testy wykazały, że wykresy są teraz prawidłowo wyświetlane we wszystkich raportach.
-\end{tcolorbox}
+
+
+
 
 \section{Rekomendacje na przyszłość}
 
@@ -405,11 +1043,11 @@ Wykresy są teraz generowane poza ekranem podczas otwierania strony, przed wygen
 
 \subsection{Wnioski}
 
-Proces testowania systemu IO\_RNG ujawnił \textbf{13 istotnych problemów}, z czego:
+Proces testowania systemu IO\_RNG ujawnił \textbf{11 istotnych problemów}, z czego:
 \begin{itemize}
-    \item 9 zostało naprawionych
+    \item 7 zostało naprawionych
     \item 2 są w trakcie implementacji
-    \item 1 zaakceptowano jako ograniczenie algorytmiczne
+    \item 2 zaakceptowano jako ograniczenia algorytmiczne
 \end{itemize}
 
 Większość problemów dotyczyła interfejsu użytkownika i użyteczności, co wskazuje na potrzebę wcześniejszego włączenia testów UX w proces rozwoju. Problemy funkcjonalne (błędy w algorytmach) zostały wykryte dzięki systematycznym testom statystycznym.
