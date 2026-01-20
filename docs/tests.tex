@@ -93,15 +93,17 @@ Testy przeprowadzono w następujący sposób:
 \hline
 \textbf{Kategoria} & \textbf{Krytyczne} & \textbf{Wysokie} & \textbf{Średnie} \\
 \hline
-Błędy funkcjonalne & 2 & 3 & 2 \\
+Błędy funkcjonalne & 3 & 4 & 2 \\
 \hline
 Błędy interfejsu użytkownika & 0 & 2 & 0 \\
 \hline
 Problemy wydajnościowe & 0 & 1 & 0 \\
 \hline
+Błędy raportowania & 0 & 1 & 0 \\
+\hline
 Braki w walidacji & 1 & 0 & 0 \\
 \hline
-\textbf{SUMA} & \textbf{3} & \textbf{6} & \textbf{2} \\
+\textbf{SUMA} & \textbf{4} & \textbf{8} & \textbf{2} \\
 \hline
 \end{tabular}
 \caption{Statystyka znalezionych problemów według kategorii i priorytetu}
@@ -110,9 +112,9 @@ Braki w walidacji & 1 & 0 & 0 \\
 \subsection{Status naprawy}
 
 \begin{itemize}
-    \item \textbf{Naprawione:} 7 problemów
+    \item \textbf{Naprawione:} 9 problemów
     \item \textbf{W trakcie naprawy:} 2 problemy
-    \item \textbf{Zaplanowane do implementacji:} 2 problemy (wymagają większych zmian architektonicznych)
+    \item \textbf{Zaakceptowane jako ograniczenia:} 1 problem
 \end{itemize}
 
 \section{Szczegółowa dokumentacja znalezionych problemów}
@@ -320,6 +322,65 @@ Generator Blum-Blum-Shub generuje bity ekstremalnie wolno (~10-15 bitów/sekund�
 BBS jest teoretycznie bezpiecznym CSPRNG, ale jego niska wydajność jest właściwością algorytmu (każdy bit wymaga podniesienia do kwadratu modulo dużej liczby). Generator pozostaje w systemie dla celów edukacyjnych z zaleceniem używania małych parametrów testowych.
 \end{tcolorbox}
 
+\subsection{Problem \#8: Brak zapisywania parametrów generatora do wyników testów}
+
+\begin{tcolorbox}[colback=orange!10!white,colframe=orange!75!black,title=Błąd funkcjonalny - Priorytet: WYSOKI]
+\textbf{Opis problemu:}
+
+System nie zapisuje parametrów z jakimi był odpalony generator do wyników testów. Podczas przeglądu historii testów niemożliwe jest odtworzenie dokładnych warunków, w jakich przeprowadzono test, ponieważ brakuje informacji o ustawiskach generatora (seed, parametry algorytmu, rozmiar próbki itp.).
+
+\textbf{Scenariusz testowy:}
+\begin{enumerate}
+    \item Uruchomienie testu algorytmu PCG32 z konkretnym seed
+    \item Zapisanie wyniku testu
+    \item Otworzenie historii testów
+    \item Brak informacji o parametrach generatora, z którymi test był wykonywany
+\end{enumerate}
+
+\textbf{Oczekiwane zachowanie:}
+
+Każdy wynik testu powinien zawierać:
+\begin{itemize}
+    \item Seed generatora
+    \item Rozmiar próbki (liczba bitów)
+    \item Parametry specyficzne dla algorytmu (np. multiplier, increment dla LCG)
+    \item Wartości \texttt{bits\_per\_value}, \texttt{msb\_first} i inne ustawienia
+    \item Możliwość klonowania testu z zachowaniem tych samych parametrów
+\end{itemize}
+
+\textbf{Status:} \textcolor{green}{NAPRAWIONE}
+
+\textbf{Implementowane rozwiązanie:}
+
+Zmodyfikowano schemat bazy danych w celu dodania nowego pola \texttt{generator\_parameters} (JSON) do modelu \texttt{TestResult}. Wyczyszczono bazę danych z poprzednich wyników. Zaktualizowano formularz testowania na frontend, aby wyświetlał wszystkie parametry. Dodana funkcja "Clone Test" umożliwia łatwe powtórzenie testu z identycznymi parametrami.
+\end{tcolorbox}
+
+\subsection{Problem \#9: Wykresy nie pojawiają się w raportach PDF}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=Błąd raportowania - Priorytet: WYSOKI]
+\textbf{Opis problemu:}
+
+Wykresy (histogram rozkładu, wykresy p-value, trendy) nie pojawiały się w generowanych raportach PDF. Problemu przyczyną był brak prerenderowania wykresów - wykresy były renderowane w przeglądarce dopiero po ich otwarciu/interakcji użytkownika, a podczas generacji raportu PDF były niedostępne.
+
+\textbf{Scenariusz testowy:}
+\begin{enumerate}
+    \item Uruchomienie testów algorytmu
+    \item Wygenerowanie raportu PDF
+    \item Otworzenie raportu - wykresy są puste lub nie istnieją
+    \item Otworzenie tej samej strony w przeglądarce - wykresy się pojawiają
+\end{enumerate}
+
+\textbf{Oczekiwane zachowanie:}
+
+Raporty PDF powinny zawierać wygenerowane, statyczne wersje wszystkich wykresów bez konieczności interakcji użytkownika.
+
+\textbf{Status:} \textcolor{green}{NAPRAWIONE}
+
+\textbf{Implementowane rozwiązanie:}
+
+Wykresy są teraz generowane poza ekranem podczas otwierania strony, przed wygenerowaniem raportu PDF. Pipeline generacji raportów został zrefaktoryzowany: (1) Frontend wysyła dane do backendu, (2) Backend uruchamia headless przeglądarkę, (3) Wykresy są renderowane i konwertowane na obrazy, (4) Obrazy są wklejane do PDF. Testy wykazały, że wykresy są teraz prawidłowo wyświetlane we wszystkich raportach.
+\end{tcolorbox}
+
 \section{Rekomendacje na przyszłość}
 
 \subsection{Obszary wymagające dalszego testowania}
@@ -344,11 +405,11 @@ BBS jest teoretycznie bezpiecznym CSPRNG, ale jego niska wydajność jest właś
 
 \subsection{Wnioski}
 
-Proces testowania systemu IO\_RNG ujawnił \textbf{11 istotnych problemów}, z czego:
+Proces testowania systemu IO\_RNG ujawnił \textbf{13 istotnych problemów}, z czego:
 \begin{itemize}
-    \item 7 zostało naprawionych
+    \item 9 zostało naprawionych
     \item 2 są w trakcie implementacji
-    \item 2 zaakceptowano jako ograniczenia algorytmiczne
+    \item 1 zaakceptowano jako ograniczenie algorytmiczne
 \end{itemize}
 
 Większość problemów dotyczyła interfejsu użytkownika i użyteczności, co wskazuje na potrzebę wcześniejszego włączenia testów UX w proces rozwoju. Problemy funkcjonalne (błędy w algorytmach) zostały wykryte dzięki systematycznym testom statystycznym.
