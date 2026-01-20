@@ -14,9 +14,11 @@
 \contentsline {subsection}{\numberline {3.5}Problem \#5: Błędy w implementacji testów algorytmów}{6}{subsection.3.5}%
 \contentsline {subsection}{\numberline {3.6}Problem \#6: Wydajność testów algorytmów}{7}{subsection.3.6}%
 \contentsline {subsection}{\numberline {3.7}Problem \#7: Nieoptymalna implementacja Blum-Blum-Shub}{8}{subsection.3.7}%
-\contentsline {section}{\numberline {4}Rekomendacje na przyszłość}{8}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Obszary wymagające dalszego testowania}{8}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Proponowane ulepszenia}{8}{subsection.4.2}%
-\contentsline {section}{\numberline {5}Podsumowanie}{8}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Wnioski}{8}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Jakość końcowa systemu}{9}{subsection.5.2}%
+\contentsline {subsection}{\numberline {3.8}Problem \#8: Brak zapisywania parametrów generatora do wyników testów}{9}{subsection.3.8}%
+\contentsline {subsection}{\numberline {3.9}Problem \#9: Wykresy nie pojawiają się w raportach PDF}{10}{subsection.3.9}%
+\contentsline {section}{\numberline {4}Rekomendacje na przyszłość}{10}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Obszary wymagające dalszego testowania}{10}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Proponowane ulepszenia}{10}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Podsumowanie}{11}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Wnioski}{11}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Jakość końcowa systemu}{11}{subsection.5.2}%
