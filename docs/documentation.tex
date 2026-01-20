@@ -58,6 +58,130 @@
 
 \section{O projekcie}
 
+\subsection{Praca w zespole}
+
+Projekt IO\_RNG został zrealizowany przez trzyosobowy zespół studentów w ramach przedmiotu Inżynieria Oprogramowania. Współpraca przebiegała w sposób produktywny, z wykorzystaniem nowoczesnych narzędzi do zarządzania projektem i kontroli wersji.
+
+\subsubsection{Realizacja projektu}
+
+Zespół wywiązał się z podstawowych założeń projektowych, dostarczając w pełni funkcjonalną aplikację webową spełniającą wszystkie kluczowe wymagania. System umożliwia:
+
+\begin{itemize}
+    \item Testowanie wielu różnych algorytmów PRNG i CSPRNG
+    \item Przeprowadzanie kompleksowych testów statystycznych (NIST, Diehard)
+    \item Wizualizację wyników i generowanie raportów PDF
+    \item Porównywanie wydajności i jakości różnych generatorów
+\end{itemize}
+
+Dodatkowo, zespół zdecydował się na implementację funkcjonalności wykraczających poza pierwotne założenia, takich jak:
+\begin{itemize}
+    \item Wielozakładkowy system testowania z niezależnymi sesjami
+    \item Kompleksowa baza wiedzy Wiki z dokumentacją algorytmów i testów
+    \item Zaawansowany system personalizacji interfejsu z synchronizacją motywów
+    \item Generator liczb z konfigurowalnymi zakresami
+\end{itemize}
+
+\subsubsection{Podział prac}
+
+Poniżej przedstawiony jest wykres finalnego podziału prac pod względem godzin.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Wykr1.png}
+    \caption{Podział prac w zespole}
+    \label{fig:podzial_prac}
+\end{figure}
+
+Niżej możemy zobaczyć analizę na podstawie wszystkich zadań wykonanych przez każdego z członków - średnią ilość niedoszacowań oraz nadszacowań wyrażoną w godzinach.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Wykr2.png}
+    \caption{Szacowania}
+    \label{fig:szacowania}
+\end{figure}
+
+Niżej możemy zobaczyć finalny wykres przedstawiający porównanie estymowanego czasu wykonania zadania oraz jego rzeczywistego czasu wykonania. Możemy zauważyć, że na przestrzeni projektu były one w miarę równe
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Wykr3.png}
+    \caption{Porównanie estymat i rzeczywistego czasu wykonania}
+    \label{fig:estymaty}
+\end{figure}
+
+Niżej znajduje się wykres, który ilustruje stosunek błędu, jaki był popełniany podczas estymacji zadań.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Wykr4.png}
+    \caption{Stosunek błędu}
+    \label{fig:Stosunekbledu}
+\end{figure}
+
+Poniżej znajduje się również finalny wykres przedstawiający różnicę między estymowanym czasem dla zadania a jego rzeczywistym czasem wykonania. Można zauważyć, że mimo nauczki z przeszłości tendencja do niedoszacowywania czasu wykonania zadań nadal pozostała obecna w zespole.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Wykr5.png}
+    \caption{Różnica pomiędzy estymatą a rzeczywistym czasem wykonania}
+    \label{fig:Roznica}
+\end{figure}
+
+\subsubsection{Efekt ''WOW''}
+Efektem ''WOW'' najszej aplikacji miał być ponadprzeciętny interfejs użytkownika naszej aplikacji. Zespół wywiązał się z tego założenia, implementując system dostarczający zachwycających doznań wizualnych dla użytkowników.
+
+\subsubsection{Wyzwania czasowe}
+
+Pierwotny plan zakładał zakończenie projektu do końca grudnia 2025 roku. Niestety, harmonogram ten okazał się zbyt optymistyczny z kilku powód:
+
+\begin{itemize}
+    \item \textbf{Złożoność techniczna:} Implementacja pełnej baterii testów statystycznych NIST i Diehard okazała się bardziej czasochłonna niż przewidywano. Każdy test wymaga skomplikowanych obliczeń matematycznych i szczegółowej walidacji zgodności ze standardami.
+    
+    \item \textbf{Obsługa wielu języków:} System obsługujący generatory napisane w Python, C++, Rust i C\# wymagał stworzenia uniwersalnego adaptera i runnerów, co znacząco zwiększyło zakres prac implementacyjnych.
+    
+    \item \textbf{Sezon świąteczny:} Przerwa świąteczna w grudniu naturalnie ograniczyła dostępność członków zespołu i intensywność pracy nad projektem.
+    
+    \item \textbf{Rozszerzenie zakresu:} Decyzja o implementacji dodatkowych funkcjonalności (Wiki, wielozakładkowe testy, zaawansowana wizualizacja) wydłużyła czas realizacji, ale znacząco podniosła wartość końcowego produktu.
+\end{itemize}
+
+Mimo opóźnienia względem pierwotnego harmonogramu, projekt został ukończony ze wszystkimi zaplanowanymi funkcjonalnościami oraz dodatkowymi rozszerzeniami. Zespół wykazał się elastycznością, dostosowując harmonogram do rzeczywistych możliwości, zachowując przy tym wysoką jakość kodu i kompletność dokumentacji.
+
+\subsubsection{Osiągnięcia zespołu}
+
+Pomimo wspomnianych wyzwań czasowych, zespół może pochwalić się następującymi osiągnięciami:
+
+\begin{itemize}
+    \item \textbf{Kompletność implementacji:} Wszystkie zaplanowane funkcjonalności zostały zrealizowane, a system działa stabilnie
+    
+    \item \textbf{Jakość kodu:} Konsekwentne stosowanie zasad SOLID, Clean Architecture i wzorców projektowych
+    
+    \item \textbf{Dokumentacja:} Szczegółowa dokumentacja techniczna oraz wbudowana baza wiedzy Wiki
+    
+    \item \textbf{Testowalność:} Pełna bateria 30 testów statystycznych (15 NIST + 15 Diehard)
+    
+    \item \textbf{User Experience:} Intuicyjny, responsywny interfejs z zaawansowanymi funkcjami wizualizacji
+    
+\end{itemize}
+
+\subsubsection{Wnioski z pracy zespołowej}
+
+Realizacja projektu IO\_RNG dostarczyła zespołowi cennych doświadczeń:
+
+\begin{itemize}
+    \item \textbf{Realityczne planowanie:} Nauczenie się szacowania czasu potrzebnego na implementację złożonych funkcjonalności
+    
+    \item \textbf{Zarządzanie zakresem:} Umiejętność balansowania między realizacją minimalnego produktu a rozszerzeniami zwiększającymi wartość
+    
+    \item \textbf{Komunikacja:} Znaczenie regularnej synchronizacji i jasnego podziału odpowiedzialności
+    
+    \item \textbf{Adaptacyjność:} Elastyczne dostosowywanie planów do rzeczywistości bez rezygnacji z jakości
+    
+    \item \textbf{Współpraca:} Efektywne wykorzystanie Git do code review i unikania konfliktów w kodzie
+\end{itemize}
+
+Podsumowując, zespół spełnił oczekiwania co do jakości i zakresu projektu, choć w dłuższym czasie niż pierwotnie zakładano. Doświadczenie to pokazało, że realistyczne szacowanie czasu oraz elastyczne podejście do harmonogramu są kluczowe w projektach informatycznych, szczególnie gdy zespół pracuje nad nowoczesnymi technologiami i złożonymi systemami.
+
+
+
 \subsection{Cel i przeznaczenie aplikacji}
 
 IO\_RNG to zaawansowana aplikacja webowa dedykowana profesjonalnemu testowaniu i kompleksowemu porównywaniu różnorodnych algorytmów generowania liczb pseudolosowych (PRNG - Pseudo Random Number Generators), w tym także algorytmów kryptograficznie bezpiecznych (CSPRNG - Cryptographically Secure Pseudo Random Number Generators).
