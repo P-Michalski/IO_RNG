@@ -295,7 +295,7 @@ export const About = () => {
         <CardHeader>
           <CardTitle>Documentation</CardTitle>
           <CardDescription>
-            Download the complete project documentation
+            Download the complete project documentation (PL only)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -351,24 +351,24 @@ export const About = () => {
                   position === "center"
                     ? "z-30 opacity-100 scale-100 lg:scale-105 xl:scale-110 w-[min(calc(100%-2rem),280px)] sm:w-[270px] md:w-[300px] lg:w-[320px] xl:w-[340px]"
                     : position === "left"
-                    ? `z-10 ${
-                        open
-                          ? "opacity-0 md:opacity-0 xl:opacity-60"
-                          : "opacity-0 sm:opacity-60"
-                      } -translate-x-full sm:-translate-x-[170px] ${
-                        open
-                          ? "md:-translate-x-full xl:-translate-x-240px"
-                          : "md:-translate-x-[200px] lg:-translate-x-240px"
-                      } xl:-translate-x-[280px] scale-90 w-[min(calc(100%-3rem),240px)] sm:w-[230px] md:w-[260px] lg:w-[280px] xl:w-[300px]`
-                    : `z-10 ${
-                        open
-                          ? "opacity-0 md:opacity-0 xl:opacity-60"
-                          : "opacity-0 sm:opacity-60"
-                      } translate-x-full sm:translate-x-[170px] ${
-                        open
-                          ? "md:translate-x-full xl:translate-x-240px"
-                          : "md:translate-x-[200px] lg:translate-x-240px"
-                      } xl:translate-x-[280px] scale-90 w-[min(calc(100%-3rem),240px)] sm:w-[230px] md:w-[260px] lg:w-[280px] xl:w-[300px]`
+                      ? `z-10 ${
+                          open
+                            ? "opacity-0 md:opacity-0 xl:opacity-60"
+                            : "opacity-0 sm:opacity-60"
+                        } -translate-x-full sm:-translate-x-[170px] ${
+                          open
+                            ? "md:-translate-x-full xl:-translate-x-240px"
+                            : "md:-translate-x-[200px] lg:-translate-x-240px"
+                        } xl:-translate-x-[280px] scale-90 w-[min(calc(100%-3rem),240px)] sm:w-[230px] md:w-[260px] lg:w-[280px] xl:w-[300px]`
+                      : `z-10 ${
+                          open
+                            ? "opacity-0 md:opacity-0 xl:opacity-60"
+                            : "opacity-0 sm:opacity-60"
+                        } translate-x-full sm:translate-x-[170px] ${
+                          open
+                            ? "md:translate-x-full xl:translate-x-240px"
+                            : "md:translate-x-[200px] lg:translate-x-240px"
+                        } xl:translate-x-[280px] scale-90 w-[min(calc(100%-3rem),240px)] sm:w-[230px] md:w-[260px] lg:w-[280px] xl:w-[300px]`
                 }`}
                 onClick={() => !isActive && setActiveIndex(index)}
               >
