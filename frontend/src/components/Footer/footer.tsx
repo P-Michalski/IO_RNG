@@ -3,7 +3,8 @@ export const Footer = () => {
     <footer className="border-t mt-auto">
       <div className="container mx-auto p-6">
         <p className="text-sm text-muted-foreground text-center">
-          © {new Date().getFullYear()} IO_RNG Project. All rights reserved.
+          © {new Date().getFullYear()} IO_RNG Project. Licensed under the MIT
+          License.
         </p>
       </div>
     </footer>
